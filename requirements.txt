@@ -1,0 +1,4 @@
+web3==5.22.0
+eth-brownie==1.16.0
+pycryptodome==3.10.1
+pytest==6.2.4

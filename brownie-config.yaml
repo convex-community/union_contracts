@@ -1,0 +1,18 @@
+reports:
+  exclude_contracts:
+    - Ownable
+    - Context
+    - ERC20
+    - SafeERC20
+    - MerkleProof
+    - ReentrancyGuard
+    - Address
+
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@4.1.0
+compiler:
+  solc:
+    remappings:
+      - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.1.0'
+networks:
+  default: mainnet-fork
