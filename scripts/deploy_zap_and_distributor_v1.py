@@ -8,8 +8,8 @@ ADDRESS_ZERO = "0x0000000000000000000000000000000000000000"
 def main():
     deployer = accounts.load("mainnet-deploy")
     zap = UnionZap.deploy(ADDRESS_ZERO, {"from": deployer}, publish_source=True)
-    merkle = MerkleDistributor.deploy(CVXCRV, zap, "0x0", {"from": deployer})
-    zap.updateDistributor(merkle, {"from": deployer}, publish_source=True)
+    merkle = MerkleDistributor.deploy(CVXCRV, zap, "0x0", {"from": deployer}, publish_source=True)
+    zap.updateDistributor(merkle, {"from": deployer})
     zap.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
     merkle.updateAdmin(AIRFORCE_SAFE, {"from": deployer})
 
