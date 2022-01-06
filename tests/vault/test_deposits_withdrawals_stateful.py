@@ -77,7 +77,7 @@ class StateMachine:
         expected_gross_withdrawn = claimable // 4
         if to_withdraw == 0:
             return
-        self.vault.withdraw(to_withdraw, {"from": address})
+        self.vault.withdraw(address, to_withdraw, {"from": address})
         penalty_amount = expected_gross_withdrawn * self.withdrawalPenalty // 10000
         claimed = self.cvxcrv.balanceOf(address) - original_balance
         assert approx(claimed, expected_gross_withdrawn - penalty_amount, 1e-3)
@@ -94,7 +94,7 @@ class StateMachine:
             claimable = shares * self.vault.totalHoldings() // self.vault.totalSupply()
             fee = claimable * self.vault.withdrawalPenalty() // 10000
             prior_cvxcrv_balance = self.cvxcrv.balanceOf(account)
-            self.vault.withdrawAll({"from": account})
+            self.vault.withdrawAll(account, {"from": account})
             withdrawn = self.cvxcrv.balanceOf(account) - prior_cvxcrv_balance
             if i != len(self.accounts) - 1:
                 assert approx(withdrawn, claimable - fee, 1e-2)

@@ -10,6 +10,7 @@ from ..utils.constants import (
     CURVE_CVX_ETH_POOL,
     CVXCRV,
     CRV,
+    ADDRESS_ZERO,
     CVX,
 )
 from ..utils import approx, cvxcrv_balance, calc_harvest_amount_in_cvxcrv
@@ -38,14 +39,16 @@ def test_withdraw_as_slippage(alice, bob, charlie, dave, erin, owner, vault):
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
-    with brownie.reverts():
-        vault.withdrawAs(balances[0] // 2, 3, cvx_amount * 1.25, {"from": alice})
-    vault.withdrawAs(balances[0] // 2, 3, cvx_amount * 0.75, {"from": alice})
+    with brownie.reverts("Receiver!"):
+        vault.withdrawAs(
+            ADDRESS_ZERO, balances[0] // 2, 3, cvx_amount * 1.25, {"from": alice}
+        )
+    vault.withdrawAs(alice, balances[0] // 2, 3, cvx_amount * 0.75, {"from": alice})
     assert approx(cvx.balanceOf(alice), cvx_amount, 0.01)
 
     # claim as cvxCRV
     bob_claimable = vault.balanceOfUnderlying(bob)
-    vault.withdrawAs(balances[1] // 2, 0, 0, {"from": bob})
+    vault.withdrawAs(bob, balances[1] // 2, 0, 0, {"from": bob})
     assert approx(
         cvxcrv.balanceOf(bob), bob_claimable // 2 * (1 - withdrawal_penalty), 1e-5
     )
@@ -57,8 +60,10 @@ def test_withdraw_as_slippage(alice, bob, charlie, dave, erin, owner, vault):
         1, 0, charlie_claimable // 2 * (1 - withdrawal_penalty)
     )
     with brownie.reverts():
-        vault.withdrawAs(balances[2] // 2, 2, crv_amount * 1.25, {"from": charlie})
-    vault.withdrawAs(balances[2] // 2, 2, crv_amount * 0.75, {"from": charlie})
+        vault.withdrawAs(
+            charlie, balances[2] // 2, 2, crv_amount * 1.25, {"from": charlie}
+        )
+    vault.withdrawAs(charlie, balances[2] // 2, 2, crv_amount * 0.75, {"from": charlie})
     assert approx(crv.balanceOf(charlie), charlie_initial_balance + crv_amount, 0.01)
 
     # claim as Eth
@@ -69,13 +74,13 @@ def test_withdraw_as_slippage(alice, bob, charlie, dave, erin, owner, vault):
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     with brownie.reverts():
-        vault.withdrawAs(balances[3] // 2, 1, eth_amount * 1.25, {"from": dave})
-    vault.withdrawAs(balances[3] // 2, 1, eth_amount * 0.75, {"from": dave})
+        vault.withdrawAs(dave, balances[3] // 2, 1, eth_amount * 1.25, {"from": dave})
+    vault.withdrawAs(dave, balances[3] // 2, 1, eth_amount * 0.75, {"from": dave})
     assert approx(dave.balance() - dave_original_balance, eth_amount, 0.01)
 
     # claim and stake
     erin_claimable = vault.balanceOfUnderlying(erin)
-    vault.withdrawAs(balances[4] // 2, 4, 0, {"from": erin})
+    vault.withdrawAs(erin, balances[4] // 2, 4, 0, {"from": erin})
     assert approx(
         interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(erin.address),
         erin_claimable // 2 * (1 - withdrawal_penalty),
@@ -113,13 +118,13 @@ def test_withdraw_all_as_slippage(alice, bob, charlie, dave, erin, owner, vault)
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
     with brownie.reverts():
-        vault.withdrawAllAs(3, cvx_amount * 1.25, {"from": alice})
-    vault.withdrawAllAs(3, cvx_amount * 0.75, {"from": alice})
+        vault.withdrawAllAs(alice, 3, cvx_amount * 1.25, {"from": alice})
+    vault.withdrawAllAs(alice, 3, cvx_amount * 0.75, {"from": alice})
     assert approx(cvx.balanceOf(alice), cvx_amount, 0.01)
 
     # claim as cvxCRV
     bob_claimable = vault.balanceOfUnderlying(bob)
-    vault.withdrawAllAs(0, 0, {"from": bob})
+    vault.withdrawAllAs(bob, 0, 0, {"from": bob})
     assert approx(cvxcrv.balanceOf(bob), bob_claimable * (1 - withdrawal_penalty), 1e-5)
 
     # claim as CRV
@@ -129,8 +134,8 @@ def test_withdraw_all_as_slippage(alice, bob, charlie, dave, erin, owner, vault)
         1, 0, charlie_claimable * (1 - withdrawal_penalty)
     )
     with brownie.reverts():
-        vault.withdrawAllAs(2, crv_amount * 1.25, {"from": charlie})
-    vault.withdrawAllAs(2, crv_amount * 0.75, {"from": charlie})
+        vault.withdrawAllAs(charlie, 2, crv_amount * 1.25, {"from": charlie})
+    vault.withdrawAllAs(charlie, 2, crv_amount * 0.75, {"from": charlie})
     assert approx(crv.balanceOf(charlie), charlie_initial_balance + crv_amount, 0.01)
 
     # claim as Eth
@@ -141,13 +146,13 @@ def test_withdraw_all_as_slippage(alice, bob, charlie, dave, erin, owner, vault)
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     with brownie.reverts():
-        vault.withdrawAllAs(1, eth_amount * 1.25, {"from": dave})
-    vault.withdrawAllAs(1, eth_amount * 0.75, {"from": dave})
+        vault.withdrawAllAs(dave, 1, eth_amount * 1.25, {"from": dave})
+    vault.withdrawAllAs(dave, 1, eth_amount * 0.75, {"from": dave})
     assert approx(dave.balance() - dave_original_balance, eth_amount, 0.01)
 
     # claim and stake
     erin_claimable = vault.balanceOfUnderlying(erin)
-    vault.withdrawAllAs(4, 0, {"from": erin})
+    vault.withdrawAllAs(erin, 4, 0, {"from": erin})
     assert approx(
         interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(erin.address),
         erin_claimable * (1 - withdrawal_penalty),
