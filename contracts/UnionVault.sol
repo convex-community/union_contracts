@@ -102,7 +102,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
 
     /// @notice Query the amount currently staked
     /// @return total - the total amount of tokens staked
-    function stakeBalance() public view returns (uint256 total) {
+    function totalHoldings() public view returns (uint256 total) {
         return cvxCrvStaking.balanceOf(address(this));
     }
 
@@ -132,7 +132,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @dev Does not account for penalties and fees
     function claimable(address user) external view returns (uint256 amount) {
         require(totalSupply() > 0, "No users");
-        return ((balanceOf(user) * stakeBalance()) / totalSupply());
+        return ((balanceOf(user) * totalHoldings()) / totalSupply());
     }
 
     /// @notice Returns the address of underlying token
@@ -232,7 +232,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     function deposit(uint256 _amount) public {
         require(_amount > 0, "Deposit too small");
 
-        uint256 _before = stakeBalance();
+        uint256 _before = totalHoldings();
         IERC20(CVXCRV_TOKEN).safeTransferFrom(
             msg.sender,
             address(this),
@@ -264,14 +264,14 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     {
         require(totalSupply() > 0);
         // Computes the amount withdrawable based on the number of shares sent
-        uint256 amount = (_shares * stakeBalance()) / totalSupply();
+        uint256 amount = (_shares * totalHoldings()) / totalSupply();
         // Burn the shares before retrieving tokens
         _burn(msg.sender, _shares);
         _withdrawable = amount;
         // If user is last to withdraw, harvest before exit
         if (totalSupply() == 0) {
             harvest();
-            cvxCrvStaking.withdraw(stakeBalance(), false);
+            cvxCrvStaking.withdraw(totalHoldings(), false);
             _withdrawable = IERC20(CVXCRV_TOKEN).balanceOf(address(this));
         }
         // Otherwise compute share and unstake

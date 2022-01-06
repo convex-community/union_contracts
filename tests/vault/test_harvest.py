@@ -104,7 +104,7 @@ def test_harvest_multiple_stakers(alice, bob, charlie, dave, erin, owner, vault)
         vault.depositAll({"from": account})
 
     platform_initial_balance = cvxcrv_balance(vault.platform())
-    initial_vault_balance = vault.stakeBalance()
+    initial_vault_balance = vault.totalHoldings()
 
     chain.sleep(100000)
     chain.mine(1)
@@ -122,7 +122,7 @@ def test_harvest_multiple_stakers(alice, bob, charlie, dave, erin, owner, vault)
         cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-5
     )
     assert approx(
-        vault.stakeBalance(),
+        vault.totalHoldings(),
         initial_vault_balance + actual_harvest - platform_fees - caller_incentive,
         1e-5,
     )

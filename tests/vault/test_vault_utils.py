@@ -34,8 +34,8 @@ def test_view_rewards(alice, vault):
 
 def test_stake_balance(alice, vault):
     vault.deposit(1e20, {"from": alice})
-    assert vault.stakeBalance() == 1e20
-    assert vault.stakeBalance() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
+    assert vault.totalHoldings() == 1e20
+    assert vault.totalHoldings() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
         vault
     )
     chain.undo()
@@ -110,7 +110,7 @@ def test_claimable(alice, bob, vault):
     vault.depositAll({"from": bob})
     assert (
         vault.claimable(alice)
-        == vault.balanceOf(alice) * vault.stakeBalance() / vault.totalSupply()
+        == vault.balanceOf(alice) * vault.totalHoldings() / vault.totalSupply()
     )
     chain.undo(2)
 
