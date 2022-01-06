@@ -139,6 +139,19 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         return ((balanceOf(user) * totalHoldings()) / totalSupply());
     }
 
+    /// @notice Returns the amount of underlying tokens an share can be redeemed for.
+    /// @return The amount of underlying tokens an share can be redeemed for.
+    function exchangeRate() public view returns (uint256) {
+        if (totalSupply() > 0) {
+            // Calculate the exchange rate by dividing the total holdings by the share supply.
+            return totalHoldings() / totalSupply();
+        }
+        // If there are no shares in circulation, return an exchange rate of 1:1.
+        else {
+            return 10**18;
+        }
+    }
+
     /// @notice Returns the address of underlying token
     function underlying() external view returns (address underlying) {
         return CVXCRV_TOKEN;

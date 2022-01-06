@@ -122,3 +122,13 @@ def test_balance_of_underlying_no_users(alice, vault):
 
 def test_underlying(vault):
     assert vault.underlying() == CVXCRV_TOKEN
+
+
+def test_exchange_rate(alice, bob, vault):
+    chain.snapshot()
+    assert vault.exchangeRate() == int(1e18)
+    vault.depositAll(alice, {"from": alice})
+    assert vault.exchangeRate() == vault.totalHoldings() / vault.totalSupply()
+    vault.depositAll(bob, {"from": bob})
+    assert vault.exchangeRate() == vault.totalHoldings() / vault.totalSupply()
+    chain.revert()
