@@ -103,8 +103,11 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
 
     /// @notice Updates the address to which platform fees are paid out
     /// @param _platform - the new platform wallet address
-    function setPlatform(address _platform) external onlyOwner {
-        require(_platform != address(0));
+    function setPlatform(address _platform)
+        external
+        onlyOwner
+        notToZeroAddress(_platform)
+    {
         platform = _platform;
         emit PlatformUpdated(_platform);
     }
