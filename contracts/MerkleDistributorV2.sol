@@ -193,7 +193,7 @@ contract MerkleDistributorV2 is ClaimZaps {
         _claim(index, account, amount, merkleProof);
 
         // Unstake
-        uint256 _withdrawn = IUnionVault(vault).withdraw(amount);
+        uint256 _withdrawn = IUnionVault(vault).withdraw(address(this), amount);
 
         // Claim it as the specified token
         _claimAs(account, _withdrawn, option, minAmountOut);
@@ -202,7 +202,7 @@ contract MerkleDistributorV2 is ClaimZaps {
 
     /// @notice Stakes the contract's entire cvxCRV balance in the Vault
     function stake() external onlyAdminOrDistributor {
-        IUnionVault(vault).depositAll();
+        IUnionVault(vault).depositAll(address(this));
     }
 
     /// @notice Freezes the claim function to allow the merkleRoot to be changed
