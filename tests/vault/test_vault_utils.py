@@ -118,3 +118,7 @@ def test_claimable(alice, bob, vault):
 def test_claimable_no_users(alice, vault):
     with brownie.reverts("No users"):
         vault.claimable(alice)
+
+
+def test_underlying(vault):
+    assert vault.underlying() == CVXCRV_TOKEN

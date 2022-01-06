@@ -135,6 +135,11 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         return ((balanceOf(user) * stakeBalance()) / totalSupply());
     }
 
+    /// @notice Returns the address of underlying token
+    function underlying() external view returns (address underlying) {
+        return CVXCRV_TOKEN;
+    }
+
     /// @notice Claim rewards and swaps them to cvxCrv for restaking
     /// @dev Can be called by anyone against an incentive in cvxCrv
     function harvest() public {
