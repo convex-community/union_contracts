@@ -10,21 +10,45 @@ interface IUnionVault {
         ClaimAndStake
     }
 
-    function withdraw(uint256 _shares) external returns (uint256 withdrawn);
+    function withdraw(address _to, uint256 _shares)
+        external
+        returns (uint256 withdrawn);
 
-    function withdrawAll() external returns (uint256 withdrawn);
+    function withdrawAll(address _to) external returns (uint256 withdrawn);
 
-    function withdrawAs(uint256 _shares, Option option) external;
+    function withdrawAs(
+        address _to,
+        uint256 _shares,
+        Option option
+    ) external;
 
-    function withdrawAllAs(Option option) external;
+    function withdrawAs(
+        address _to,
+        uint256 _shares,
+        Option option,
+        uint256 minAmountOut
+    ) external;
 
-    function depositAll() external;
+    function withdrawAllAs(address _to, Option option) external;
 
-    function deposit(uint256 _amount) external;
+    function withdrawAllAs(
+        address _to,
+        Option option,
+        uint256 minAmountOut
+    ) external;
+
+    function depositAll(address _to) external returns (uint256 shares);
+
+    function deposit(address _to, uint256 _amount)
+        external
+        returns (uint256 shares);
 
     function harvest() external;
 
-    function claimable(address user) external view returns (uint256 amount);
+    function balanceOfUnderlying(address user)
+        external
+        view
+        returns (uint256 amount);
 
     function outstanding3CrvRewards() external view returns (uint256 total);
 
@@ -32,7 +56,9 @@ interface IUnionVault {
 
     function outstandingCrvRewards() external view returns (uint256 total);
 
-    function stakeBalance() external view returns (uint256 total);
+    function totalHoldings() external view returns (uint256 total);
+
+    function underlying() external view returns (address);
 
     function setPlatform(address _platform) external;
 
