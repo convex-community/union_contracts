@@ -227,4 +227,9 @@ contract UnionBase {
                 minAmountOut
             );
     }
+
+    modifier notToZeroAddress(address _to) {
+        require(_to != address(0), "Receiver!");
+        _;
+    }
 }

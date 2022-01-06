@@ -76,8 +76,11 @@ contract MerkleDistributorV2 is ClaimZaps {
 
     /// @notice Transfers ownership of the contract
     /// @param newAdmin - address of the new admin of the contract
-    function updateAdmin(address newAdmin) external onlyAdmin {
-        require(newAdmin != address(0));
+    function updateAdmin(address newAdmin)
+        external
+        onlyAdmin
+        notToZeroAddress(newAdmin)
+    {
         address oldAdmin = admin;
         admin = newAdmin;
         emit AdminUpdated(oldAdmin, newAdmin);
@@ -85,8 +88,11 @@ contract MerkleDistributorV2 is ClaimZaps {
 
     /// @notice Changes the contract allowed to freeze before depositing
     /// @param newDepositor - address of the new depositor contract
-    function updateDepositor(address newDepositor) external onlyAdmin {
-        require(newDepositor != address(0));
+    function updateDepositor(address newDepositor)
+        external
+        onlyAdmin
+        notToZeroAddress(newDepositor)
+    {
         address oldDepositor = depositor;
         depositor = newDepositor;
         emit DepositorUpdated(oldDepositor, newDepositor);

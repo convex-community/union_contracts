@@ -400,9 +400,4 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     }
 
     receive() external payable {}
-
-    modifier notToZeroAddress(address _to) {
-        require(_to != address(0), "Receiver!");
-        _;
-    }
 }
