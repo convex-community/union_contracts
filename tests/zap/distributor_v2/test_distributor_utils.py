@@ -110,3 +110,18 @@ def test_update_admin(owner, alice, merkle_distributor_v2):
 def test_update_admin_not_owner(owner, alice, merkle_distributor_v2):
     with brownie.reverts("Admin only"):
         merkle_distributor_v2.updateAdmin(alice, {"from": alice})
+
+
+def test_update_depositor(owner, alice, merkle_distributor_v2):
+    previous_depositor = merkle_distributor_v2.depositor()
+    tx = merkle_distributor_v2.updateDepositor(alice, {"from": owner})
+    assert merkle_distributor_v2.depositor() == alice
+    assert len(tx.events) == 1
+    assert tx.events["DepositorUpdated"]["oldDepositor"] == previous_depositor
+    assert tx.events["DepositorUpdated"]["newDepositor"] == alice
+    chain.undo()
+
+
+def test_update_depositor_not_owner(owner, alice, merkle_distributor_v2):
+    with brownie.reverts("Admin only"):
+        merkle_distributor_v2.updateAdmin(alice, {"from": alice})

@@ -33,6 +33,11 @@ contract MerkleDistributorV2 is ClaimZaps {
     event MerkleRootUpdated(bytes32 indexed merkleRoot, uint32 indexed week);
     // This event is triggered whenever the admin is updated.
     event AdminUpdated(address indexed oldAdmin, address indexed newAdmin);
+    // This event is triggered whenever the depositor contract is updated.
+    event DepositorUpdated(
+        address indexed oldDepositor,
+        address indexed newDepositor
+    );
 
     constructor(address _vault, address _depositor) {
         require(_vault != address(0));
@@ -76,6 +81,15 @@ contract MerkleDistributorV2 is ClaimZaps {
         address oldAdmin = admin;
         admin = newAdmin;
         emit AdminUpdated(oldAdmin, newAdmin);
+    }
+
+    /// @notice Changes the contract allowed to freeze before depositing
+    /// @param newDepositor - address of the new depositor contract
+    function updateDepositor(address newDepositor) external onlyAdmin {
+        require(newDepositor != address(0));
+        address oldDepositor = depositor;
+        depositor = newDepositor;
+        emit DepositorUpdated(oldDepositor, newDepositor);
     }
 
     /// @notice Internal function to handle users' claims
