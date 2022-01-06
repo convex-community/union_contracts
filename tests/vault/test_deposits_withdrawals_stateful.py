@@ -26,7 +26,7 @@ class StateMachine:
     def setup(self):
         self.share_balances = {i: 0 for i in self.accounts}
         for account in self.accounts:
-            self.vault.deposit(1e20, {"from": account})
+            self.vault.deposit(account, 1e20, {"from": account})
 
     def rule_deposit(self, address, value):
         original_address_balance = self.cvxcrv.balanceOf(address)
@@ -35,7 +35,7 @@ class StateMachine:
             return
         prior_vault_balance = self.vault.totalHoldings()
         prior_supply = self.vault.totalSupply()
-        self.vault.deposit(value, {"from": address})
+        self.vault.deposit(address, value, {"from": address})
         assert self.vault.totalHoldings() == prior_vault_balance + value
         assert self.cvxcrv.balanceOf(address) == original_address_balance - value
         assert self.vault.balanceOf(address) == original_address_vault_balance + (

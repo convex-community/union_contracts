@@ -15,7 +15,7 @@ def test_view_rewards(alice, vault):
     original_crv_rewards = vault.outstandingCrvRewards()
     original_cvx_rewards = vault.outstandingCvxRewards()
     original_3crv_rewards = vault.outstanding3CrvRewards()
-    vault.deposit(1e20, {"from": alice})
+    vault.deposit(alice, 1e20, {"from": alice})
     chain.mine(10)
     assert vault.outstandingCrvRewards() > original_crv_rewards
     assert vault.outstandingCvxRewards() > original_cvx_rewards
@@ -33,7 +33,7 @@ def test_view_rewards(alice, vault):
 
 
 def test_total_holdings(alice, vault):
-    vault.deposit(1e20, {"from": alice})
+    vault.deposit(alice, 1e20, {"from": alice})
     assert vault.totalHoldings() == 1e20
     assert vault.totalHoldings() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
         vault
@@ -106,8 +106,8 @@ def test_set_withdraw_penalty_non_owner(alice, vault):
 
 
 def test_balance_of_underlying(alice, bob, vault):
-    vault.depositAll({"from": alice})
-    vault.depositAll({"from": bob})
+    vault.depositAll(alice, {"from": alice})
+    vault.depositAll(bob, {"from": bob})
     assert (
         vault.balanceOfUnderlying(alice)
         == vault.balanceOf(alice) * vault.totalHoldings() / vault.totalSupply()

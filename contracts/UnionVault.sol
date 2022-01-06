@@ -232,8 +232,14 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
 
     /// @notice Deposit user funds in the autocompounder and mints tokens
     /// representing user's share of the pool in exchange
+    /// @param _to - the address that will receive the shares
     /// @param _amount - the amount of cvxCrv to deposit
-    function deposit(uint256 _amount) public {
+    /// @return shares - the amount of shares issued
+    function deposit(address _to, uint256 _amount)
+        public
+        notToZeroAddress(_to)
+        returns (uint256 shares)
+    {
         require(_amount > 0, "Deposit too small");
 
         uint256 _before = totalHoldings();
@@ -251,12 +257,15 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         } else {
             shares = (_amount * totalSupply()) / _before;
         }
-        _mint(msg.sender, shares);
+        _mint(_to, shares);
+        return shares;
     }
 
     /// @notice Deposit all of user's cvxCRV balance
-    function depositAll() external {
-        deposit(IERC20(CVXCRV_TOKEN).balanceOf(msg.sender));
+    /// @param _to - the address that will receive the shares
+    /// @return shares - the amount of shares issued
+    function depositAll(address _to) external returns (uint256 shares) {
+        return deposit(_to, IERC20(CVXCRV_TOKEN).balanceOf(msg.sender));
     }
 
     /// @notice Unstake cvxCrv in proportion to the amount of shares sent

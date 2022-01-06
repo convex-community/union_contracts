@@ -18,7 +18,7 @@ def test_harvest_single_staker(alice, bob, owner, vault):
     bob_initial_balance = cvxcrv_balance(bob)
     platform_initial_balance = cvxcrv_balance(vault.platform())
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
     chain.mine(1)
     estimated_harvest = calc_harvest_amount_in_cvxcrv(vault)
@@ -64,7 +64,7 @@ def test_harvest_no_discount(alice, bob, owner, vault):
     bob_initial_balance = cvxcrv_balance(bob)
     platform_initial_balance = cvxcrv_balance(vault.platform())
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
     chain.mine(1)
     estimated_harvest = calc_harvest_amount_in_cvxcrv(vault)
@@ -101,7 +101,7 @@ def test_harvest_multiple_stakers(alice, bob, charlie, dave, erin, owner, vault)
 
     for account in accounts:
         initial_balances[account.address] = cvxcrv_balance(account)
-        vault.depositAll({"from": account})
+        vault.depositAll(account, {"from": account})
 
     platform_initial_balance = cvxcrv_balance(vault.platform())
     initial_vault_balance = vault.totalHoldings()

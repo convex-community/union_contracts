@@ -25,11 +25,11 @@ def test_withdraw_as(alice, bob, charlie, dave, erin, owner, vault):
     balances = []
     vault.setApprovals({"from": owner})
     # ensure none of the test accounts are last to withdraw
-    vault.deposit(1, {"from": owner})
+    vault.deposit(owner, 1, {"from": owner})
 
     for account in [alice, bob, charlie, dave, erin]:
         balances.append(cvxcrv_balance(account))
-        vault.depositAll({"from": account})
+        vault.depositAll(account, {"from": account})
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
@@ -93,11 +93,11 @@ def test_withdraw_all_as(alice, bob, charlie, dave, erin, owner, vault):
     balances = []
     vault.setApprovals({"from": owner})
     # ensure none of the test accounts are last to withdraw
-    vault.deposit(1, {"from": owner})
+    vault.deposit(owner, 1, {"from": owner})
 
     for account in [alice, bob, charlie, dave, erin]:
         balances.append(cvxcrv_balance(account))
-        vault.depositAll({"from": account})
+        vault.depositAll(account, {"from": account})
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
@@ -153,7 +153,7 @@ def test_withdraw_all_as(alice, bob, charlie, dave, erin, owner, vault):
 def test_withdraw_as_to_address_zero(alice, owner, vault):
     chain.snapshot()
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
 
     with brownie.reverts("Receiver!"):
         vault.withdrawAs(ADDRESS_ZERO, 1, 3, {"from": alice})
@@ -163,7 +163,7 @@ def test_withdraw_as_to_address_zero(alice, owner, vault):
 def test_withdraw_all_as_to_address_zero(alice, owner, vault):
     chain.snapshot()
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
 
     with brownie.reverts("Receiver!"):
         vault.withdrawAllAs(ADDRESS_ZERO, 3, {"from": alice})
@@ -173,7 +173,7 @@ def test_withdraw_all_as_to_address_zero(alice, owner, vault):
 def test_withdraw_as_to_address_zero_slippage(alice, owner, vault):
     chain.snapshot()
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
 
     with brownie.reverts("Receiver!"):
         vault.withdrawAs(ADDRESS_ZERO, 1, 3, 0, {"from": alice})
@@ -183,7 +183,7 @@ def test_withdraw_as_to_address_zero_slippage(alice, owner, vault):
 def test_withdraw_all_as_to_address_zero_slippage(alice, owner, vault):
     chain.snapshot()
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
 
     with brownie.reverts("Receiver!"):
         vault.withdrawAllAs(ADDRESS_ZERO, 3, 0, {"from": alice})

@@ -25,11 +25,11 @@ def test_withdraw_as_slippage(alice, bob, charlie, dave, erin, owner, vault):
     balances = []
     vault.setApprovals({"from": owner})
     # ensure none of the test accounts are last to withdraw
-    vault.deposit(1, {"from": owner})
+    vault.deposit(owner, 1, {"from": owner})
 
     for account in [alice, bob, charlie, dave, erin]:
         balances.append(cvxcrv_balance(account))
-        vault.depositAll({"from": account})
+        vault.depositAll(account, {"from": account})
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
@@ -103,11 +103,11 @@ def test_withdraw_all_as_slippage(alice, bob, charlie, dave, erin, owner, vault)
     balances = []
     vault.setApprovals({"from": owner})
     # ensure none of the test accounts are last to withdraw
-    vault.deposit(1, {"from": owner})
+    vault.deposit(owner, 1, {"from": owner})
 
     for account in [alice, bob, charlie, dave, erin]:
         balances.append(cvxcrv_balance(account))
-        vault.depositAll({"from": account})
+        vault.depositAll(account, {"from": account})
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 

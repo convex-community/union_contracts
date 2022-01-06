@@ -13,7 +13,7 @@ def test_unique_withdrawal(alice, owner, vault, amount):
     alice_initial_balance = cvxcrv_balance(alice)
     half_amount = int(Decimal(amount) / 2)
     vault.setApprovals({"from": owner})
-    vault.deposit(amount, {"from": alice})
+    vault.deposit(alice, amount, {"from": alice})
     tx = vault.withdraw(alice, half_amount, {"from": alice})
     penalty_amount = half_amount * vault.withdrawalPenalty() // 10000
     assert cvxcrv_balance(vault) == 0
@@ -37,7 +37,7 @@ def test_withdraw_small(alice, owner, vault):
     chain.snapshot()
     alice_initial_balance = cvxcrv_balance(alice)
     vault.setApprovals({"from": owner})
-    vault.deposit(1, {"from": alice})
+    vault.deposit(alice, 1, {"from": alice})
     vault.withdrawAll(alice, {"from": alice})
     assert cvxcrv_balance(alice) == alice_initial_balance  # no rewards
     assert interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(vault) == 0
@@ -49,7 +49,7 @@ def test_withdraw_all(alice, owner, vault):
     chain.snapshot()
     alice_initial_balance = cvxcrv_balance(alice)
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
     chain.mine(1)
     harvested = calc_harvest_amount_in_cvxcrv(vault)
@@ -71,7 +71,7 @@ def test_withdraw_all(alice, owner, vault):
 def test_withdraw_address_zero(alice, owner, vault):
     chain.snapshot()
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
     with brownie.reverts("Receiver!"):
         vault.withdrawAll(ADDRESS_ZERO, {"from": alice})
     with brownie.reverts("Receiver!"):
