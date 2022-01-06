@@ -130,7 +130,11 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @param user - address whose claimable amount to query
     /// @return amount - claimable amount
     /// @dev Does not account for penalties and fees
-    function claimable(address user) external view returns (uint256 amount) {
+    function balanceOfUnderlying(address user)
+        external
+        view
+        returns (uint256 amount)
+    {
         require(totalSupply() > 0, "No users");
         return ((balanceOf(user) * totalHoldings()) / totalSupply());
     }

@@ -52,7 +52,7 @@ def test_third_party_claimed_single_workflow(
         params + single_claim_param, 0, False, False, {"from": owner}
     )
 
-    distributor_balance = vault.claimable(merkle_distributor_v2)
+    distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
     )
@@ -103,7 +103,7 @@ def test_third_party_claimed_all_workflow(
 
     tx = union_contract.distribute(params, 0, False, False, {"from": owner})
 
-    distributor_balance = vault.claimable(merkle_distributor_v2)
+    distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
     )

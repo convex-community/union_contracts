@@ -32,7 +32,7 @@ def test_view_rewards(alice, vault):
     chain.undo()
 
 
-def test_stake_balance(alice, vault):
+def test_total_holdings(alice, vault):
     vault.deposit(1e20, {"from": alice})
     assert vault.totalHoldings() == 1e20
     assert vault.totalHoldings() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
@@ -105,19 +105,19 @@ def test_set_withdraw_penalty_non_owner(alice, vault):
         vault.setWithdrawalPenalty(123, {"from": alice})
 
 
-def test_claimable(alice, bob, vault):
+def test_balance_of_underlying(alice, bob, vault):
     vault.depositAll({"from": alice})
     vault.depositAll({"from": bob})
     assert (
-        vault.claimable(alice)
+        vault.balanceOfUnderlying(alice)
         == vault.balanceOf(alice) * vault.totalHoldings() / vault.totalSupply()
     )
     chain.undo(2)
 
 
-def test_claimable_no_users(alice, vault):
+def test_balance_of_underlying_no_users(alice, vault):
     with brownie.reverts("No users"):
-        vault.claimable(alice)
+        vault.balanceOfUnderlying(alice)
 
 
 def test_underlying(vault):

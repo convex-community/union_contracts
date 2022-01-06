@@ -70,9 +70,9 @@ class StateMachine:
         non_withdrawers = [
             account for account in self.accounts if account.address != address
         ]
-        claimable_non_withdrawer = self.vault.claimable(non_withdrawers[0])
+        claimable_non_withdrawer = self.vault.balanceOfUnderlying(non_withdrawers[0])
         original_balance = self.cvxcrv.balanceOf(address)
-        claimable = self.vault.claimable(address)
+        claimable = self.vault.balanceOfUnderlying(address)
         to_withdraw = shares // 4
         expected_gross_withdrawn = claimable // 4
         if to_withdraw == 0:
@@ -81,7 +81,10 @@ class StateMachine:
         penalty_amount = expected_gross_withdrawn * self.withdrawalPenalty // 10000
         claimed = self.cvxcrv.balanceOf(address) - original_balance
         assert approx(claimed, expected_gross_withdrawn - penalty_amount, 1e-3)
-        assert self.vault.claimable(non_withdrawers[0]) > claimable_non_withdrawer
+        assert (
+            self.vault.balanceOfUnderlying(non_withdrawers[0])
+            > claimable_non_withdrawer
+        )
 
     def teardown_final(self):
         for i, account in enumerate(self.accounts):

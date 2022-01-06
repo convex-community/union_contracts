@@ -67,13 +67,15 @@ def test_update_root_unfrozen(owner, merkle_distributor_v2):
 
 
 def test_stake(owner, merkle_distributor_v2, vault):
-    initial_claimable = vault.claimable(merkle_distributor_v2)
+    initial_claimable = vault.balanceOfUnderlying(merkle_distributor_v2)
     amount = 1e10
     interface.IERC20(CVXCRV).transfer(
         merkle_distributor_v2, amount, {"from": CVXCRV_REWARDS}
     )
     merkle_distributor_v2.stake({"from": owner})
-    assert vault.claimable(merkle_distributor_v2) == initial_claimable + amount
+    assert (
+        vault.balanceOfUnderlying(merkle_distributor_v2) == initial_claimable + amount
+    )
 
 
 def test_stake_unauthorized(alice, merkle_distributor_v2):

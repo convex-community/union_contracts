@@ -45,7 +45,7 @@ def test_claim_and_swap_on_uniswap_v3_01_percent(
         False,
         {"from": owner},
     )
-    distributor_balance = vault.claimable(merkle_distributor_v2)
+    distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
     )
@@ -105,7 +105,7 @@ def test_claim_and_swap_on_uniswap_v3_1percent_and_sushi(
     union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
     tx = union_contract.distribute(params, router_choices, True, False, {"from": owner})
-    distributor_balance = vault.claimable(merkle_distributor_v2)
+    distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
     )

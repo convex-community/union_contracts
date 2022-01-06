@@ -40,7 +40,7 @@ def test_harvest_single_staker(alice, bob, owner, vault):
         1e-5,
     )
     assert approx(
-        vault.claimable(alice),
+        vault.balanceOfUnderlying(alice),
         alice_initial_balance + actual_harvest - platform_fees - caller_incentive,
         1e-5,
     )
@@ -86,7 +86,7 @@ def test_harvest_no_discount(alice, bob, owner, vault):
         1e-5,
     )
     assert approx(
-        vault.claimable(alice),
+        vault.balanceOfUnderlying(alice),
         alice_initial_balance + actual_harvest - platform_fees - caller_incentive,
         1e-5,
     )
@@ -128,7 +128,7 @@ def test_harvest_multiple_stakers(alice, bob, charlie, dave, erin, owner, vault)
     )
     for account in accounts:
         assert approx(
-            vault.claimable(account) - initial_balances[account.address],
+            vault.balanceOfUnderlying(account) - initial_balances[account.address],
             (actual_harvest - platform_fees - caller_incentive) // len(accounts),
             1e-5,
         )
