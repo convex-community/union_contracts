@@ -39,7 +39,7 @@ def test_claim_and_swap_no_discount(
     )
     union_contract.setApprovals({"from": owner})
     tx = union_contract.distribute(params, 0, True, True, {"from": owner})
-    distributor_balance = vault.claimable(merkle_distributor_v2)
+    distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
     )

@@ -53,7 +53,7 @@ def test_manual_claim_workflow(
     eth_amount = single_swap_tx.return_value[-1]
     owner.transfer(union_contract, eth_amount)
     tx = union_contract.distribute(params, 0, True, False, {"from": owner})
-    distributor_balance = vault.claimable(merkle_distributor_v2)
+    distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
     )

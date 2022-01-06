@@ -15,7 +15,7 @@ def test_view_rewards(alice, vault):
     original_crv_rewards = vault.outstandingCrvRewards()
     original_cvx_rewards = vault.outstandingCvxRewards()
     original_3crv_rewards = vault.outstanding3CrvRewards()
-    vault.deposit(1e20, {"from": alice})
+    vault.deposit(alice, 1e20, {"from": alice})
     chain.mine(10)
     assert vault.outstandingCrvRewards() > original_crv_rewards
     assert vault.outstandingCvxRewards() > original_cvx_rewards
@@ -32,10 +32,10 @@ def test_view_rewards(alice, vault):
     chain.undo()
 
 
-def test_stake_balance(alice, vault):
-    vault.deposit(1e20, {"from": alice})
-    assert vault.stakeBalance() == 1e20
-    assert vault.stakeBalance() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
+def test_total_holdings(alice, vault):
+    vault.deposit(alice, 1e20, {"from": alice})
+    assert vault.totalHoldings() == 1e20
+    assert vault.totalHoldings() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
         vault
     )
     chain.undo()
@@ -105,16 +105,30 @@ def test_set_withdraw_penalty_non_owner(alice, vault):
         vault.setWithdrawalPenalty(123, {"from": alice})
 
 
-def test_claimable(alice, bob, vault):
-    vault.depositAll({"from": alice})
-    vault.depositAll({"from": bob})
+def test_balance_of_underlying(alice, bob, vault):
+    vault.depositAll(alice, {"from": alice})
+    vault.depositAll(bob, {"from": bob})
     assert (
-        vault.claimable(alice)
-        == vault.balanceOf(alice) * vault.stakeBalance() / vault.totalSupply()
+        vault.balanceOfUnderlying(alice)
+        == vault.balanceOf(alice) * vault.totalHoldings() / vault.totalSupply()
     )
     chain.undo(2)
 
 
-def test_claimable_no_users(alice, vault):
+def test_balance_of_underlying_no_users(alice, vault):
     with brownie.reverts("No users"):
-        vault.claimable(alice)
+        vault.balanceOfUnderlying(alice)
+
+
+def test_underlying(vault):
+    assert vault.underlying() == CVXCRV_TOKEN
+
+
+def test_exchange_rate(alice, bob, vault):
+    chain.snapshot()
+    assert vault.exchangeRate() == int(1e18)
+    vault.depositAll(alice, {"from": alice})
+    assert vault.exchangeRate() == vault.totalHoldings() / vault.totalSupply()
+    vault.depositAll(bob, {"from": bob})
+    assert vault.exchangeRate() == vault.totalHoldings() / vault.totalSupply()
+    chain.revert()

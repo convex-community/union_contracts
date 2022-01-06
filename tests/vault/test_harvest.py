@@ -18,13 +18,13 @@ def test_harvest_single_staker(alice, bob, owner, vault):
     bob_initial_balance = cvxcrv_balance(bob)
     platform_initial_balance = cvxcrv_balance(vault.platform())
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
     chain.mine(1)
     estimated_harvest = calc_harvest_amount_in_cvxcrv(vault)
     tx = vault.harvest({"from": bob})
 
-    actual_harvest = tx.events["Harvest"]["amount"]
+    actual_harvest = tx.events["Harvest"]["_value"]
     assert approx(estimated_harvest, actual_harvest, 1e-3)
 
     platform_fees = actual_harvest * vault.platformFee() // 10000
@@ -40,7 +40,7 @@ def test_harvest_single_staker(alice, bob, owner, vault):
         1e-5,
     )
     assert approx(
-        vault.claimable(alice),
+        vault.balanceOfUnderlying(alice),
         alice_initial_balance + actual_harvest - platform_fees - caller_incentive,
         1e-5,
     )
@@ -64,13 +64,13 @@ def test_harvest_no_discount(alice, bob, owner, vault):
     bob_initial_balance = cvxcrv_balance(bob)
     platform_initial_balance = cvxcrv_balance(vault.platform())
     vault.setApprovals({"from": owner})
-    vault.depositAll({"from": alice})
+    vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
     chain.mine(1)
     estimated_harvest = calc_harvest_amount_in_cvxcrv(vault)
     tx = vault.harvest({"from": bob})
 
-    actual_harvest = tx.events["Harvest"]["amount"]
+    actual_harvest = tx.events["Harvest"]["_value"]
     assert approx(estimated_harvest, actual_harvest, 1e-3)
 
     platform_fees = actual_harvest * vault.platformFee() // 10000
@@ -86,7 +86,7 @@ def test_harvest_no_discount(alice, bob, owner, vault):
         1e-5,
     )
     assert approx(
-        vault.claimable(alice),
+        vault.balanceOfUnderlying(alice),
         alice_initial_balance + actual_harvest - platform_fees - caller_incentive,
         1e-5,
     )
@@ -101,17 +101,17 @@ def test_harvest_multiple_stakers(alice, bob, charlie, dave, erin, owner, vault)
 
     for account in accounts:
         initial_balances[account.address] = cvxcrv_balance(account)
-        vault.depositAll({"from": account})
+        vault.depositAll(account, {"from": account})
 
     platform_initial_balance = cvxcrv_balance(vault.platform())
-    initial_vault_balance = vault.stakeBalance()
+    initial_vault_balance = vault.totalHoldings()
 
     chain.sleep(100000)
     chain.mine(1)
     estimated_harvest = calc_harvest_amount_in_cvxcrv(vault)
     tx = vault.harvest({"from": bob})
 
-    actual_harvest = tx.events["Harvest"]["amount"]
+    actual_harvest = tx.events["Harvest"]["_value"]
     assert approx(estimated_harvest, actual_harvest, 1e-3)
 
     platform_fees = actual_harvest * vault.platformFee() // 10000
@@ -122,13 +122,13 @@ def test_harvest_multiple_stakers(alice, bob, charlie, dave, erin, owner, vault)
         cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-5
     )
     assert approx(
-        vault.stakeBalance(),
+        vault.totalHoldings(),
         initial_vault_balance + actual_harvest - platform_fees - caller_incentive,
         1e-5,
     )
     for account in accounts:
         assert approx(
-            vault.claimable(account) - initial_balances[account.address],
+            vault.balanceOfUnderlying(account) - initial_balances[account.address],
             (actual_harvest - platform_fees - caller_incentive) // len(accounts),
             1e-5,
         )

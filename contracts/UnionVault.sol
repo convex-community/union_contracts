@@ -41,9 +41,9 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     ICurvePool private tripool = ICurvePool(TRIPOOL);
     ICurveTriCrypto private tricrypto = ICurveTriCrypto(TRICRYPTO);
 
-    event Harvest(address indexed caller, uint256 amount);
-    event Stake(uint256 amount);
-    event Unstake(address indexed user, uint256 amount);
+    event Harvest(address indexed _caller, uint256 _value);
+    event Deposit(address indexed _from, address indexed _to, uint256 _value);
+    event Withdraw(address indexed _from, address indexed _to, uint256 _value);
 
     constructor()
         ERC20(
@@ -102,7 +102,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
 
     /// @notice Query the amount currently staked
     /// @return total - the total amount of tokens staked
-    function stakeBalance() public view returns (uint256 total) {
+    function totalHoldings() public view returns (uint256 total) {
         return cvxCrvStaking.balanceOf(address(this));
     }
 
@@ -130,9 +130,31 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @param user - address whose claimable amount to query
     /// @return amount - claimable amount
     /// @dev Does not account for penalties and fees
-    function claimable(address user) external view returns (uint256 amount) {
+    function balanceOfUnderlying(address user)
+        external
+        view
+        returns (uint256 amount)
+    {
         require(totalSupply() > 0, "No users");
-        return ((balanceOf(user) * stakeBalance()) / totalSupply());
+        return ((balanceOf(user) * totalHoldings()) / totalSupply());
+    }
+
+    /// @notice Returns the amount of underlying tokens an share can be redeemed for.
+    /// @return The amount of underlying tokens an share can be redeemed for.
+    function exchangeRate() public view returns (uint256) {
+        if (totalSupply() > 0) {
+            // Calculate the exchange rate by dividing the total holdings by the share supply.
+            return totalHoldings() / totalSupply();
+        }
+        // If there are no shares in circulation, return an exchange rate of 1:1.
+        else {
+            return 10**18;
+        }
+    }
+
+    /// @notice Returns the address of underlying token
+    function underlying() external view returns (address underlying) {
+        return CVXCRV_TOKEN;
     }
 
     /// @notice Claim rewards and swaps them to cvxCrv for restaking
@@ -218,16 +240,21 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @param _amount - amount of cvxCrv to stake
     function _stake(uint256 _amount) internal {
         cvxCrvStaking.stake(_amount);
-        emit Stake(_amount);
     }
 
     /// @notice Deposit user funds in the autocompounder and mints tokens
     /// representing user's share of the pool in exchange
+    /// @param _to - the address that will receive the shares
     /// @param _amount - the amount of cvxCrv to deposit
-    function deposit(uint256 _amount) public {
+    /// @return shares - the amount of shares issued
+    function deposit(address _to, uint256 _amount)
+        public
+        notToZeroAddress(_to)
+        returns (uint256 shares)
+    {
         require(_amount > 0, "Deposit too small");
 
-        uint256 _before = stakeBalance();
+        uint256 _before = totalHoldings();
         IERC20(CVXCRV_TOKEN).safeTransferFrom(
             msg.sender,
             address(this),
@@ -242,12 +269,16 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         } else {
             shares = (_amount * totalSupply()) / _before;
         }
-        _mint(msg.sender, shares);
+        _mint(_to, shares);
+        emit Deposit(msg.sender, _to, _amount);
+        return shares;
     }
 
     /// @notice Deposit all of user's cvxCRV balance
-    function depositAll() external {
-        deposit(IERC20(CVXCRV_TOKEN).balanceOf(msg.sender));
+    /// @param _to - the address that will receive the shares
+    /// @return shares - the amount of shares issued
+    function depositAll(address _to) external returns (uint256 shares) {
+        return deposit(_to, IERC20(CVXCRV_TOKEN).balanceOf(msg.sender));
     }
 
     /// @notice Unstake cvxCrv in proportion to the amount of shares sent
@@ -259,14 +290,14 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     {
         require(totalSupply() > 0);
         // Computes the amount withdrawable based on the number of shares sent
-        uint256 amount = (_shares * stakeBalance()) / totalSupply();
+        uint256 amount = (_shares * totalHoldings()) / totalSupply();
         // Burn the shares before retrieving tokens
         _burn(msg.sender, _shares);
         _withdrawable = amount;
         // If user is last to withdraw, harvest before exit
         if (totalSupply() == 0) {
             harvest();
-            cvxCrvStaking.withdraw(stakeBalance(), false);
+            cvxCrvStaking.withdraw(totalHoldings(), false);
             _withdrawable = IERC20(CVXCRV_TOKEN).balanceOf(address(this));
         }
         // Otherwise compute share and unstake
@@ -283,58 +314,89 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     }
 
     /// @notice Unstake cvxCrv in proportion to the amount of shares sent
+    /// @param _to - address to send cvxCrv to
     /// @param _shares - the number of shares sent
     /// @return withdrawn - the amount of cvxCRV returned to the user
-    function withdraw(uint256 _shares) public returns (uint256 withdrawn) {
+    function withdraw(address _to, uint256 _shares)
+        public
+        notToZeroAddress(_to)
+        returns (uint256 withdrawn)
+    {
         // Withdraw requested amount of cvxCrv
         uint256 _withdrawable = _withdraw(_shares);
         // And sends back cvxCrv to user
-        IERC20(CVXCRV_TOKEN).safeTransfer(msg.sender, _withdrawable);
-        emit Unstake(msg.sender, _withdrawable);
+        IERC20(CVXCRV_TOKEN).safeTransfer(_to, _withdrawable);
+        emit Withdraw(msg.sender, _to, _withdrawable);
         return _withdrawable;
     }
 
     /// @notice Withdraw all of a users' position as cvxCRV
+    /// @param _to - address to send cvxCrv to
     /// @return withdrawn - the amount of cvxCRV returned to the user
-    function withdrawAll() external returns (uint256 withdrawn) {
-        return withdraw(balanceOf(msg.sender));
+    function withdrawAll(address _to)
+        external
+        notToZeroAddress(_to)
+        returns (uint256 withdrawn)
+    {
+        return withdraw(_to, balanceOf(msg.sender));
     }
 
     /// @notice Zap function to withdraw as another token
+    /// @param _to - address to send cvxCrv to
     /// @param _shares - the number of shares sent
     /// @param option - what to swap to
-    function withdrawAs(uint256 _shares, Option option) external {
+    function withdrawAs(
+        address _to,
+        uint256 _shares,
+        Option option
+    ) external notToZeroAddress(_to) {
         uint256 _withdrawn = _withdraw(_shares);
-        _claimAs(msg.sender, _withdrawn, option);
+        _claimAs(_to, _withdrawn, option);
     }
 
     /// @notice Zap function to withdraw all shares to another token
+    /// @param _to - address to send cvxCrv to
     /// @param option - what to swap to
-    function withdrawAllAs(Option option) external {
+    function withdrawAllAs(address _to, Option option)
+        external
+        notToZeroAddress(_to)
+    {
         uint256 _withdrawn = _withdraw(balanceOf(msg.sender));
-        _claimAs(msg.sender, _withdrawn, option);
+        _claimAs(_to, _withdrawn, option);
     }
 
     /// @notice Zap function to withdraw as another token
+    /// @param _to - address to send cvxCrv to
     /// @param _shares - the number of shares sent
     /// @param option - what to swap to
     /// @param minAmountOut - minimum desired amount of output token
     function withdrawAs(
+        address _to,
         uint256 _shares,
         Option option,
         uint256 minAmountOut
-    ) external {
+    ) external notToZeroAddress(_to) {
         uint256 _withdrawn = _withdraw(_shares);
-        _claimAs(msg.sender, _withdrawn, option, minAmountOut);
+        _claimAs(_to, _withdrawn, option, minAmountOut);
     }
 
     /// @notice Zap function to withdraw all shares to another token
+    /// @param _to - address to send cvxCrv to
     /// @param option - what to swap to
     /// @param minAmountOut - minimum desired amount of output token
-    function withdrawAllAs(Option option, uint256 minAmountOut) external {
+    function withdrawAllAs(
+        address _to,
+        Option option,
+        uint256 minAmountOut
+    ) external notToZeroAddress(_to) {
         uint256 _withdrawn = _withdraw(balanceOf(msg.sender));
-        _claimAs(msg.sender, _withdrawn, option, minAmountOut);
+        _claimAs(_to, _withdrawn, option, minAmountOut);
     }
 
     receive() external payable {}
+
+    modifier notToZeroAddress(address _to) {
+        require(_to != address(0), "Receiver!");
+        _;
+    }
 }
