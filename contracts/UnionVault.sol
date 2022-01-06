@@ -241,14 +241,8 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
                 IERC20(CVXCRV_TOKEN).safeTransfer(platform, feeAmount);
                 _stakingAmount = _stakingAmount - feeAmount;
             }
-            _stake(_stakingAmount);
+            cvxCrvStaking.stake(_stakingAmount);
         }
-    }
-
-    /// @notice Stakes a certain amount of cvxCrv
-    /// @param _amount - amount of cvxCrv to stake
-    function _stake(uint256 _amount) internal {
-        cvxCrvStaking.stake(_amount);
     }
 
     /// @notice Deposit user funds in the autocompounder and mints tokens
@@ -269,7 +263,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
             address(this),
             _amount
         );
-        _stake(_amount);
+        cvxCrvStaking.stake(_amount);
 
         // Issues shares in proportion of deposit to pool amount
         uint256 shares = 0;
