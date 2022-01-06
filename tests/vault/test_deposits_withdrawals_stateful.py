@@ -50,7 +50,7 @@ class StateMachine:
         prior_vault_balance = self.vault.totalHoldings()
         platform_initial_balance = self.cvxcrv.balanceOf(self.platform)
         tx = self.vault.harvest({"from": self.accounts[0]})
-        harvested_amount = tx.events["Harvest"]["amount"]
+        harvested_amount = tx.events["Harvest"]["_value"]
         platform_fees = harvested_amount * self.platformFee // 10000
         caller_incentive = harvested_amount * self.callIncentive // 10000
         assert self.vault.totalHoldings() >= prior_vault_balance

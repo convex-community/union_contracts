@@ -14,7 +14,9 @@ def test_unique_deposit(alice, vault, amount):
     assert cvxcrv_balance(vault) == 0
     assert cvxcrv_balance(alice) == alice_initial_balance - amount
     assert interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(vault) == amount
-    assert tx.events["Stake"]["amount"] == amount
+    assert tx.events["Deposit"]["_value"] == amount
+    assert tx.events["Deposit"]["_from"] == alice
+    assert tx.events["Deposit"]["_to"] == alice
     assert vault.balanceOf(alice) == amount
     chain.undo()
 

@@ -24,7 +24,7 @@ def test_harvest_single_staker(alice, bob, owner, vault):
     estimated_harvest = calc_harvest_amount_in_cvxcrv(vault)
     tx = vault.harvest({"from": bob})
 
-    actual_harvest = tx.events["Harvest"]["amount"]
+    actual_harvest = tx.events["Harvest"]["_value"]
     assert approx(estimated_harvest, actual_harvest, 1e-3)
 
     platform_fees = actual_harvest * vault.platformFee() // 10000
@@ -70,7 +70,7 @@ def test_harvest_no_discount(alice, bob, owner, vault):
     estimated_harvest = calc_harvest_amount_in_cvxcrv(vault)
     tx = vault.harvest({"from": bob})
 
-    actual_harvest = tx.events["Harvest"]["amount"]
+    actual_harvest = tx.events["Harvest"]["_value"]
     assert approx(estimated_harvest, actual_harvest, 1e-3)
 
     platform_fees = actual_harvest * vault.platformFee() // 10000
@@ -111,7 +111,7 @@ def test_harvest_multiple_stakers(alice, bob, charlie, dave, erin, owner, vault)
     estimated_harvest = calc_harvest_amount_in_cvxcrv(vault)
     tx = vault.harvest({"from": bob})
 
-    actual_harvest = tx.events["Harvest"]["amount"]
+    actual_harvest = tx.events["Harvest"]["_value"]
     assert approx(estimated_harvest, actual_harvest, 1e-3)
 
     platform_fees = actual_harvest * vault.platformFee() // 10000

@@ -41,9 +41,9 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     ICurvePool private tripool = ICurvePool(TRIPOOL);
     ICurveTriCrypto private tricrypto = ICurveTriCrypto(TRICRYPTO);
 
-    event Harvest(address indexed caller, uint256 amount);
-    event Stake(uint256 amount);
-    event Unstake(address indexed user, uint256 amount);
+    event Harvest(address indexed _caller, uint256 _value);
+    event Deposit(address indexed _from, address indexed _to, uint256 _value);
+    event Withdraw(address indexed _from, address indexed _to, uint256 _value);
 
     constructor()
         ERC20(
@@ -240,7 +240,6 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @param _amount - amount of cvxCrv to stake
     function _stake(uint256 _amount) internal {
         cvxCrvStaking.stake(_amount);
-        emit Stake(_amount);
     }
 
     /// @notice Deposit user funds in the autocompounder and mints tokens
@@ -271,6 +270,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
             shares = (_amount * totalSupply()) / _before;
         }
         _mint(_to, shares);
+        emit Deposit(msg.sender, _to, _amount);
         return shares;
     }
 
@@ -326,7 +326,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         uint256 _withdrawable = _withdraw(_shares);
         // And sends back cvxCrv to user
         IERC20(CVXCRV_TOKEN).safeTransfer(_to, _withdrawable);
-        emit Unstake(_to, _withdrawable);
+        emit Withdraw(msg.sender, _to, _withdrawable);
         return _withdrawable;
     }
 

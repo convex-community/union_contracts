@@ -27,8 +27,9 @@ def test_unique_withdrawal(alice, owner, vault, amount):
         half_amount + penalty_amount,
         1e-18,
     )
-    assert approx(tx.events["Unstake"]["amount"], half_amount - penalty_amount, 1e-18)
-    assert tx.events["Unstake"]["user"] == alice
+    assert approx(tx.events["Withdraw"]["_value"], half_amount - penalty_amount, 1e-18)
+    assert tx.events["Withdraw"]["_from"] == alice
+    assert tx.events["Withdraw"]["_to"] == alice
     assert approx(vault.balanceOf(alice), half_amount, 1e-18)
     chain.revert()
 
@@ -59,7 +60,7 @@ def test_withdraw_all(alice, owner, vault):
         cvxcrv_balance(alice), alice_initial_balance + harvested, 1e-3
     )  # harvest as last to claim
     assert (
-        cvxcrv_balance(alice) == alice_initial_balance + tx.events["Harvest"]["amount"]
+        cvxcrv_balance(alice) == alice_initial_balance + tx.events["Harvest"]["_value"]
     )
     assert (
         interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(vault) == 0
