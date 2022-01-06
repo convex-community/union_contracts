@@ -44,6 +44,7 @@ def test_total_holdings(alice, vault):
 def test_set_platform(alice, owner, vault):
     vault.setPlatform(alice, {"from": owner})
     assert vault.platform() == alice
+    assert tx.events["PlatformUpdated"]["_platform"] == alice
     chain.undo()
 
 
@@ -60,6 +61,7 @@ def test_set_platform_non_owner(alice, vault):
 def test_set_platform_fee(owner, vault):
     vault.setPlatformFee(1234, {"from": owner})
     assert vault.platformFee() == 1234
+    assert tx.events["PlatformFeeUpdated"]["_fee"] == 1234
     chain.undo()
 
 
@@ -76,6 +78,7 @@ def test_set_platform_fee_non_owner(alice, vault):
 def test_set_call_incentive(owner, vault):
     vault.setCallIncentive(123, {"from": owner})
     assert vault.callIncentive() == 123
+    assert tx.events["CallerIncentiveUpdated"]["_incentive"] == 123
     chain.undo()
 
 
@@ -92,6 +95,7 @@ def test_set_call_incentive_non_owner(alice, vault):
 def test_set_withdraw_penalty(owner, vault):
     vault.setWithdrawalPenalty(123, {"from": owner})
     assert vault.withdrawalPenalty() == 123
+    assert tx.events["WithdrawalPenaltyUpdated"]["_penalty"] == 123
     chain.undo()
 
 

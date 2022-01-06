@@ -45,6 +45,11 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     event Deposit(address indexed _from, address indexed _to, uint256 _value);
     event Withdraw(address indexed _from, address indexed _to, uint256 _value);
 
+    event WithdrawalPenaltyUpdated(uint256 _penalty);
+    event CallerIncentiveUpdated(uint256 _incentive);
+    event PlatformFeeUpdated(uint256 _fee);
+    event PlatformUpdated(address _platform);
+
     constructor()
         ERC20(
             string(abi.encodePacked("Unionized cvxCRV")),
@@ -77,6 +82,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     function setWithdrawalPenalty(uint256 _penalty) external onlyOwner {
         require(_penalty <= MAX_WITHDRAWAL_PENALTY);
         withdrawalPenalty = _penalty;
+        emit WithdrawalPenaltyUpdated(_penalty);
     }
 
     /// @notice Updates the caller incentive for harvests
@@ -84,6 +90,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     function setCallIncentive(uint256 _incentive) external onlyOwner {
         require(_incentive <= MAX_CALL_INCENTIVE);
         callIncentive = _incentive;
+        emit CallerIncentiveUpdated(_incentive);
     }
 
     /// @notice Updates the part of yield redirected to the platform
@@ -91,6 +98,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     function setPlatformFee(uint256 _fee) external onlyOwner {
         require(_fee <= MAX_PLATFORM_FEE);
         platformFee = _fee;
+        emit PlatformFeeUpdated(_fee);
     }
 
     /// @notice Updates the address to which platform fees are paid out
@@ -98,6 +106,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     function setPlatform(address _platform) external onlyOwner {
         require(_platform != address(0));
         platform = _platform;
+        emit PlatformUpdated(_platform);
     }
 
     /// @notice Query the amount currently staked
