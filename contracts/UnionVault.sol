@@ -48,7 +48,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     event WithdrawalPenaltyUpdated(uint256 _penalty);
     event CallerIncentiveUpdated(uint256 _incentive);
     event PlatformFeeUpdated(uint256 _fee);
-    event PlatformUpdated(address _platform);
+    event PlatformUpdated(address indexed _platform);
 
     constructor()
         ERC20(
