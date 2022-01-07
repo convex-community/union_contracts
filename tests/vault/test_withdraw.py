@@ -73,8 +73,8 @@ def test_withdraw_address_zero(alice, owner, vault):
     chain.snapshot()
     vault.setApprovals({"from": owner})
     vault.depositAll(alice, {"from": alice})
-    with brownie.reverts("Receiver!"):
+    with brownie.reverts("Invalid address!"):
         vault.withdrawAll(ADDRESS_ZERO, {"from": alice})
-    with brownie.reverts("Receiver!"):
+    with brownie.reverts("Invalid address!"):
         vault.withdraw(ADDRESS_ZERO, 10, {"from": alice})
     chain.revert()

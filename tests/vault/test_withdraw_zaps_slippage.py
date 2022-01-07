@@ -39,7 +39,7 @@ def test_withdraw_as_slippage(alice, bob, charlie, dave, erin, owner, vault):
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
-    with brownie.reverts("Receiver!"):
+    with brownie.reverts("Invalid address!"):
         vault.withdrawAs(
             ADDRESS_ZERO, balances[0] // 2, 3, cvx_amount * 1.25, {"from": alice}
         )

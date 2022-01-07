@@ -155,7 +155,7 @@ def test_withdraw_as_to_address_zero(alice, owner, vault):
     vault.setApprovals({"from": owner})
     vault.depositAll(alice, {"from": alice})
 
-    with brownie.reverts("Receiver!"):
+    with brownie.reverts("Invalid address!"):
         vault.withdrawAs(ADDRESS_ZERO, 1, 3, {"from": alice})
     chain.revert()
 
@@ -165,7 +165,7 @@ def test_withdraw_all_as_to_address_zero(alice, owner, vault):
     vault.setApprovals({"from": owner})
     vault.depositAll(alice, {"from": alice})
 
-    with brownie.reverts("Receiver!"):
+    with brownie.reverts("Invalid address!"):
         vault.withdrawAllAs(ADDRESS_ZERO, 3, {"from": alice})
     chain.revert()
 
@@ -175,7 +175,7 @@ def test_withdraw_as_to_address_zero_slippage(alice, owner, vault):
     vault.setApprovals({"from": owner})
     vault.depositAll(alice, {"from": alice})
 
-    with brownie.reverts("Receiver!"):
+    with brownie.reverts("Invalid address!"):
         vault.withdrawAs(ADDRESS_ZERO, 1, 3, 0, {"from": alice})
     chain.revert()
 
@@ -185,6 +185,6 @@ def test_withdraw_all_as_to_address_zero_slippage(alice, owner, vault):
     vault.setApprovals({"from": owner})
     vault.depositAll(alice, {"from": alice})
 
-    with brownie.reverts("Receiver!"):
+    with brownie.reverts("Invalid address!"):
         vault.withdrawAllAs(ADDRESS_ZERO, 3, 0, {"from": alice})
     chain.revert()

@@ -5,6 +5,7 @@ from ...utils.constants import (
     CRV,
     CVXCRV_REWARDS,
     CURVE_CVXCRV_CRV_POOL,
+    ADDRESS_ZERO
 )
 from brownie import interface, chain
 
@@ -126,4 +127,29 @@ def test_update_depositor(owner, alice, merkle_distributor_v2):
 
 def test_update_depositor_not_owner(owner, alice, merkle_distributor_v2):
     with brownie.reverts("Admin only"):
-        merkle_distributor_v2.updateAdmin(alice, {"from": alice})
+        merkle_distributor_v2.updateDepositor(alice, {"from": alice})
+
+
+def test_update_depositor_address_zero(owner, merkle_distributor_v2):
+    with brownie.reverts("Invalid address!"):
+        merkle_distributor_v2.updateDepositor(ADDRESS_ZERO, {"from": owner})
+
+
+def test_update_vault(owner, alice, merkle_distributor_v2):
+    previous_vault = merkle_distributor_v2.vault()
+    tx = merkle_distributor_v2.updateVault(alice, {"from": owner})
+    assert merkle_distributor_v2.vault() == alice
+    assert len(tx.events) == 1
+    assert tx.events["VaultUpdated"]["oldVault"] == previous_vault
+    assert tx.events["VaultUpdated"]["newVault"] == alice
+    chain.undo()
+
+
+def test_update_vault_not_owner(owner, alice, merkle_distributor_v2):
+    with brownie.reverts("Admin only"):
+        merkle_distributor_v2.updateVault(alice, {"from": alice})
+
+
+def test_update_vault_address_zero(owner, merkle_distributor_v2):
+    with brownie.reverts("Invalid address!"):
+        merkle_distributor_v2.updateVault(ADDRESS_ZERO, {"from": owner})

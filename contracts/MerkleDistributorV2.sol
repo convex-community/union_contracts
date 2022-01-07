@@ -38,6 +38,8 @@ contract MerkleDistributorV2 is ClaimZaps {
         address indexed oldDepositor,
         address indexed newDepositor
     );
+    // This event is triggered whenever the vault contract is updated.
+    event VaultUpdated(address indexed oldVault, address indexed newVault);
 
     constructor(address _vault, address _depositor) {
         require(_vault != address(0));
@@ -96,6 +98,18 @@ contract MerkleDistributorV2 is ClaimZaps {
         address oldDepositor = depositor;
         depositor = newDepositor;
         emit DepositorUpdated(oldDepositor, newDepositor);
+    }
+
+    /// @notice Changes the Vault where funds are staked
+    /// @param newVault - address of the new vault contract
+    function updateVault(address newVault)
+        external
+        onlyAdmin
+        notToZeroAddress(newVault)
+    {
+        address oldVault = vault;
+        vault = newVault;
+        emit VaultUpdated(oldVault, newVault);
     }
 
     /// @notice Internal function to handle users' claims
