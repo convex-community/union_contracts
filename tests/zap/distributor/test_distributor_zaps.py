@@ -29,10 +29,11 @@ def test_distrib_zaps(alice, bob, charlie, dave, erin, owner, merkle_distributor
 
     # test claim as cvxCrv
     proofs = tree.get_proof(alice.address)
+    alice_initial_balance = cvxcrv.balanceOf(alice)
     tx = merkle_distributor.claim(
         proofs["claim"]["index"], alice.address, CLAIM_AMOUNT, proofs["proofs"], 0
     )
-    assert cvxcrv.balanceOf(alice) == CLAIM_AMOUNT
+    assert cvxcrv.balanceOf(alice) - alice_initial_balance == CLAIM_AMOUNT
 
     # test claim as Crv
     proofs = tree.get_proof(bob.address)
@@ -71,6 +72,7 @@ def test_distrib_zaps(alice, bob, charlie, dave, erin, owner, merkle_distributor
 
     # test claim and stake
     proofs = tree.get_proof(erin.address)
+    erin_initial_balance = cvxcrv.balanceOf(erin)
     tx = merkle_distributor.claim(
         proofs["claim"]["index"], erin.address, CLAIM_AMOUNT, proofs["proofs"], 4
     )
@@ -78,7 +80,7 @@ def test_distrib_zaps(alice, bob, charlie, dave, erin, owner, merkle_distributor
         interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(erin.address) == CLAIM_AMOUNT
     )
     interface.IBasicRewards(CVXCRV_REWARDS).withdrawAll(False, {"from": erin})
-    assert cvxcrv.balanceOf(erin) == CLAIM_AMOUNT
+    assert cvxcrv.balanceOf(erin) - erin_initial_balance == CLAIM_AMOUNT
     chain.revert()
 
 

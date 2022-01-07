@@ -13,7 +13,7 @@ from ..utils.constants import (
     CVX,
     ADDRESS_ZERO,
 )
-from ..utils import approx, cvxcrv_balance, calc_harvest_amount_in_cvxcrv
+from ..utils import approx, cvxcrv_balance
 
 
 def test_withdraw_as(alice, bob, charlie, dave, erin, owner, vault):
@@ -34,12 +34,12 @@ def test_withdraw_as(alice, bob, charlie, dave, erin, owner, vault):
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
     # claim as CVX
-    vault.withdrawAs(alice, balances[0] // 2, 3, {"from": alice})
     crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         1, 0, balances[0] // 2 * (1 - withdrawal_penalty)
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
+    vault.withdrawAs(alice, balances[0] // 2, 3, {"from": alice})
     assert approx(cvx.balanceOf(alice), cvx_amount, 0.01)
 
     # claim as cvxCRV
@@ -61,11 +61,11 @@ def test_withdraw_as(alice, bob, charlie, dave, erin, owner, vault):
     # claim as Eth
     dave_original_balance = dave.balance()
     dave_claimable = vault.balanceOfUnderlying(dave)
-    vault.withdrawAs(dave, balances[3] // 2, 1, {"from": dave})
     crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         1, 0, dave_claimable // 2 * (1 - withdrawal_penalty)
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
+    vault.withdrawAs(dave, balances[3] // 2, 1, {"from": dave})
     assert approx(dave.balance() - dave_original_balance, eth_amount, 0.01)
 
     # claim and stake
@@ -102,12 +102,12 @@ def test_withdraw_all_as(alice, bob, charlie, dave, erin, owner, vault):
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
     # claim as CVX
-    vault.withdrawAllAs(alice, 3, {"from": alice})
     crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         1, 0, balances[0] * (1 - withdrawal_penalty)
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
+    vault.withdrawAllAs(alice, 3, {"from": alice})
     assert approx(cvx.balanceOf(alice), cvx_amount, 0.01)
 
     # claim as cvxCRV
@@ -118,20 +118,20 @@ def test_withdraw_all_as(alice, bob, charlie, dave, erin, owner, vault):
     # claim as CRV
     charlie_initial_balance = crv.balanceOf(charlie)
     charlie_claimable = vault.balanceOfUnderlying(charlie)
-    vault.withdrawAllAs(charlie, 2, {"from": charlie})
     crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         1, 0, charlie_claimable * (1 - withdrawal_penalty)
     )
+    vault.withdrawAllAs(charlie, 2, {"from": charlie})
     assert approx(crv.balanceOf(charlie), charlie_initial_balance + crv_amount, 0.01)
 
     # claim as Eth
     dave_original_balance = dave.balance()
     dave_claimable = vault.balanceOfUnderlying(dave)
-    vault.withdrawAllAs(dave, 1, {"from": dave})
     crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         1, 0, dave_claimable * (1 - withdrawal_penalty)
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
+    vault.withdrawAllAs(dave, 1, {"from": dave})
     assert approx(dave.balance() - dave_original_balance, eth_amount, 0.01)
 
     # claim and stake

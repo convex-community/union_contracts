@@ -122,6 +122,7 @@ def test_set_approvals_non_owner(alice, union_contract):
 
 
 def test_set_forwarding(owner, union_contract):
+    chain.snapshot()
     assert (
         interface.IVotiumRegistry(VOTIUM_REGISTRY).registry(union_contract.address)[1]
         == ADDRESS_ZERO
@@ -131,7 +132,7 @@ def test_set_forwarding(owner, union_contract):
         interface.IVotiumRegistry(VOTIUM_REGISTRY).registry(union_contract.address)[1]
         == VOTIUM_DISTRIBUTOR
     )
-    chain.undo()
+    chain.revert()
 
 
 def test_set_forwarding_non_owner(alice, union_contract):
@@ -140,6 +141,7 @@ def test_set_forwarding_non_owner(alice, union_contract):
 
 
 def test_execute(owner, union_contract):
+    chain.snapshot()
     nsbt_amount = 1e12
     nsbt = interface.IERC20(NSBT)
     nsbt.transfer(
@@ -153,6 +155,7 @@ def test_execute(owner, union_contract):
     union_contract.execute(NSBT, 0, calldata, {"from": owner})
     assert nsbt.balanceOf(union_contract) == 0
     assert nsbt.balanceOf(VOTIUM_REGISTRY) - previous_balance == nsbt_amount
+    chain.revert()
 
 
 def test_execute_non_owner(alice, union_contract):
@@ -171,6 +174,8 @@ def test_stake_non_owner(alice, union_contract):
 
 
 def test_stake(owner, union_contract):
+    chain.snapshot()
+    initial_balance = interface.IERC20(CVXCRV_TOKEN).balanceOf(owner)
     amount = 1234567890
     interface.IERC20(CVXCRV_TOKEN).transfer(
         union_contract, amount, {"from": CURVE_CVXCRV_CRV_POOL}
@@ -178,5 +183,7 @@ def test_stake(owner, union_contract):
     union_contract.stakeAccumulated({"from": owner})
     assert interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(owner) == amount - 1
     interface.IBasicRewards(CVXCRV_REWARDS).withdrawAll(False, {"from": owner})
-    assert interface.IERC20(CVXCRV_TOKEN).balanceOf(owner) == amount - 1
-    chain.undo(2)
+    assert (
+        interface.IERC20(CVXCRV_TOKEN).balanceOf(owner) - initial_balance == amount - 1
+    )
+    chain.revert()

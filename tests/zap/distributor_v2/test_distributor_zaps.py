@@ -56,6 +56,7 @@ def test_distrib_zaps(
 
     # test claim as Cvx
     proofs = tree.get_proof(charlie.address)
+    charlie_initial_balance = cvx.balanceOf(charlie)
     charlie_claimable = (CLAIM_AMOUNT * vault.totalHoldings()) // vault.totalSupply()
     crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         1, 0, charlie_claimable * (1 - withdrawal_penalty)
@@ -65,7 +66,7 @@ def test_distrib_zaps(
     tx = merkle_distributor_v2.claimAs(
         proofs["claim"]["index"], charlie.address, CLAIM_AMOUNT, proofs["proofs"], 3
     )
-    assert approx(cvx.balanceOf(charlie), cvx_amount, 0.01)
+    assert approx(cvx.balanceOf(charlie) - charlie_initial_balance, cvx_amount, 0.01)
 
     # test claim as Eth
     dave_claimable = (CLAIM_AMOUNT * vault.totalHoldings()) // vault.totalSupply()
@@ -82,6 +83,7 @@ def test_distrib_zaps(
 
     # test claim and stake
     proofs = tree.get_proof(erin.address)
+    erin_initial_balance = cvxcrv.balanceOf(erin)
     erin_claimable = (CLAIM_AMOUNT * vault.totalHoldings()) // vault.totalSupply()
     tx = merkle_distributor_v2.claimAs(
         proofs["claim"]["index"], erin.address, CLAIM_AMOUNT, proofs["proofs"], 4
@@ -93,7 +95,9 @@ def test_distrib_zaps(
     )
     interface.IBasicRewards(CVXCRV_REWARDS).withdrawAll(False, {"from": erin})
     assert approx(
-        cvxcrv.balanceOf(erin), erin_claimable * (1 - withdrawal_penalty), 1e-5
+        cvxcrv.balanceOf(erin) - erin_initial_balance,
+        erin_claimable * (1 - withdrawal_penalty),
+        1e-5,
     )
     chain.revert()
 
