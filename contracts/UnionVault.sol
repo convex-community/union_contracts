@@ -299,7 +299,6 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         uint256 amount = (_shares * totalHoldings()) / totalSupply();
         // Burn the shares before retrieving tokens
         _burn(msg.sender, _shares);
-        _withdrawable = amount;
         // If user is last to withdraw, harvest before exit
         if (totalSupply() == 0) {
             harvest();
@@ -308,6 +307,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         }
         // Otherwise compute share and unstake
         else {
+            _withdrawable = amount;
             // Substract a small withdrawal fee to prevent users "timing"
             // the harvests. The fee stays staked and is therefore
             // redistributed to all remaining participants.
