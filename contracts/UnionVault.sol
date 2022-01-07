@@ -165,7 +165,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     }
 
     /// @notice Returns the address of the underlying token
-    function underlying() external view returns (address underlying) {
+    function underlying() external view returns (address) {
         return CVXCRV_TOKEN;
     }
 
@@ -252,11 +252,11 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// representing user's share of the pool in exchange
     /// @param _to - the address that will receive the shares
     /// @param _amount - the amount of cvxCrv to deposit
-    /// @return shares - the amount of shares issued
+    /// @return _shares - the amount of shares issued
     function deposit(address _to, uint256 _amount)
         public
         notToZeroAddress(_to)
-        returns (uint256 shares)
+        returns (uint256 _shares)
     {
         require(_amount > 0, "Deposit too small");
 
@@ -282,8 +282,8 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
 
     /// @notice Deposit all of user's cvxCRV balance
     /// @param _to - the address that will receive the shares
-    /// @return shares - the amount of shares issued
-    function depositAll(address _to) external returns (uint256 shares) {
+    /// @return _shares - the amount of shares issued
+    function depositAll(address _to) external returns (uint256 _shares) {
         return deposit(_to, IERC20(CVXCRV_TOKEN).balanceOf(msg.sender));
     }
 
