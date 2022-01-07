@@ -7,7 +7,6 @@ from ..utils.constants import (
     CRV,
     CURVE_CVXCRV_CRV_POOL,
     CURVE_VOTING_ESCROW,
-    CVXCRV_DEPOSIT,
 )
 from ..utils import approx, cvxcrv_balance, calc_harvest_amount_in_cvxcrv
 

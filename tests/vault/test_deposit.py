@@ -8,6 +8,7 @@ from ..utils import cvxcrv_balance
 
 @pytest.mark.parametrize("amount", [1e20])
 def test_unique_deposit(alice, vault, amount):
+    chain.snapshot()
     alice_initial_balance = cvxcrv_balance(alice)
     tx = vault.deposit(alice, amount, {"from": alice})
 
@@ -18,7 +19,7 @@ def test_unique_deposit(alice, vault, amount):
     assert tx.events["Deposit"]["_from"] == alice
     assert tx.events["Deposit"]["_to"] == alice
     assert vault.balanceOf(alice) == amount
-    chain.undo()
+    chain.revert()
 
 
 def test_deposit_null_value(alice, vault):
@@ -28,6 +29,7 @@ def test_deposit_null_value(alice, vault):
 
 @pytest.mark.parametrize("amount", [100, 1e20])
 def test_multiple_deposit(accounts, vault, amount):
+    chain.snapshot()
     for i, account in enumerate(accounts[:10]):
         account_initial_balance = cvxcrv_balance(account)
         vault.deposit(account, amount, {"from": account})
@@ -38,10 +40,11 @@ def test_multiple_deposit(accounts, vault, amount):
         )
         assert vault.balanceOf(account) == amount
 
-    chain.undo(10)
+    chain.revert()
 
 
 def test_deposit_all(alice, vault):
+    chain.snapshot()
     alice_initial_balance = cvxcrv_balance(alice)
     vault.depositAll(alice, {"from": alice})
 
@@ -51,4 +54,4 @@ def test_deposit_all(alice, vault):
         == alice_initial_balance
     )
     assert vault.balanceOf(alice) == alice_initial_balance
-    chain.undo()
+    chain.revert()

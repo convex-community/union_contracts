@@ -45,6 +45,11 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     event Deposit(address indexed _from, address indexed _to, uint256 _value);
     event Withdraw(address indexed _from, address indexed _to, uint256 _value);
 
+    event WithdrawalPenaltyUpdated(uint256 _penalty);
+    event CallerIncentiveUpdated(uint256 _incentive);
+    event PlatformFeeUpdated(uint256 _fee);
+    event PlatformUpdated(address indexed _platform);
+
     constructor()
         ERC20(
             string(abi.encodePacked("Unionized cvxCRV")),
@@ -77,6 +82,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     function setWithdrawalPenalty(uint256 _penalty) external onlyOwner {
         require(_penalty <= MAX_WITHDRAWAL_PENALTY);
         withdrawalPenalty = _penalty;
+        emit WithdrawalPenaltyUpdated(_penalty);
     }
 
     /// @notice Updates the caller incentive for harvests
@@ -84,6 +90,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     function setCallIncentive(uint256 _incentive) external onlyOwner {
         require(_incentive <= MAX_CALL_INCENTIVE);
         callIncentive = _incentive;
+        emit CallerIncentiveUpdated(_incentive);
     }
 
     /// @notice Updates the part of yield redirected to the platform
@@ -91,13 +98,18 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     function setPlatformFee(uint256 _fee) external onlyOwner {
         require(_fee <= MAX_PLATFORM_FEE);
         platformFee = _fee;
+        emit PlatformFeeUpdated(_fee);
     }
 
     /// @notice Updates the address to which platform fees are paid out
     /// @param _platform - the new platform wallet address
-    function setPlatform(address _platform) external onlyOwner {
-        require(_platform != address(0));
+    function setPlatform(address _platform)
+        external
+        onlyOwner
+        notToZeroAddress(_platform)
+    {
         platform = _platform;
+        emit PlatformUpdated(_platform);
     }
 
     /// @notice Query the amount currently staked
@@ -139,8 +151,8 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         return ((balanceOf(user) * totalHoldings()) / totalSupply());
     }
 
-    /// @notice Returns the amount of underlying tokens an share can be redeemed for.
-    /// @return The amount of underlying tokens an share can be redeemed for.
+    /// @notice Returns the amount of underlying tokens a share can be redeemed for.
+    /// @return The amount of underlying tokens a share can be redeemed for.
     function exchangeRate() public view returns (uint256) {
         if (totalSupply() > 0) {
             // Calculate the exchange rate by dividing the total holdings by the share supply.
@@ -152,8 +164,8 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         }
     }
 
-    /// @notice Returns the address of underlying token
-    function underlying() external view returns (address underlying) {
+    /// @notice Returns the address of the underlying token
+    function underlying() external view returns (address) {
         return CVXCRV_TOKEN;
     }
 
@@ -232,25 +244,19 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
                 IERC20(CVXCRV_TOKEN).safeTransfer(platform, feeAmount);
                 _stakingAmount = _stakingAmount - feeAmount;
             }
-            _stake(_stakingAmount);
+            cvxCrvStaking.stake(_stakingAmount);
         }
-    }
-
-    /// @notice Stakes a certain amount of cvxCrv
-    /// @param _amount - amount of cvxCrv to stake
-    function _stake(uint256 _amount) internal {
-        cvxCrvStaking.stake(_amount);
     }
 
     /// @notice Deposit user funds in the autocompounder and mints tokens
     /// representing user's share of the pool in exchange
     /// @param _to - the address that will receive the shares
     /// @param _amount - the amount of cvxCrv to deposit
-    /// @return shares - the amount of shares issued
+    /// @return _shares - the amount of shares issued
     function deposit(address _to, uint256 _amount)
         public
         notToZeroAddress(_to)
-        returns (uint256 shares)
+        returns (uint256 _shares)
     {
         require(_amount > 0, "Deposit too small");
 
@@ -260,7 +266,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
             address(this),
             _amount
         );
-        _stake(_amount);
+        cvxCrvStaking.stake(_amount);
 
         // Issues shares in proportion of deposit to pool amount
         uint256 shares = 0;
@@ -276,8 +282,8 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
 
     /// @notice Deposit all of user's cvxCRV balance
     /// @param _to - the address that will receive the shares
-    /// @return shares - the amount of shares issued
-    function depositAll(address _to) external returns (uint256 shares) {
+    /// @return _shares - the amount of shares issued
+    function depositAll(address _to) external returns (uint256 _shares) {
         return deposit(_to, IERC20(CVXCRV_TOKEN).balanceOf(msg.sender));
     }
 
@@ -394,9 +400,4 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     }
 
     receive() external payable {}
-
-    modifier notToZeroAddress(address _to) {
-        require(_to != address(0), "Receiver!");
-        _;
-    }
 }

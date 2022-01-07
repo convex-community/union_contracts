@@ -12,6 +12,7 @@ from ..utils.constants import (
 
 
 def test_view_rewards(alice, vault):
+    chain.snapshot()
     original_crv_rewards = vault.outstandingCrvRewards()
     original_cvx_rewards = vault.outstandingCvxRewards()
     original_3crv_rewards = vault.outstanding3CrvRewards()
@@ -29,22 +30,25 @@ def test_view_rewards(alice, vault):
     assert vault.outstanding3CrvRewards() == interface.IVirtualBalanceRewardPool(
         THREE_CRV_REWARDS
     ).earned(vault)
-    chain.undo()
+    chain.revert()
 
 
 def test_total_holdings(alice, vault):
+    chain.snapshot()
     vault.deposit(alice, 1e20, {"from": alice})
     assert vault.totalHoldings() == 1e20
     assert vault.totalHoldings() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
         vault
     )
-    chain.undo()
+    chain.revert()
 
 
 def test_set_platform(alice, owner, vault):
-    vault.setPlatform(alice, {"from": owner})
+    chain.snapshot()
+    tx = vault.setPlatform(alice, {"from": owner})
     assert vault.platform() == alice
-    chain.undo()
+    assert tx.events["PlatformUpdated"]["_platform"] == alice
+    chain.revert()
 
 
 def test_set_platform_address_zero(owner, vault):
@@ -58,9 +62,11 @@ def test_set_platform_non_owner(alice, vault):
 
 
 def test_set_platform_fee(owner, vault):
-    vault.setPlatformFee(1234, {"from": owner})
+    chain.snapshot()
+    tx = vault.setPlatformFee(1234, {"from": owner})
     assert vault.platformFee() == 1234
-    chain.undo()
+    assert tx.events["PlatformFeeUpdated"]["_fee"] == 1234
+    chain.revert()
 
 
 def test_set_platform_fee_too_high(owner, vault):
@@ -74,9 +80,11 @@ def test_set_platform_fee_non_owner(alice, vault):
 
 
 def test_set_call_incentive(owner, vault):
-    vault.setCallIncentive(123, {"from": owner})
+    chain.snapshot()
+    tx = vault.setCallIncentive(123, {"from": owner})
     assert vault.callIncentive() == 123
-    chain.undo()
+    assert tx.events["CallerIncentiveUpdated"]["_incentive"] == 123
+    chain.revert()
 
 
 def test_set_call_incentive_too_high(owner, vault):
@@ -90,9 +98,11 @@ def test_set_call_incentive_non_owner(alice, vault):
 
 
 def test_set_withdraw_penalty(owner, vault):
-    vault.setWithdrawalPenalty(123, {"from": owner})
+    chain.snapshot()
+    tx = vault.setWithdrawalPenalty(123, {"from": owner})
     assert vault.withdrawalPenalty() == 123
-    chain.undo()
+    assert tx.events["WithdrawalPenaltyUpdated"]["_penalty"] == 123
+    chain.revert()
 
 
 def test_set_withdraw_penalty_too_high(owner, vault):
@@ -106,22 +116,19 @@ def test_set_withdraw_penalty_non_owner(alice, vault):
 
 
 def test_balance_of_underlying(alice, bob, vault):
+    chain.snapshot()
     vault.depositAll(alice, {"from": alice})
     vault.depositAll(bob, {"from": bob})
     assert (
         vault.balanceOfUnderlying(alice)
         == vault.balanceOf(alice) * vault.totalHoldings() / vault.totalSupply()
     )
-    chain.undo(2)
+    chain.revert()
 
 
 def test_balance_of_underlying_no_users(alice, vault):
     with brownie.reverts("No users"):
         vault.balanceOfUnderlying(alice)
-
-
-def test_underlying(vault):
-    assert vault.underlying() == CVXCRV_TOKEN
 
 
 def test_exchange_rate(alice, bob, vault):
@@ -132,3 +139,7 @@ def test_exchange_rate(alice, bob, vault):
     vault.depositAll(bob, {"from": bob})
     assert vault.exchangeRate() == vault.totalHoldings() / vault.totalSupply()
     chain.revert()
+
+
+def test_underlying(vault):
+    assert vault.underlying() == CVXCRV_TOKEN

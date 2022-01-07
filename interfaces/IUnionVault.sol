@@ -37,11 +37,11 @@ interface IUnionVault {
         uint256 minAmountOut
     ) external;
 
-    function depositAll(address _to) external returns (uint256 shares);
+    function depositAll(address _to) external returns (uint256 _shares);
 
     function deposit(address _to, uint256 _amount)
         external
-        returns (uint256 shares);
+        returns (uint256 _shares);
 
     function harvest() external;
 
