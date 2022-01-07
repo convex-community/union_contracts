@@ -229,7 +229,7 @@ contract UnionBase {
     }
 
     modifier notToZeroAddress(address _to) {
-        require(_to != address(0), "Receiver!");
+        require(_to != address(0), "Invalid address!");
         _;
     }
 }

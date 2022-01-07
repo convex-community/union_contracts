@@ -26,8 +26,24 @@ interface IMerkleDistributorV2 {
         uint256 index,
         address account,
         uint256 amount,
+        bytes32[] calldata merkleProof
+    ) external;
+
+    function claimAs(
+        uint256 index,
+        address account,
+        uint256 amount,
         bytes32[] calldata merkleProof,
         Option option
+    ) external;
+
+    function claimAs(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32[] calldata merkleProof,
+        Option option,
+        uint256 minAmountOut
     ) external;
 
     function freeze() external;
@@ -38,6 +54,12 @@ interface IMerkleDistributorV2 {
 
     function updateMerkleRoot(bytes32 newMerkleRoot, bool unfreeze) external;
 
+    function updateDepositor(address newDepositor) external;
+
+    function updateAdmin(address newAdmin) external;
+
+    function updateVault(address newVault) external;
+
     event Claimed(
         uint256 index,
         uint256 amount,
@@ -45,5 +67,15 @@ interface IMerkleDistributorV2 {
         uint256 indexed week,
         Option option
     );
+
+    event DepositorUpdated(
+        address indexed oldDepositor,
+        address indexed newDepositor
+    );
+
+    event AdminUpdated(address indexed oldAdmin, address indexed newAdmin);
+
+    event VaultUpdated(address indexed oldVault, address indexed newVault);
+
     event MerkleRootUpdated(bytes32 indexed merkleRoot, uint32 indexed week);
 }
