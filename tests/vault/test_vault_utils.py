@@ -33,11 +33,11 @@ def test_view_rewards(alice, vault):
     chain.revert()
 
 
-def test_total_holdings(alice, vault):
+def test_total_underlying(alice, vault):
     chain.snapshot()
     vault.deposit(alice, 1e20, {"from": alice})
-    assert vault.totalHoldings() == 1e20
-    assert vault.totalHoldings() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
+    assert vault.totalUnderlying() == 1e20
+    assert vault.totalUnderlying() == interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(
         vault
     )
     chain.revert()
@@ -121,7 +121,7 @@ def test_balance_of_underlying(alice, bob, vault):
     vault.depositAll(bob, {"from": bob})
     assert (
         vault.balanceOfUnderlying(alice)
-        == vault.balanceOf(alice) * vault.totalHoldings() / vault.totalSupply()
+        == vault.balanceOf(alice) * vault.totalUnderlying() / vault.totalSupply()
     )
     chain.revert()
 
@@ -129,16 +129,6 @@ def test_balance_of_underlying(alice, bob, vault):
 def test_balance_of_underlying_no_users(alice, vault):
     with brownie.reverts("No users"):
         vault.balanceOfUnderlying(alice)
-
-
-def test_exchange_rate(alice, bob, vault):
-    chain.snapshot()
-    assert vault.exchangeRate() == int(1e18)
-    vault.depositAll(alice, {"from": alice})
-    assert vault.exchangeRate() == vault.totalHoldings() / vault.totalSupply()
-    vault.depositAll(bob, {"from": bob})
-    assert vault.exchangeRate() == vault.totalHoldings() / vault.totalSupply()
-    chain.revert()
 
 
 def test_underlying(vault):

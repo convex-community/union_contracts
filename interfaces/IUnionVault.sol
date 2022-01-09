@@ -52,13 +52,11 @@ interface IUnionVault {
 
     function outstanding3CrvRewards() external view returns (uint256 total);
 
-    function exchangeRate() external view returns (uint256);
-
     function outstandingCvxRewards() external view returns (uint256 total);
 
     function outstandingCrvRewards() external view returns (uint256 total);
 
-    function totalHoldings() external view returns (uint256 total);
+    function totalUnderlying() external view returns (uint256 total);
 
     function underlying() external view returns (address);
 
