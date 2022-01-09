@@ -114,7 +114,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
 
     /// @notice Query the amount currently staked
     /// @return total - the total amount of tokens staked
-    function totalHoldings() public view returns (uint256 total) {
+    function totalUnderlying() public view returns (uint256 total) {
         return cvxCrvStaking.balanceOf(address(this));
     }
 
@@ -148,20 +148,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
         returns (uint256 amount)
     {
         require(totalSupply() > 0, "No users");
-        return ((balanceOf(user) * totalHoldings()) / totalSupply());
-    }
-
-    /// @notice Returns the amount of underlying tokens a share can be redeemed for.
-    /// @return The amount of underlying tokens a share can be redeemed for.
-    function exchangeRate() public view returns (uint256) {
-        if (totalSupply() > 0) {
-            // Calculate the exchange rate by dividing the total holdings by the share supply.
-            return totalHoldings() / totalSupply();
-        }
-        // If there are no shares in circulation, return an exchange rate of 1:1.
-        else {
-            return 10**18;
-        }
+        return ((balanceOf(user) * totalUnderlying()) / totalSupply());
     }
 
     /// @notice Returns the address of the underlying token
@@ -260,7 +247,7 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     {
         require(_amount > 0, "Deposit too small");
 
-        uint256 _before = totalHoldings();
+        uint256 _before = totalUnderlying();
         IERC20(CVXCRV_TOKEN).safeTransferFrom(
             msg.sender,
             address(this),
@@ -296,13 +283,13 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     {
         require(totalSupply() > 0);
         // Computes the amount withdrawable based on the number of shares sent
-        uint256 amount = (_shares * totalHoldings()) / totalSupply();
+        uint256 amount = (_shares * totalUnderlying()) / totalSupply();
         // Burn the shares before retrieving tokens
         _burn(msg.sender, _shares);
         // If user is last to withdraw, harvest before exit
         if (totalSupply() == 0) {
             harvest();
-            cvxCrvStaking.withdraw(totalHoldings(), false);
+            cvxCrvStaking.withdraw(totalUnderlying(), false);
             _withdrawable = IERC20(CVXCRV_TOKEN).balanceOf(address(this));
         }
         // Otherwise compute share and unstake

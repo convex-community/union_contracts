@@ -5,7 +5,7 @@ from ...utils.constants import (
     CRV,
     CVXCRV_REWARDS,
     CURVE_CVXCRV_CRV_POOL,
-    ADDRESS_ZERO
+    ADDRESS_ZERO,
 )
 from brownie import interface, chain
 

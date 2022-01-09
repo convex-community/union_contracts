@@ -33,10 +33,10 @@ class StateMachine:
         original_address_vault_balance = self.vault.balanceOf(address)
         if original_address_balance < value:
             return
-        prior_vault_balance = self.vault.totalHoldings()
+        prior_vault_balance = self.vault.totalUnderlying()
         prior_supply = self.vault.totalSupply()
         self.vault.deposit(address, value, {"from": address})
-        assert self.vault.totalHoldings() == prior_vault_balance + value
+        assert self.vault.totalUnderlying() == prior_vault_balance + value
         assert self.cvxcrv.balanceOf(address) == original_address_balance - value
         assert self.vault.balanceOf(address) == original_address_vault_balance + (
             (value * prior_supply) // prior_vault_balance
@@ -47,13 +47,13 @@ class StateMachine:
 
     def rule_harvest(self):
         original_address_balance = self.cvxcrv.balanceOf(self.accounts[0])
-        prior_vault_balance = self.vault.totalHoldings()
+        prior_vault_balance = self.vault.totalUnderlying()
         platform_initial_balance = self.cvxcrv.balanceOf(self.platform)
         tx = self.vault.harvest({"from": self.accounts[0]})
         harvested_amount = tx.events["Harvest"]["_value"]
         platform_fees = harvested_amount * self.platformFee // 10000
         caller_incentive = harvested_amount * self.callIncentive // 10000
-        assert self.vault.totalHoldings() >= prior_vault_balance
+        assert self.vault.totalUnderlying() >= prior_vault_balance
         assert approx(
             (self.cvxcrv.balanceOf(self.accounts[0]) - original_address_balance),
             caller_incentive,
@@ -91,7 +91,9 @@ class StateMachine:
             shares = self.vault.balanceOf(account)
             if shares == 0:
                 continue
-            claimable = shares * self.vault.totalHoldings() // self.vault.totalSupply()
+            claimable = (
+                shares * self.vault.totalUnderlying() // self.vault.totalSupply()
+            )
             fee = claimable * self.vault.withdrawalPenalty() // 10000
             prior_cvxcrv_balance = self.cvxcrv.balanceOf(account)
             self.vault.withdrawAll(account, {"from": account})
@@ -100,7 +102,7 @@ class StateMachine:
                 assert approx(withdrawn, claimable - fee, 1e-2)
 
         assert self.vault.totalSupply() == 0
-        assert self.vault.totalHoldings() == 0
+        assert self.vault.totalUnderlying() == 0
 
 
 def test_vault_deposit_withdraw(state_machine, accounts, UnionVault):
