@@ -126,13 +126,13 @@ contract UnionZap is Ownable, UnionBase {
     /// @notice Set approvals for the tokens used when swapping
     function setApprovals() external onlyOwner {
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 2**256 - 1);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
 
         IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, 0);
-        IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, 2**256 - 1);
+        IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, type(uint256).max);
 
         IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
-        IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 2**256 - 1);
+        IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, type(uint256).max);
     }
 
     /// @notice Swap a token for ETH
@@ -155,7 +155,7 @@ contract UnionZap is Ownable, UnionBase {
 
         IUniV2Router(router).swapExactTokensForETH(
             amount,
-            0,
+            1,
             _path,
             address(this),
             block.timestamp + 1
@@ -212,6 +212,7 @@ contract UnionZap is Ownable, UnionBase {
     /// @param claimBeforeSwap - whether to claim on Votium or not
     /// @param lock - whether to lock or swap crv to cvxcrv
     /// @param stake - whether to stake cvxcrv (if distributor is vault)
+    /// @param minAmountOut - min output amount of cvxCRV or CRV (if locking)
     /// @dev routerChoices is a 2-bit bitmap such that
     /// 0b00 (0) - Sushi
     /// 0b01 (1) - UniV2
@@ -225,7 +226,8 @@ contract UnionZap is Ownable, UnionBase {
         uint256 routerChoices,
         bool claimBeforeSwap,
         bool lock,
-        bool stake
+        bool stake,
+        uint256 minAmountOut
     ) internal {
         // initialize gas counting
         uint256 _startGas = gasleft();
@@ -268,14 +270,16 @@ contract UnionZap is Ownable, UnionBase {
 
         uint256 _ethBalance = address(this).balance;
 
+        // if locking, we apply minAmount to CRV - otherwise will do on cvxCRV
+        uint256 minCrvOut = lock ? minAmountOut : 0;
         // swap from ETH to CRV
-        uint256 _swappedCrv = _swapEthToCrv(_ethBalance);
+        uint256 _swappedCrv = _swapEthToCrv(_ethBalance, minCrvOut);
 
         uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
 
         // swap on Curve if there is a premium for doing so
         if (!lock) {
-            _swapCrvToCvxCrv(_crvBalance, address(this));
+            _swapCrvToCvxCrv(_crvBalance, address(this), minAmountOut);
         }
         // otherwise deposit & lock
         else {
@@ -320,7 +324,7 @@ contract UnionZap is Ownable, UnionBase {
         bool claimBeforeSwap,
         bool lock
     ) external onlyOwner {
-        _distribute(claimParams, routerChoices, claimBeforeSwap, lock, true);
+        _distribute(claimParams, routerChoices, claimBeforeSwap, lock, true, 0);
     }
 
     /// @notice External wrapper around _distribute
@@ -338,7 +342,27 @@ contract UnionZap is Ownable, UnionBase {
         bool lock,
         bool stake
     ) external onlyOwner {
-        _distribute(claimParams, routerChoices, claimBeforeSwap, lock, stake);
+        _distribute(claimParams, routerChoices, claimBeforeSwap, lock, stake, 0);
+    }
+
+    /// @notice External wrapper around _distribute with slippage protection
+    /// @param claimParams - an array containing the info necessary to claim
+    /// @param routerChoices - the router to use for the swap
+    /// @param claimBeforeSwap - whether to claim on Votium or not
+    /// @param lock - whether to lock or swap crv to cvxcrv
+    /// @param stake - whether to stake cvxcrv (if distributor is vault)
+    /// @param minAmountOut - min output amount of cvxCRV or CRV (if locking)
+    /// @dev Overloads distribute above to allow specifying a stake param and
+    /// min values for swaps to ETH
+    function distribute(
+        IMultiMerkleStash.claimParam[] calldata claimParams,
+        uint256 routerChoices,
+        bool claimBeforeSwap,
+        bool lock,
+        bool stake,
+        uint256 minAmountOut
+    ) external onlyOwner {
+        _distribute(claimParams, routerChoices, claimBeforeSwap, lock, stake, minAmountOut);
     }
 
     // @notice Stakes the accumulated cvxCrv for the owner
