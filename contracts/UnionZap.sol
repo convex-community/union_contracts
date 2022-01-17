@@ -349,6 +349,14 @@ contract UnionZap is Ownable, UnionBase {
         );
     }
 
+    // @notice retrieves part of the cvxCRV and transfers it to a wallet
+    // @param amount - the amount to claim
+    // @param to - the address to send the cvxCRV to
+    function claimAccumulated(uint256 amount, address to) external onlyOwner {
+        require(to != address(0));
+        IERC20(CVXCRV_TOKEN).safeTransfer(to, amount);
+    }
+
     receive() external payable {
         emit Received(msg.sender, msg.value);
     }

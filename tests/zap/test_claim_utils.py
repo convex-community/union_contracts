@@ -187,3 +187,25 @@ def test_stake(owner, union_contract):
         interface.IERC20(CVXCRV_TOKEN).balanceOf(owner) - initial_balance == amount - 1
     )
     chain.revert()
+
+
+def test_claim_accumulated(owner, bob, union_contract):
+    chain.snapshot()
+    bob_initial_balance = interface.IERC20(CVXCRV_TOKEN).balanceOf(bob)
+    amount = 1234567890
+    interface.IERC20(CVXCRV_TOKEN).transfer(
+        union_contract, amount, {"from": CURVE_CVXCRV_CRV_POOL}
+    )
+    union_contract.claimAccumulated(amount, bob, {"from": owner})
+    assert interface.IERC20(CVXCRV_TOKEN).balanceOf(bob) - bob_initial_balance == amount
+    chain.revert()
+
+
+def test_claim_accumulated_non_owner(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.claimAccumulated(12345, alice, {"from": alice})
+
+
+def test_claim_accumulated_to_zero_address(owner, union_contract):
+    with brownie.reverts():
+        union_contract.claimAccumulated(12345, ADDRESS_ZERO, {"from": owner})
