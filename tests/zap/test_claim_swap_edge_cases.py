@@ -38,7 +38,7 @@ def test_claim_and_swap_no_discount(
         TOKENS, union_contract, 0
     )
     union_contract.setApprovals({"from": owner})
-    tx = union_contract.distribute(params, 0, True, True, {"from": owner})
+    tx = union_contract.distribute(params, 0, True, True, True, 0, {"from": owner})
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
@@ -61,12 +61,12 @@ def test_claim_and_swap_not_owner(
     ]
     union_contract.setApprovals({"from": owner})
     with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.distribute(params, 0, True, False, {"from": alice})
+        union_contract.distribute(params, 0, True, False, True, 0, {"from": alice})
 
 
 def test_claim_and_swap_empty_claims(owner, union_contract):
     with brownie.reverts("No claims"):
-        union_contract.distribute([], 0, True, False, {"from": owner})
+        union_contract.distribute([], 0, True, False, True, 0, {"from": owner})
 
 
 def test_claim_not_owner(alice, union_contract):
