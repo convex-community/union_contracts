@@ -209,3 +209,8 @@ def test_claim_accumulated_non_owner(alice, union_contract):
 def test_claim_accumulated_to_zero_address(owner, union_contract):
     with brownie.reverts():
         union_contract.claimAccumulated(12345, ADDRESS_ZERO, {"from": owner})
+
+
+def test_distribute_non_owner(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.distribute([], 0, True, True, True, 0, {"from": alice})

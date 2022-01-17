@@ -231,7 +231,7 @@ contract UnionZap is Ownable, UnionBase {
         bool lock,
         bool stake,
         uint256 minAmountOut
-    ) external {
+    ) external onlyOwner {
         // initialize gas counting
         uint256 _startGas = gasleft();
         bool _locked = false;
