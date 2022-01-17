@@ -224,14 +224,14 @@ contract UnionZap is Ownable, UnionBase {
     /// Ex: 6 = 00 01 10 will swap token 1 on UniV3, 2 on UniV3, last on Sushi
     /// Passing 0 will execute all swaps on sushi
     /// @dev claimBeforeSwap is used in case 3rd party already claimed on Votium
-    function _distribute(
+    function distribute(
         IMultiMerkleStash.claimParam[] calldata claimParams,
         uint256 routerChoices,
         bool claimBeforeSwap,
         bool lock,
         bool stake,
         uint256 minAmountOut
-    ) internal {
+    ) external {
         // initialize gas counting
         uint256 _startGas = gasleft();
         bool _locked = false;
@@ -314,31 +314,6 @@ contract UnionZap is Ownable, UnionBase {
             IMerkleDistributorV2(unionDistributor).stake();
         }
         emit Distributed(_netDeposit, _cvxCrvBalance - _netDeposit, _locked);
-    }
-
-    /// @notice External wrapper around _distribute
-    /// @param claimParams - an array containing the info necessary to claim
-    /// @param routerChoices - the router to use for the swap
-    /// @param claimBeforeSwap - whether to claim on Votium or not
-    /// @param lock - whether to lock or swap crv to cvxcrv
-    /// @param stake - whether to stake cvxcrv (if distributor is vault)
-    /// @param minAmountOut - min output amount of cvxCRV or CRV (if locking)
-    function distribute(
-        IMultiMerkleStash.claimParam[] calldata claimParams,
-        uint256 routerChoices,
-        bool claimBeforeSwap,
-        bool lock,
-        bool stake,
-        uint256 minAmountOut
-    ) external onlyOwner {
-        _distribute(
-            claimParams,
-            routerChoices,
-            claimBeforeSwap,
-            lock,
-            stake,
-            minAmountOut
-        );
     }
 
     // @notice Stakes the accumulated cvxCrv for the owner
