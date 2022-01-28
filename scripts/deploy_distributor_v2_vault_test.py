@@ -15,9 +15,9 @@ def main():
     vault.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
     merkle = MerkleDistributorV2.deploy(vault, union_contract, {"from": deployer})
 
+    merkle.setApprovals({"from": deployer})
     merkle.updateAdmin(AIRFORCE_SAFE, {"from": deployer})
     union_contract.updateDistributor(merkle, {"from": AIRFORCE_SAFE})
-    merkle.setApprovals({"from": deployer})
 
 
     assert union_contract.unionDistributor() == merkle
