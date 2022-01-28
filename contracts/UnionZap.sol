@@ -126,13 +126,16 @@ contract UnionZap is Ownable, UnionBase {
     /// @notice Set approvals for the tokens used when swapping
     function setApprovals() external onlyOwner {
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 2**256 - 1);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
 
         IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, 0);
-        IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, 2**256 - 1);
+        IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, type(uint256).max);
 
         IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
-        IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 2**256 - 1);
+        IERC20(CVXCRV_TOKEN).safeApprove(
+            CVXCRV_STAKING_CONTRACT,
+            type(uint256).max
+        );
     }
 
     /// @notice Swap a token for ETH
@@ -155,7 +158,7 @@ contract UnionZap is Ownable, UnionBase {
 
         IUniV2Router(router).swapExactTokensForETH(
             amount,
-            0,
+            1,
             _path,
             address(this),
             block.timestamp + 1
@@ -212,6 +215,7 @@ contract UnionZap is Ownable, UnionBase {
     /// @param claimBeforeSwap - whether to claim on Votium or not
     /// @param lock - whether to lock or swap crv to cvxcrv
     /// @param stake - whether to stake cvxcrv (if distributor is vault)
+    /// @param minAmountOut - min output amount of cvxCRV or CRV (if locking)
     /// @dev routerChoices is a 2-bit bitmap such that
     /// 0b00 (0) - Sushi
     /// 0b01 (1) - UniV2
@@ -220,13 +224,14 @@ contract UnionZap is Ownable, UnionBase {
     /// Ex: 6 = 00 01 10 will swap token 1 on UniV3, 2 on UniV3, last on Sushi
     /// Passing 0 will execute all swaps on sushi
     /// @dev claimBeforeSwap is used in case 3rd party already claimed on Votium
-    function _distribute(
+    function distribute(
         IMultiMerkleStash.claimParam[] calldata claimParams,
         uint256 routerChoices,
         bool claimBeforeSwap,
         bool lock,
-        bool stake
-    ) internal {
+        bool stake,
+        uint256 minAmountOut
+    ) external onlyOwner {
         // initialize gas counting
         uint256 _startGas = gasleft();
         bool _locked = false;
@@ -268,14 +273,16 @@ contract UnionZap is Ownable, UnionBase {
 
         uint256 _ethBalance = address(this).balance;
 
+        // if locking, we apply minAmount to CRV - otherwise will do on cvxCRV
+        uint256 minCrvOut = lock ? minAmountOut : 0;
         // swap from ETH to CRV
-        uint256 _swappedCrv = _swapEthToCrv(_ethBalance);
+        uint256 _swappedCrv = _swapEthToCrv(_ethBalance, minCrvOut);
 
         uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
 
         // swap on Curve if there is a premium for doing so
         if (!lock) {
-            _swapCrvToCvxCrv(_crvBalance, address(this));
+            _swapCrvToCvxCrv(_crvBalance, address(this), minAmountOut);
         }
         // otherwise deposit & lock
         else {
@@ -309,44 +316,20 @@ contract UnionZap is Ownable, UnionBase {
         emit Distributed(_netDeposit, _cvxCrvBalance - _netDeposit, _locked);
     }
 
-    /// @notice External wrapper around _distribute
-    /// @param claimParams - an array containing the info necessary to claim
-    /// @param routerChoices - the router to use for the swap
-    /// @param claimBeforeSwap - whether to claim on Votium or not
-    /// @param lock - whether to lock or swap crv to cvxcrv
-    function distribute(
-        IMultiMerkleStash.claimParam[] calldata claimParams,
-        uint256 routerChoices,
-        bool claimBeforeSwap,
-        bool lock
-    ) external onlyOwner {
-        _distribute(claimParams, routerChoices, claimBeforeSwap, lock, true);
-    }
-
-    /// @notice External wrapper around _distribute
-    /// @param claimParams - an array containing the info necessary to claim
-    /// @param routerChoices - the router to use for the swap
-    /// @param claimBeforeSwap - whether to claim on Votium or not
-    /// @param lock - whether to lock or swap crv to cvxcrv
-    /// @param stake - whether to stake cvxcrv (if distributor is vault)
-    /// @dev Overloads distribute above to allow specifying a stake param to
-    /// switch between regular distributor and vault distributor (v2)
-    function distribute(
-        IMultiMerkleStash.claimParam[] calldata claimParams,
-        uint256 routerChoices,
-        bool claimBeforeSwap,
-        bool lock,
-        bool stake
-    ) external onlyOwner {
-        _distribute(claimParams, routerChoices, claimBeforeSwap, lock, stake);
-    }
-
     // @notice Stakes the accumulated cvxCrv for the owner
     function stakeAccumulated() external onlyOwner {
         cvxCrvStaking.stakeFor(
             owner(),
             IERC20(CVXCRV_TOKEN).balanceOf(address(this)) - 1
         );
+    }
+
+    // @notice retrieves part of the cvxCRV and transfers it to a wallet
+    // @param amount - the amount to claim
+    // @param to - the address to send the cvxCRV to
+    function claimAccumulated(uint256 amount, address to) external onlyOwner {
+        require(to != address(0));
+        IERC20(CVXCRV_TOKEN).safeTransfer(to, amount);
     }
 
     receive() external payable {

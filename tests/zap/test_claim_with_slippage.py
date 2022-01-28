@@ -23,7 +23,14 @@ def test_claim_and_swap(
     )
     union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
-    tx = union_contract.distribute(params, 0, True, False, True, 0, {"from": owner})
+    with brownie.reverts():
+        tx = union_contract.distribute(
+            params, 0, True, False, True, expected_output_amount * 1.25, {"from": owner}
+        )
+
+    tx = union_contract.distribute(
+        params, 0, True, False, True, expected_output_amount * 0.75, {"from": owner}
+    )
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance

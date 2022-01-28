@@ -49,7 +49,7 @@ def test_third_party_claimed_single_workflow(
     )
 
     tx = union_contract.distribute(
-        params + single_claim_param, 0, False, False, {"from": owner}
+        params + single_claim_param, 0, False, False, True, 0, {"from": owner}
     )
 
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
@@ -101,7 +101,7 @@ def test_third_party_claimed_all_workflow(
         TOKENS, union_contract, 0
     )
 
-    tx = union_contract.distribute(params, 0, False, False, {"from": owner})
+    tx = union_contract.distribute(params, 0, False, False, True, 0, {"from": owner})
 
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (

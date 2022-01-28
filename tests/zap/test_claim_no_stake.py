@@ -23,7 +23,7 @@ def test_claim_no_stake(
     )
     union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
-    tx = union_contract.distribute(params, 0, True, False, False, {"from": owner})
+    tx = union_contract.distribute(params, 0, True, False, False, 0, {"from": owner})
     distributor_balance = interface.IERC20(CVXCRV).balanceOf(merkle_distributor_v2)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
@@ -63,7 +63,7 @@ def test_claim_no_stake_distributor_v1(
     )
     union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
-    tx = union_contract.distribute(params, 0, True, False, False, {"from": owner})
+    tx = union_contract.distribute(params, 0, True, False, False, 0, {"from": owner})
     distributor_balance = interface.IERC20(CVXCRV).balanceOf(merkle_distributor)
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
