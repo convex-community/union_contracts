@@ -7,4 +7,13 @@ interface ICVXLocker {
         uint256 _amount,
         uint256 _spendRatio
     ) external;
+
+    function balances(address _user)
+        external
+        view
+        returns (
+            uint112 locked,
+            uint112 boosted,
+            uint32 nextUnlockIndex
+        );
 }

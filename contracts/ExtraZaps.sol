@@ -16,14 +16,11 @@ import "../interfaces/ICVXLocker.sol";
 contract ExtraZaps is Ownable, UnionBase {
     using SafeERC20 for IERC20;
 
-    address private constant VAULT = 0x83507cc8C8B67Ed48BADD1F59F684D5d02884C81;
-
+    address public immutable vault;
     address private constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
+    address private constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
 
-    address private constant MERKLE_DISTRIBUTOR =
-        0xA83043Df401346A67eddEb074679B4570b956183;
     address private constant TRICRYPTO =
         0xD51a44d3FaE010294C616388b506AcdA1bfAAE46;
     address private constant TRIPOOL =
@@ -44,9 +41,14 @@ contract ExtraZaps is Ownable, UnionBase {
     IBooster booster = IBooster(BOOSTER);
     IRewards triPoolRewards = IRewards(CONVEX_TRIPOOL_REWARDS);
     ICVXLocker locker = ICVXLocker(CONVEX_LOCKER);
-    IMerkleDistributorV2 distributor = IMerkleDistributorV2(MERKLE_DISTRIBUTOR);
+    IMerkleDistributorV2 distributor;
 
-    function _setApprovals() internal {
+    constructor(address _vault, address _distributor) {
+        vault = _vault;
+        distributor = IMerkleDistributorV2(_distributor);
+    }
+
+    function setApprovals() external {
         IERC20(TRICRV).safeApprove(BOOSTER, 0);
         IERC20(TRICRV).safeApprove(BOOSTER, type(uint256).max);
 
@@ -66,8 +68,8 @@ contract ExtraZaps is Ownable, UnionBase {
     /// @notice Retrieves user's uCRV and unstake to ETH
     /// @param amount - the amount of uCRV to unstake
     function _withdrawFromVaultAsEth(uint256 amount) internal {
-        IERC20(VAULT).safeTransferFrom(msg.sender, address(this), amount);
-        IUnionVault(VAULT).withdrawAllAs(
+        IERC20(vault).safeTransferFrom(msg.sender, address(this), amount);
+        IUnionVault(vault).withdrawAllAs(
             address(this),
             IUnionVault.Option.ClaimAsETH
         );
@@ -81,7 +83,7 @@ contract ExtraZaps is Ownable, UnionBase {
         uint256 minAmountOut,
         address to
     ) internal {
-        triCryptoSwap.exchange(
+        triCryptoSwap.exchange{value: amount}(
             2, // ETH
             0, // USDT
             amount,
@@ -141,7 +143,7 @@ contract ExtraZaps is Ownable, UnionBase {
         // claim as USDT
         uint256 _usdtAmount = claimFromVaultAsUsdt(amount, 0, address(this));
         // add USDT to Tripool
-        triPool.add_liquidity([_usdtAmount, 0, 0], minAmountOut);
+        triPool.add_liquidity([0, 0, _usdtAmount], minAmountOut);
         // deposit on Convex
         booster.depositAll(9, false);
         // stake on behalf of user
@@ -203,8 +205,8 @@ contract ExtraZaps is Ownable, UnionBase {
         uint256 minAmountOut,
         address to
     ) public {
-        IERC20(VAULT).safeTransferFrom(msg.sender, address(this), amount);
-        IUnionVault(VAULT).withdrawAllAs(
+        IERC20(vault).safeTransferFrom(msg.sender, address(this), amount);
+        IUnionVault(vault).withdrawAllAs(
             address(this),
             IUnionVault.Option.ClaimAsCVX
         );

@@ -2,6 +2,8 @@
 pragma solidity 0.8.9;
 
 interface IRewards {
+    function balanceOf(address) external view returns (uint256);
+
     function stake(address, uint256) external;
 
     function stakeFor(address, uint256) external;
