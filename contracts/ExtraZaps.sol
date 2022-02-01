@@ -61,6 +61,15 @@ contract ExtraZaps is Ownable, UnionBase {
             type(uint256).max
         );
 
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
+
+        IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
+        IERC20(CVXCRV_TOKEN).safeApprove(
+            CVXCRV_STAKING_CONTRACT,
+            type(uint256).max
+        );
+
         IERC20(CVX).safeApprove(CONVEX_LOCKER, 0);
         IERC20(CVX).safeApprove(CONVEX_LOCKER, type(uint256).max);
     }
@@ -101,7 +110,7 @@ contract ExtraZaps is Ownable, UnionBase {
         uint256 amount,
         uint256 minAmountOut,
         address to
-    ) public returns (uint256) {
+    ) public notToZeroAddress(to) returns (uint256) {
         _withdrawFromVaultAsEth(amount);
         _swapEthToUsdt(address(this).balance, minAmountOut, to);
         uint256 _usdtAmount = IERC20(USDT).balanceOf(address(this));
@@ -126,7 +135,7 @@ contract ExtraZaps is Ownable, UnionBase {
         bytes32[] calldata merkleProof,
         uint256 minAmountOut,
         address to
-    ) external returns (uint256) {
+    ) external notToZeroAddress(to) returns (uint256) {
         distributor.claim(index, account, amount, merkleProof);
         return claimFromVaultAsUsdt(amount, minAmountOut, to);
     }
@@ -139,7 +148,7 @@ contract ExtraZaps is Ownable, UnionBase {
         uint256 amount,
         uint256 minAmountOut,
         address to
-    ) public {
+    ) public notToZeroAddress(to) {
         // claim as USDT
         uint256 _usdtAmount = claimFromVaultAsUsdt(amount, 0, address(this));
         // add USDT to Tripool
@@ -167,7 +176,7 @@ contract ExtraZaps is Ownable, UnionBase {
         bytes32[] calldata merkleProof,
         uint256 minAmountOut,
         address to
-    ) external {
+    ) external notToZeroAddress(to) {
         distributor.claim(index, account, amount, merkleProof);
         claimFromVaultAndStakeIn3PoolConvex(amount, minAmountOut, to);
     }
@@ -185,8 +194,9 @@ contract ExtraZaps is Ownable, UnionBase {
         address router,
         address outputToken,
         address to
-    ) external {
+    ) public notToZeroAddress(to) {
         require(router != address(0));
+        require(to != address(0));
         _withdrawFromVaultAsEth(amount);
         address[] memory _path = new address[](2);
         _path[0] = WETH;
@@ -194,6 +204,33 @@ contract ExtraZaps is Ownable, UnionBase {
         IUniV2Router(router).swapExactETHForTokens{
             value: address(this).balance
         }(minAmountOut, _path, to, block.timestamp + 60);
+    }
+
+    /// @notice Claim to any token via a univ2 router
+    /// @notice Use at your own risk
+    /// @param amount - amount of uCRV to unstake
+    /// @param minAmountOut - min amount of output token expected
+    /// @param router - address of the router to use. e.g. 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F for Sushi
+    /// @param outputToken - address of the token to swap to
+    /// @param to - address of the final recipient of the swapped tokens
+    function claimFromDistributorViaUniV2EthPair(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32[] calldata merkleProof,
+        uint256 minAmountOut,
+        address router,
+        address outputToken,
+        address to
+    ) external notToZeroAddress(to) {
+        distributor.claim(index, account, amount, merkleProof);
+        claimFromVaultViaUniV2EthPair(
+            amount,
+            minAmountOut,
+            router,
+            outputToken,
+            to
+        );
     }
 
     /// @notice Unstake from the Pounder as CVX and locks it
@@ -204,11 +241,12 @@ contract ExtraZaps is Ownable, UnionBase {
         uint256 amount,
         uint256 minAmountOut,
         address to
-    ) public {
+    ) public notToZeroAddress(to) {
         IERC20(vault).safeTransferFrom(msg.sender, address(this), amount);
         IUnionVault(vault).withdrawAllAs(
             address(this),
-            IUnionVault.Option.ClaimAsCVX
+            IUnionVault.Option.ClaimAsCVX,
+            minAmountOut
         );
         locker.lock(to, IERC20(CVX).balanceOf(address(this)), 0);
     }
@@ -227,7 +265,7 @@ contract ExtraZaps is Ownable, UnionBase {
         bytes32[] calldata merkleProof,
         uint256 minAmountOut,
         address to
-    ) external {
+    ) external notToZeroAddress(to) {
         distributor.claim(index, account, amount, merkleProof);
         claimFromVaultAsCvxAndLock(amount, minAmountOut, to);
     }
@@ -235,10 +273,14 @@ contract ExtraZaps is Ownable, UnionBase {
     /// @notice Deposit into the pounder from ETH
     /// @param minAmountOut - min amount of cvCRV expected
     /// @param to - address to stake on behalf of
-    function depositFromEth(uint256 minAmountOut, address to) external payable {
+    function depositFromEth(uint256 minAmountOut, address to)
+        external
+        payable
+        notToZeroAddress(to)
+    {
         require(msg.value > 0, "cheap");
         uint256 _crvAmount = _swapEthToCrv(msg.value);
-        uint256 _cvxCrvAmount = _swapCvxCrvToCrv(
+        uint256 _cvxCrvAmount = _swapCrvToCvxCrv(
             _crvAmount,
             address(this),
             minAmountOut
