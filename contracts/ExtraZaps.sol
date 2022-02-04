@@ -196,7 +196,6 @@ contract ExtraZaps is Ownable, UnionBase {
         address to
     ) public notToZeroAddress(to) {
         require(router != address(0));
-        require(to != address(0));
         _withdrawFromVaultAsEth(amount);
         address[] memory _path = new address[](2);
         _path[0] = WETH;
@@ -271,7 +270,7 @@ contract ExtraZaps is Ownable, UnionBase {
     }
 
     /// @notice Deposit into the pounder from ETH
-    /// @param minAmountOut - min amount of cvCRV expected
+    /// @param minAmountOut - min amount of cvxCRV expected
     /// @param to - address to stake on behalf of
     function depositFromEth(uint256 minAmountOut, address to)
         external
@@ -279,7 +278,19 @@ contract ExtraZaps is Ownable, UnionBase {
         notToZeroAddress(to)
     {
         require(msg.value > 0, "cheap");
-        uint256 _crvAmount = _swapEthToCrv(msg.value);
+        _depositFromEth(msg.value, minAmountOut, to);
+    }
+
+    /// @notice Internal function to deposit ETH to the pounder
+    /// @param amount - amount of ETH
+    /// @param minAmountOut - min amount of cvxCRV expected
+    /// @param to - address to stake on behalf of
+    function _depositFromEth(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) internal {
+        uint256 _crvAmount = _swapEthToCrv(amount);
         uint256 _cvxCrvAmount = _swapCrvToCvxCrv(
             _crvAmount,
             address(this),
@@ -289,6 +300,61 @@ contract ExtraZaps is Ownable, UnionBase {
             to,
             IERC20(CVXCRV_TOKEN).balanceOf(address(this))
         );
+    }
+
+    /// @notice Deposit into the pounder from CRV
+    /// @param minAmountOut - min amount of cvxCRV expected
+    /// @param to - address to stake on behalf of
+    function depositFromCrv(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) external notToZeroAddress(to) {
+        IERC20(CRV_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
+        uint256 _cvxCrvAmount = _swapCrvToCvxCrv(
+            amount,
+            address(this),
+            minAmountOut
+        );
+        cvxCrvStaking.stakeFor(
+            to,
+            IERC20(CVXCRV_TOKEN).balanceOf(address(this))
+        );
+    }
+
+    /// @notice Deposit into the pounder from any token via Uni interface
+    /// @notice Use at your own risk
+    /// @dev Zap contract needs approval for spending of inputToken
+    /// @param amount - min amount of input token
+    /// @param minAmountOut - min amount of cvxCRV expected
+    /// @param router - address of the router to use. e.g. 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F for Sushi
+    /// @param inputToken - address of the token to swap from, needs to have an ETH pair on router used
+    /// @param to - address to stake on behalf of
+    function depositViaUniV2EthPair(
+        uint256 amount,
+        uint256 minAmountOut,
+        address router,
+        address inputToken,
+        address to
+    ) external notToZeroAddress(to) {
+        require(router != address(0));
+
+        IERC20(inputToken).safeTransferFrom(msg.sender, address(this), amount);
+        address[] memory _path = new address[](2);
+        _path[0] = inputToken;
+        _path[1] = WETH;
+
+        IERC20(inputToken).safeApprove(router, 0);
+        IERC20(inputToken).safeApprove(router, amount);
+
+        IUniV2Router(router).swapExactTokensForETH(
+            amount,
+            1,
+            _path,
+            address(this),
+            block.timestamp + 1
+        );
+        _depositFromEth(address(this).balance, minAmountOut, to);
     }
 
     receive() external payable {}
