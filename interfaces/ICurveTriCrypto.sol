@@ -8,7 +8,7 @@ interface ICurveTriCrypto {
         uint256 dx,
         uint256 min_dy,
         bool use_eth
-    ) external;
+    ) external payable;
 
     function get_dy(
         uint256 i,
