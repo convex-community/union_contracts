@@ -64,11 +64,8 @@ contract ExtraZaps is Ownable, UnionBase {
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
 
-        IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
-        IERC20(CVXCRV_TOKEN).safeApprove(
-            CVXCRV_STAKING_CONTRACT,
-            type(uint256).max
-        );
+        IERC20(CVXCRV_TOKEN).safeApprove(vault, 0);
+        IERC20(CVXCRV_TOKEN).safeApprove(vault, type(uint256).max);
 
         IERC20(CVX).safeApprove(CONVEX_LOCKER, 0);
         IERC20(CVX).safeApprove(CONVEX_LOCKER, type(uint256).max);
@@ -296,10 +293,7 @@ contract ExtraZaps is Ownable, UnionBase {
             address(this),
             minAmountOut
         );
-        cvxCrvStaking.stakeFor(
-            to,
-            IERC20(CVXCRV_TOKEN).balanceOf(address(this))
-        );
+        IUnionVault(vault).deposit(to, _cvxCrvAmount);
     }
 
     /// @notice Deposit into the pounder from CRV
@@ -316,10 +310,7 @@ contract ExtraZaps is Ownable, UnionBase {
             address(this),
             minAmountOut
         );
-        cvxCrvStaking.stakeFor(
-            to,
-            IERC20(CVXCRV_TOKEN).balanceOf(address(this))
-        );
+        IUnionVault(vault).deposit(to, _cvxCrvAmount);
     }
 
     /// @notice Deposit into the pounder from any token via Uni interface
@@ -355,6 +346,17 @@ contract ExtraZaps is Ownable, UnionBase {
             block.timestamp + 1
         );
         _depositFromEth(address(this).balance, minAmountOut, to);
+    }
+
+    /// @notice Execute calls on behalf of contract
+    /// (for instance to retrieve locked tokens)
+    function execute(
+        address _to,
+        uint256 _value,
+        bytes calldata _data
+    ) external onlyOwner returns (bool, bytes memory) {
+        (bool success, bytes memory result) = _to.call{value: _value}(_data);
+        return (success, result);
     }
 
     receive() external payable {}

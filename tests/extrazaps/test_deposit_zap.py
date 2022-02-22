@@ -18,6 +18,7 @@ def test_deposit_from_eth(alice, owner, vault, zaps):
     cvxcrv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         0, 1, crv_amount
     )
+    ucrv_amount = (cvxcrv_amount * vault.totalSupply()) / vault.totalUnderlying()
 
     with brownie.reverts():
         zaps.depositFromEth(cvxcrv_amount * 2, alice, {"from": alice, "value": amount})
@@ -27,8 +28,8 @@ def test_deposit_from_eth(alice, owner, vault, zaps):
     zaps.depositFromEth(0, alice, {"from": alice, "value": amount})
 
     assert approx(
-        interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(alice) * 1e-18,
-        cvxcrv_amount * 1e-18,
+        vault.balanceOf(alice) * 1e-18,
+        ucrv_amount * 1e-18,
         1,
     )
     chain.revert()
@@ -40,6 +41,8 @@ def test_deposit_from_crv(alice, owner, vault, zaps):
     cvxcrv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         0, 1, amount
     )
+    ucrv_amount = (cvxcrv_amount * vault.totalSupply()) / vault.totalUnderlying()
+
     interface.IERC20(CRV_TOKEN).transfer(
         alice.address, 2e22, {"from": CURVE_CVXCRV_CRV_POOL}
     )
@@ -53,8 +56,8 @@ def test_deposit_from_crv(alice, owner, vault, zaps):
     zaps.depositFromCrv(amount, 0, alice, {"from": alice})
 
     assert approx(
-        interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(alice) * 1e-18,
-        cvxcrv_amount * 1e-18,
+        vault.balanceOf(alice) * 1e-18,
+        ucrv_amount * 1e-18,
         1,
     )
     chain.revert()
@@ -72,6 +75,7 @@ def test_deposit_from_spell(alice, owner, vault, zaps):
     cvxcrv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
         0, 1, crv_amount
     )
+    ucrv_amount = (cvxcrv_amount * vault.totalSupply()) / vault.totalUnderlying()
 
     with brownie.reverts():
         zaps.depositFromCrv(amount, cvxcrv_amount * 2, alice, {"from": alice})
@@ -82,8 +86,8 @@ def test_deposit_from_spell(alice, owner, vault, zaps):
     zaps.depositViaUniV2EthPair(amount, 0, SUSHI_ROUTER, SPELL, alice, {"from": alice})
 
     assert approx(
-        interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(alice) * 1e-18,
-        cvxcrv_amount * 1e-18,
+        vault.balanceOf(alice) * 1e-18,
+        ucrv_amount * 1e-18,
         1,
     )
     chain.revert()
