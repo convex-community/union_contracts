@@ -41,7 +41,7 @@ contract CvxFxsStrategyBase {
     IBooster booster = IBooster(BOOSTER);
     ICurveV2Pool crvEthSwap = ICurveV2Pool(CURVE_CRV_ETH_POOL);
     ICurveV2Pool fxsEthSwap = ICurveV2Pool(CURVE_FXS_ETH_POOL);
-    ICurveFactoryPool cvxFxsCvxSwap = ICurveFactoryPool(CURVE_CVXFXS_FXS_POOL);
+    ICurveV2Pool cvxFxsFxsSwap = ICurveV2Pool(CURVE_CVXFXS_FXS_POOL);
 
     /// @notice Swap CRV for native ETH on Curve
     /// @param amount - amount to swap

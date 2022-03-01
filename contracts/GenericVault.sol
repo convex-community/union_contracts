@@ -32,7 +32,7 @@ contract GenericUnionVault is ERC20, Ownable {
     event PlatformUpdated(address indexed _platform);
     event StrategySet(address indexed _strategy);
 
-    constructor(address _token, address _strategy)
+    constructor(address _token)
     ERC20(
         string(abi.encodePacked("Unionized ", ERC20(_token).name())),
         string(abi.encodePacked("u", ERC20(_token).symbol()))
