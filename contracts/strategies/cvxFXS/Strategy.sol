@@ -127,7 +127,7 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
                 }
 
                 // Add liquidity on Curve
-                cvxFxsFxsSwap.add_liquidity([0, _stakingAmount], 0);
+                cvxFxsFxsSwap.add_liquidity([_stakingAmount, 0], 0);
                 // Stake on Convex
                 require(booster.depositAll(PID, true));
             }
