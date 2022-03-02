@@ -15,7 +15,7 @@ from .constants import (
     CURVE_CVX_ETH_POOL,
     TRICRYPTO,
     TRIPOOL,
-    UNI_QUOTER,
+    UNI_QUOTER, CURVE_CVXFXS_FXS_LP_TOKEN,
 )
 
 
@@ -53,6 +53,10 @@ def calc_harvest_amount_in_cvxcrv(vault):
 
 def cvxcrv_balance(address):
     return interface.IERC20(CVXCRV).balanceOf(address)
+
+
+def cvxfxs_lp_balance(address):
+    return interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).balanceOf(address)
 
 
 def approx(a, b, precision=1e-10):
