@@ -36,6 +36,15 @@ contract CvxFxsStrategyBase {
     uint256 public constant CVXETH_ETH_INDEX = 0;
     uint256 public constant CVXETH_CVX_INDEX = 1;
 
+    // The swap strategy to use when going eth -> fxs
+    enum SwapOption {
+        Curve,
+        Uniswap,
+        Unistables
+    }
+    SwapOption swapOption = SwapOption.Curve;
+    event OptionChanged(SwapOption oldOption, SwapOption newOption);
+
     IBasicRewards cvxFxsStaking = IBasicRewards(CVXFXS_STAKING_CONTRACT);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
     IBooster booster = IBooster(BOOSTER);
@@ -146,5 +155,20 @@ contract CvxFxsStrategyBase {
             amount,
             minAmountOut
         );
+    }
+
+    /// @notice Swap native ETH for FXS via different routes
+    /// @param _ethAmount - amount to swap
+    /// @param _option - the option to use when swapping
+    function _swapEthForFxs(uint256 _ethAmount, SwapOption _option)
+    internal returns (uint256 _swapped) {
+        if (_option == SwapOption.Curve) {
+            return fxsEthSwap.exchange_underlying{value: _ethAmount}(
+                0,
+                1,
+                _ethAmount,
+                0
+            );
+        }
     }
 }

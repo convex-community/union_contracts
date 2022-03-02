@@ -64,6 +64,14 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
         require(booster.deposit(PID, _amount, true));
     }
 
+    /// @notice Change the default swap option for eth -> fxs
+    /// @param _newOption - the new option to use
+    function setSwapOption(SwapOption _newOption) external onlyOwner {
+        SwapOption _oldOption = swapOption;
+        swapOption = _newOption;
+        emit OptionChanged(_oldOption, swapOption);
+    }
+
     /// @notice Withdraw a certain amount from the staking contract
     /// @param _amount - the amount to withdraw
     /// @dev Can only be called by the vault
@@ -72,10 +80,17 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
         IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeTransfer(vault, _amount);
     }
 
-    function harvest(uint256 platformFee,
-        uint256 callIncentive,
-        address caller,
-        address platform) external onlyVault() returns (uint256 harvested) {
+    /// @notice Claim rewards and swaps them to FXS for restaking
+    /// @dev Can be called by the vault only
+    /// @param _platformFee - the platform fee
+    /// @param _callIncentive - the caller fee
+    /// @param _caller - the address calling the harvest on the vault
+    /// @param _platform - the address receiving the platform fees
+    /// @return harvested - the amount harvested
+    function harvest(uint256 _platformFee,
+        uint256 _callIncentive,
+        address _caller,
+        address _platform) external onlyVault() returns (uint256 harvested) {
         // claim rewards
         cvxFxsStaking.getReward();
 
@@ -97,12 +112,7 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
         }
         uint256 _ethBalance = address(this).balance;
 
-        fxsEthSwap.exchange_underlying{value: _ethBalance}(
-            0,
-            1,
-            _ethBalance,
-            0
-        );
+        _swapEthForFxs(_ethBalance, swapOption);
 
         uint256 _fxsBalance = IERC20(FXS_TOKEN).balanceOf(address(this));
 
@@ -112,17 +122,17 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
             if (_fxsBalance > 0) {
                 uint256 _stakingAmount = _fxsBalance;
                 // Deduce and pay out incentive to caller (not needed for final exit)
-                if (callIncentive > 0) {
-                    uint256 incentiveAmount = (_fxsBalance * callIncentive) /
+                if (_callIncentive > 0) {
+                    uint256 incentiveAmount = (_fxsBalance * _callIncentive) /
                     FEE_DENOMINATOR;
-                    IERC20(FXS_TOKEN).safeTransfer(caller, incentiveAmount);
+                    IERC20(FXS_TOKEN).safeTransfer(_caller, incentiveAmount);
                     _stakingAmount = _stakingAmount - incentiveAmount;
                 }
                 // Deduce and pay platform fee
-                if (platformFee > 0) {
-                    uint256 feeAmount = (_fxsBalance * platformFee) /
+                if (_platformFee > 0) {
+                    uint256 feeAmount = (_fxsBalance * _platformFee) /
                     FEE_DENOMINATOR;
-                    IERC20(FXS_TOKEN).safeTransfer(platform, feeAmount);
+                    IERC20(FXS_TOKEN).safeTransfer(_platform, feeAmount);
                     _stakingAmount = _stakingAmount - feeAmount;
                 }
 
