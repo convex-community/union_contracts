@@ -76,7 +76,7 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
     /// @param _amount - the amount to withdraw
     /// @dev Can only be called by the vault
     function withdraw(uint256 _amount) external onlyVault() {
-        booster.withdraw(PID, _amount);
+        cvxFxsStaking.withdrawAndUnwrap(_amount, false);
         IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeTransfer(vault, _amount);
     }
 
@@ -112,8 +112,9 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
         }
         uint256 _ethBalance = address(this).balance;
 
-        _swapEthForFxs(_ethBalance, swapOption);
-
+        if (_ethBalance > 0) {
+            _swapEthForFxs(_ethBalance, swapOption);
+        }
         uint256 _fxsBalance = IERC20(FXS_TOKEN).balanceOf(address(this));
 
         // if this is the last call, no restake & no fees
