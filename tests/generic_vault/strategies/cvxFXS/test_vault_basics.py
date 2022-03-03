@@ -9,5 +9,3 @@ def test_total_underlying(alice, bob, strategy, vault):
     vault.deposit(bob, 1e22, {"from": alice})
     assert vault.totalUnderlying() == 2e22
     chain.revert()
-
-

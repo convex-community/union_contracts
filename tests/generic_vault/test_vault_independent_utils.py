@@ -71,7 +71,9 @@ def test_set_withdraw_penalty(owner, dummy_vault):
 
 def test_set_withdraw_penalty_too_high(owner, dummy_vault):
     with brownie.reverts():
-        dummy_vault.setWithdrawalPenalty(dummy_vault.MAX_WITHDRAWAL_PENALTY() + 1, {"from": owner})
+        dummy_vault.setWithdrawalPenalty(
+            dummy_vault.MAX_WITHDRAWAL_PENALTY() + 1, {"from": owner}
+        )
 
 
 def test_set_withdraw_penalty_non_owner(alice, dummy_vault):
@@ -101,4 +103,3 @@ def test_set_strategy_address_zero(owner, dummy_vault):
 def test_set_strategy_non_owner(alice, dummy_vault):
     with brownie.reverts("Ownable: caller is not the owner"):
         dummy_vault.setWithdrawalPenalty(CVXCRV_TOKEN, {"from": alice})
-

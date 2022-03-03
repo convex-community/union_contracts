@@ -16,4 +16,3 @@ def test_withdraw_non_vault(alice, owner, vault, strategy):
         strategy.withdraw(20, {"from": owner})
     with brownie.reverts("Vault calls only"):
         strategy.withdraw(20, {"from": alice})
-

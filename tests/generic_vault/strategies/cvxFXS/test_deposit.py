@@ -17,10 +17,12 @@ def test_deposit(alice, owner, vault, strategy):
     assert cvxfxs_lp_balance(alice) == alice_initial_lp_balance - amount
     assert vault.balanceOf(alice) == amount
     assert vault.totalUnderlying() == amount
-    assert interface.IBasicRewards(CVXFXS_STAKING_CONTRACT).balanceOf(strategy) == amount
+    assert (
+        interface.IBasicRewards(CVXFXS_STAKING_CONTRACT).balanceOf(strategy) == amount
+    )
 
-    assert tx.events["Staked"]['user'] == strategy
-    assert tx.events["Staked"]['amount'] == amount
+    assert tx.events["Staked"]["user"] == strategy
+    assert tx.events["Staked"]["amount"] == amount
     chain.revert()
 
 
@@ -37,9 +39,9 @@ def test_multiple_deposit(accounts, vault, strategy, amount):
         vault.deposit(account, amount, {"from": account})
 
         assert cvxfxs_lp_balance(account) == account_initial_balance - amount
-        assert interface.IBasicRewards(CVXFXS_STAKING_CONTRACT).balanceOf(strategy) == amount * (
-            i + 1
-        )
+        assert interface.IBasicRewards(CVXFXS_STAKING_CONTRACT).balanceOf(
+            strategy
+        ) == amount * (i + 1)
         assert vault.balanceOf(account) == amount
 
     chain.revert()
