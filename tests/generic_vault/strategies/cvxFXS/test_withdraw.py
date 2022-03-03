@@ -11,6 +11,7 @@ from ....utils.cvxfxs import calc_harvest_amount_curve
 @pytest.mark.parametrize("amount", [1e20])
 def test_unique_partial_withdrawal(alice, owner, vault, strategy, amount):
     chain.snapshot()
+    strategy.setSwapOption(0, {"from": owner})
     alice_initial_balance = cvxfxs_lp_balance(alice)
     half_amount = int(Decimal(amount) / 2)
     vault.deposit(alice, amount, {"from": alice})
@@ -34,6 +35,7 @@ def test_unique_partial_withdrawal(alice, owner, vault, strategy, amount):
 
 def test_withdraw_small(alice, owner, strategy, vault):
     chain.snapshot()
+    strategy.setSwapOption(0, {"from": owner})
     alice_initial_balance = cvxfxs_lp_balance(alice)
     vault.deposit(alice, 1, {"from": alice})
     vault.withdrawAll(alice, {"from": alice})
@@ -55,6 +57,7 @@ def test_withdraw_address_zero(alice, owner, vault):
 
 def test_withdraw_all(alice, owner, vault, strategy):
     chain.snapshot()
+    strategy.setSwapOption(0, {"from": owner})
     alice_initial_balance = cvxfxs_lp_balance(alice)
     vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
