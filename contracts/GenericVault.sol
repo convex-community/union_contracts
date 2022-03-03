@@ -166,7 +166,7 @@ contract GenericUnionVault is ERC20, Ownable {
         _burn(msg.sender, _shares);
         // If user is last to withdraw, harvest before exit
         if (totalSupply() == 0) {
-            IStrategy(strategy).harvest(platformFee, callIncentive, msg.sender, platform);
+            harvest();
             IStrategy(strategy).withdraw(totalUnderlying());
             _withdrawable = IERC20(underlyingToken).balanceOf(address(this));
         }

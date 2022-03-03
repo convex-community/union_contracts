@@ -17,4 +17,6 @@ interface IBasicRewards {
     function getReward() external returns (bool);
 
     function stake(uint256) external returns (bool);
+
+    function extraRewards(uint256) external view returns (address);
 }

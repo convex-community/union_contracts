@@ -171,4 +171,7 @@ contract CvxFxsStrategyBase {
             );
         }
     }
+
+    receive() external payable {
+    }
 }

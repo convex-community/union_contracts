@@ -51,6 +51,9 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
         IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(BOOSTER, 0);
         IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(BOOSTER, type(uint256).max);
 
+        IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
+        IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
+
     }
 
     /// @notice Query the amount currently staked
@@ -117,11 +120,14 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
         }
         uint256 _fxsBalance = IERC20(FXS_TOKEN).balanceOf(address(this));
 
-        // if this is the last call, no restake & no fees
-        if (IGenericVault(vault).totalSupply() != 0) {
+        uint256 _stakingAmount = _fxsBalance;
+        uint256 _staked;
 
-            if (_fxsBalance > 0) {
-                uint256 _stakingAmount = _fxsBalance;
+        if (_fxsBalance > 0) {
+
+            // if this is the last call, no fees
+            if (IGenericVault(vault).totalSupply() != 0) {
+
                 // Deduce and pay out incentive to caller (not needed for final exit)
                 if (_callIncentive > 0) {
                     uint256 incentiveAmount = (_fxsBalance * _callIncentive) /
@@ -137,13 +143,15 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
                     _stakingAmount = _stakingAmount - feeAmount;
                 }
 
-                // Add liquidity on Curve
-                cvxFxsFxsSwap.add_liquidity([_stakingAmount, 0], 0);
-                // Stake on Convex
-                require(booster.depositAll(PID, true));
             }
+
+            // Add liquidity on Curve
+            _staked = cvxFxsFxsSwap.add_liquidity([_stakingAmount, 0], 0);
+            // Stake on Convex
+            require(booster.depositAll(PID, true));
         }
-        return _fxsBalance;
+
+        return _staked;
     }
 
 
