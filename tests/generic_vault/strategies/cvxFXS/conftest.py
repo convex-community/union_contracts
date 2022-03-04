@@ -30,12 +30,12 @@ def strategy(owner, vault):
 def distribute_fxs_and_lp_tokens(accounts, vault):
 
     for account in accounts[:10]:
-        interface.IERC20(FXS).transfer(account.address, 1e23, {"from": VE_FXS})
+        interface.IERC20(FXS).transfer(account.address, 1e24, {"from": VE_FXS})
         interface.IERC20(FXS).approve(
             CURVE_CVXFXS_FXS_POOL, 2 ** 256 - 1, {"from": account}
         )
         interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).add_liquidity(
-            [5e22, 0], 0, {"from": account}
+            [5e23, 0], 0, {"from": account}
         )
         assert interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).balanceOf(account) > 0
         interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(
