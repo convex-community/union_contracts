@@ -42,7 +42,7 @@ contract CvxFxsStrategyBase {
         Uniswap,
         Unistables
     }
-    SwapOption swapOption = SwapOption.Curve;
+    SwapOption public swapOption = SwapOption.Curve;
     event OptionChanged(SwapOption oldOption, SwapOption newOption);
 
     IBasicRewards cvxFxsStaking = IBasicRewards(CVXFXS_STAKING_CONTRACT);
