@@ -1,4 +1,5 @@
 from brownie import interface, chain
+from eth_abi.packed import encode_single_packed
 
 from .constants import (
     CVXFXS_STAKING_CONTRACT,
@@ -9,6 +10,11 @@ from .constants import (
     FXS,
     FXS_COMMUNITY,
     CURVE_CVXFXS_FXS_LP_TOKEN,
+    UNI_QUOTER,
+    WETH,
+    FRAX,
+    USDT,
+    UNI_ROUTER,
 )
 
 
@@ -25,6 +31,7 @@ def estimate_lp_tokens_received(amount):
     chain.undo(3)
     return tokens_added
 
+
 def calc_rewards(strategy):
     staking = interface.IBasicRewards(CVXFXS_STAKING_CONTRACT)
     crv_rewards = staking.earned(strategy)
@@ -39,6 +46,32 @@ def calc_rewards(strategy):
         eth_balance += crv_eth_swap.get_dy(1, 0, crv_rewards)
 
     return fxs_rewards, eth_balance
+
+
+def calc_harvest_amount_uniswap(strategy):
+    fxs_balance, eth_balance = calc_rewards(strategy)
+    if eth_balance > 0:
+        fxs_balance += interface.IQuoter(UNI_QUOTER).quoteExactInputSingle(
+            WETH, FXS, 10000, eth_balance, 0
+        )
+
+    return fxs_balance
+
+
+def calc_harvest_amount_unistable(strategy):
+    fxs_balance, eth_balance = calc_rewards(strategy)
+    if eth_balance > 0:
+        path = encode_single_packed(
+            "(address,uint24,address,uint24,address)", [WETH, 500, USDT, 500, FRAX]
+        )
+        stable_balance = interface.IQuoter(UNI_QUOTER).quoteExactInput(
+            path, eth_balance
+        )
+        fxs_balance += interface.IUniV2Router(UNI_ROUTER).getAmountsOut(
+            stable_balance, [FRAX, FXS]
+        )[-1]
+
+    return fxs_balance
 
 
 def calc_harvest_amount_curve(strategy):
