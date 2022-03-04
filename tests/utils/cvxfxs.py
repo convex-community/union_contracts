@@ -25,9 +25,7 @@ def estimate_lp_tokens_received(amount):
     chain.undo(3)
     return tokens_added
 
-
-def calc_harvest_amount_curve(strategy, fxs=False):
-
+def calc_rewards(strategy):
     staking = interface.IBasicRewards(CVXFXS_STAKING_CONTRACT)
     crv_rewards = staking.earned(strategy)
     cvx_rewards = interface.IBasicRewards(staking.extraRewards(0)).earned(strategy)
@@ -40,12 +38,15 @@ def calc_harvest_amount_curve(strategy, fxs=False):
     if crv_rewards > 0:
         eth_balance += crv_eth_swap.get_dy(1, 0, crv_rewards)
 
-    fxs_balance = fxs_rewards
+    return fxs_rewards, eth_balance
+
+
+def calc_harvest_amount_curve(strategy):
+
+    fxs_balance, eth_balance = calc_rewards(strategy)
     if eth_balance > 0:
         fxs_balance += interface.ICurveV2Pool(CURVE_FXS_ETH_POOL).get_dy(
             0, 1, eth_balance
         )
-    if fxs:
-        return fxs_balance
 
-    return estimate_lp_tokens_received(fxs_balance)
+    return fxs_balance

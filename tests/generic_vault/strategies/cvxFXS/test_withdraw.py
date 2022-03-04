@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from ....utils.constants import CVXFXS_STAKING_CONTRACT, ADDRESS_ZERO
 from ....utils import approx, cvxfxs_lp_balance
-from ....utils.cvxfxs import calc_harvest_amount_curve
+from ....utils.cvxfxs import calc_harvest_amount_curve, estimate_lp_tokens_received
 
 
 @pytest.mark.parametrize("amount", [1e20])
@@ -62,7 +62,7 @@ def test_withdraw_all(alice, owner, vault, strategy):
     vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
     chain.mine(1)
-    harvested = calc_harvest_amount_curve(strategy)
+    harvested = estimate_lp_tokens_received(calc_harvest_amount_curve(strategy))
 
     tx = vault.withdrawAll(alice, {"from": alice})
     assert approx(

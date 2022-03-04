@@ -14,7 +14,7 @@ def test_harvest_single_staker(alice, bob, owner, vault, strategy):
     vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
     chain.mine(1)
-    estimated_harvested_fxs = calc_harvest_amount_curve(strategy, True)
+    estimated_harvested_fxs = calc_harvest_amount_curve(strategy)
 
     platform_fees = estimated_harvested_fxs * vault.platformFee() // 10000
     caller_incentive = estimated_harvested_fxs * vault.callIncentive() // 10000
@@ -62,7 +62,7 @@ def test_harvest_multiple_stakers(
 
     chain.sleep(100000)
     chain.mine(1)
-    estimated_harvested_fxs = calc_harvest_amount_curve(strategy, True)
+    estimated_harvested_fxs = calc_harvest_amount_curve(strategy)
 
     platform_fees = estimated_harvested_fxs * vault.platformFee() // 10000
     caller_incentive = estimated_harvested_fxs * vault.callIncentive() // 10000
