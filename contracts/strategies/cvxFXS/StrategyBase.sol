@@ -196,9 +196,12 @@ contract CvxFxsStrategyBase {
                     1,
                     0
                 );
-            return IUniV3Router(UNIV3_ROUTER).exactInputSingle(_params);
+            return
+                IUniV3Router(UNIV3_ROUTER).exactInputSingle{value: _ethAmount}(
+                    _params
+                );
         } else {
-            uint256 fee = 500;
+            uint24 fee = 500;
             IUniV3Router.ExactInputParams memory _params = IUniV3Router
                 .ExactInputParams(
                     abi.encodePacked(
@@ -214,9 +217,9 @@ contract CvxFxsStrategyBase {
                     0
                 );
 
-            uint256 _fraxAmount = IUniV3Router(UNIV3_ROUTER).exactInput(
-                _params
-            );
+            uint256 _fraxAmount = IUniV3Router(UNIV3_ROUTER).exactInput{
+                value: _ethAmount
+            }(_params);
             address[] memory _path = new address[](2);
             _path[0] = FRAX_TOKEN;
             _path[1] = FXS_TOKEN;
