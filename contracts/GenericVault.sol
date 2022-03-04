@@ -9,7 +9,6 @@ import "../interfaces/IStrategy.sol";
 contract GenericUnionVault is ERC20, Ownable {
     using SafeERC20 for IERC20;
 
-
     uint256 public withdrawalPenalty = 100;
     uint256 public constant MAX_WITHDRAWAL_PENALTY = 150;
     uint256 public platformFee = 500;
@@ -33,14 +32,13 @@ contract GenericUnionVault is ERC20, Ownable {
     event StrategySet(address indexed _strategy);
 
     constructor(address _token)
-    ERC20(
-        string(abi.encodePacked("Unionized ", ERC20(_token).name())),
-        string(abi.encodePacked("u", ERC20(_token).symbol()))
-    )
+        ERC20(
+            string(abi.encodePacked("Unionized ", ERC20(_token).name())),
+            string(abi.encodePacked("u", ERC20(_token).symbol()))
+        )
     {
         underlyingToken = _token;
     }
-
 
     /// @notice Updates the withdrawal penalty
     /// @param _penalty - the amount of the new penalty (in BIPS)
@@ -69,21 +67,22 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @notice Updates the address to which platform fees are paid out
     /// @param _platform - the new platform wallet address
     function setPlatform(address _platform)
-    external
-    onlyOwner
-    notToZeroAddress(_platform)
+        external
+        onlyOwner
+        notToZeroAddress(_platform)
     {
         platform = _platform;
         emit PlatformUpdated(_platform);
     }
 
-
     /// @notice Set the address of the strategy contract
     /// @dev Can only be set once
     /// @param _strategy - address of the strategy contract
     function setStrategy(address _strategy)
-    external onlyOwner
-    notToZeroAddress(_strategy) {
+        external
+        onlyOwner
+        notToZeroAddress(_strategy)
+    {
         require(strategy == address(0), "Strategy already set");
         strategy = _strategy;
         emit StrategySet(_strategy);
@@ -105,9 +104,9 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @return amount - claimable amount
     /// @dev Does not account for penalties and fees
     function balanceOfUnderlying(address user)
-    external
-    view
-    returns (uint256 amount)
+        external
+        view
+        returns (uint256 amount)
     {
         require(totalSupply() > 0, "No users");
         return ((balanceOf(user) * totalUnderlying()) / totalSupply());
@@ -119,18 +118,14 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @param _amount - the amount of cvxCrv to deposit
     /// @return _shares - the amount of shares issued
     function deposit(address _to, uint256 _amount)
-    public
-    notToZeroAddress(_to)
-    returns (uint256 _shares)
+        public
+        notToZeroAddress(_to)
+        returns (uint256 _shares)
     {
         require(_amount > 0, "Deposit too small");
 
         uint256 _before = totalUnderlying();
-        IERC20(underlyingToken).safeTransferFrom(
-            msg.sender,
-            strategy,
-            _amount
-        );
+        IERC20(underlyingToken).safeTransferFrom(msg.sender, strategy, _amount);
         IStrategy(strategy).stake(_amount);
 
         // Issues shares in proportion of deposit to pool amount
@@ -156,8 +151,8 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @param _shares - the number of shares sent
     /// @return _withdrawable - the withdrawable cvxCrv amount
     function _withdraw(uint256 _shares)
-    internal
-    returns (uint256 _withdrawable)
+        internal
+        returns (uint256 _withdrawable)
     {
         require(totalSupply() > 0);
         // Computes the amount withdrawable based on the number of shares sent
@@ -177,7 +172,7 @@ contract GenericUnionVault is ERC20, Ownable {
             // the harvests. The fee stays staked and is therefore
             // redistributed to all remaining participants.
             uint256 _penalty = (_withdrawable * withdrawalPenalty) /
-            FEE_DENOMINATOR;
+                FEE_DENOMINATOR;
             _withdrawable = _withdrawable - _penalty;
             IStrategy(strategy).withdraw(_withdrawable);
         }
@@ -189,9 +184,9 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @param _shares - the number of shares sent
     /// @return withdrawn - the amount of cvxCRV returned to the user
     function withdraw(address _to, uint256 _shares)
-    public
-    notToZeroAddress(_to)
-    returns (uint256 withdrawn)
+        public
+        notToZeroAddress(_to)
+        returns (uint256 withdrawn)
     {
         // Withdraw requested amount of cvxCrv
         uint256 _withdrawable = _withdraw(_shares);
@@ -205,19 +200,23 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @param _to - address to send cvxCrv to
     /// @return withdrawn - the amount of cvxCRV returned to the user
     function withdrawAll(address _to)
-    external
-    notToZeroAddress(_to)
-    returns (uint256 withdrawn)
+        external
+        notToZeroAddress(_to)
+        returns (uint256 withdrawn)
     {
         return withdraw(_to, balanceOf(msg.sender));
     }
-
 
     /// @notice Claim rewards and swaps them to FXS for restaking
     /// @dev Can be called by anyone against an incentive in FXS
     /// @dev Harvest logic in the strategy contract
     function harvest() public {
-        uint256 _harvested = IStrategy(strategy).harvest(platformFee, callIncentive, msg.sender, platform);
+        uint256 _harvested = IStrategy(strategy).harvest(
+            platformFee,
+            callIncentive,
+            msg.sender,
+            platform
+        );
         emit Harvest(msg.sender, _harvested);
     }
 
@@ -225,5 +224,4 @@ contract GenericUnionVault is ERC20, Ownable {
         require(_to != address(0), "Invalid address!");
         _;
     }
-
 }
