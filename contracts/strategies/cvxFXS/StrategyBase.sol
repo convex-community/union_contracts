@@ -152,6 +152,24 @@ contract CvxFxsStrategyBase {
         return _ethToCvx(amount, minAmountOut);
     }
 
+    /// @notice Swap CVX for native ETH on Curve
+    /// @param amount - amount to swap
+    /// @return amount of ETH obtained after the swap
+    function _swapCvxToEth(uint256 amount) internal returns (uint256) {
+        return _cvxToEth(amount, 0);
+    }
+
+    /// @notice Swap CVX for native ETH on Curve
+    /// @param amount - amount to swap
+    /// @param minAmountOut - minimum expected amount of output tokens
+    /// @return amount of ETH obtained after the swap
+    function _swapCvxToEth(uint256 amount, uint256 minAmountOut)
+        internal
+        returns (uint256)
+    {
+        return _cvxToEth(amount, minAmountOut);
+    }
+
     /// @notice Swap native ETH for CVX on Curve
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
@@ -164,6 +182,23 @@ contract CvxFxsStrategyBase {
             cvxEthSwap.exchange_underlying{value: amount}(
                 CVXETH_ETH_INDEX,
                 CVXETH_CVX_INDEX,
+                amount,
+                minAmountOut
+            );
+    }
+
+    /// @notice Swap native CVX for ETH on Curve
+    /// @param amount - amount to swap
+    /// @param minAmountOut - minimum expected amount of output tokens
+    /// @return amount of ETH obtained after the swap
+    function _cvxToEth(uint256 amount, uint256 minAmountOut)
+        internal
+        returns (uint256)
+    {
+        return
+            cvxEthSwap.exchange_underlying{value: 0}(
+                1,
+                0,
                 amount,
                 minAmountOut
             );
