@@ -34,7 +34,7 @@ contract ExtraZaps is Ownable, UnionBase {
     address private constant CONVEX_TRIPOOL_REWARDS =
         0x689440f2Ff927E1f24c72F1087E1FAF471eCe1c8;
     address private constant CONVEX_LOCKER =
-        0xD18140b4B819b895A3dba5442F959fA44994AF50;
+        0x72a19342e8F1838460eBFCCEf09F6585e32db86E;
 
     ICurveTriCrypto triCryptoSwap = ICurveTriCrypto(TRICRYPTO);
     ITriPool triPool = ITriPool(TRIPOOL);
