@@ -22,7 +22,7 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
     }
 
     /// @notice Set approvals for the contracts used when swapping & staking
-    function setApprovals() external override {
+    function setApprovals() external {
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, 0);
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, type(uint256).max);
 
@@ -34,6 +34,9 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
             BOOSTER,
             type(uint256).max
         );
+
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
 
         IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
         IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(
@@ -91,7 +94,7 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
         // sell CVX rewards for ETH
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
         if (_cvxBalance > 0) {
-            cvxEthSwap.exchange_underlying{value: 0}(1, 0, _cvxBalance, 0);
+            _swapCrvToEth(_cvxBalance);
         }
 
         // sell CRV rewards for ETH
