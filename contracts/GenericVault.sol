@@ -99,7 +99,7 @@ contract GenericUnionVault is ERC20, Ownable {
         return IStrategy(strategy).totalUnderlying();
     }
 
-    /// @notice Returns the amount of cvxCRV a user can claim
+    /// @notice Returns the amount of underlying a user can claim
     /// @param user - address whose claimable amount to query
     /// @return amount - claimable amount
     /// @dev Does not account for penalties and fees
@@ -115,7 +115,7 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @notice Deposit user funds in the autocompounder and mints tokens
     /// representing user's share of the pool in exchange
     /// @param _to - the address that will receive the shares
-    /// @param _amount - the amount of cvxCrv to deposit
+    /// @param _amount - the amount of underlying to deposit
     /// @return _shares - the amount of shares issued
     function deposit(address _to, uint256 _amount)
         public
@@ -140,16 +140,16 @@ contract GenericUnionVault is ERC20, Ownable {
         return shares;
     }
 
-    /// @notice Deposit all of user's cvxCRV balance
+    /// @notice Deposit all of user's underlying balance
     /// @param _to - the address that will receive the shares
     /// @return _shares - the amount of shares issued
     function depositAll(address _to) external returns (uint256 _shares) {
         return deposit(_to, IERC20(underlyingToken).balanceOf(msg.sender));
     }
 
-    /// @notice Unstake cvxCrv in proportion to the amount of shares sent
+    /// @notice Unstake underlying in proportion to the amount of shares sent
     /// @param _shares - the number of shares sent
-    /// @return _withdrawable - the withdrawable cvxCrv amount
+    /// @return _withdrawable - the withdrawable underlying amount
     function _withdraw(uint256 _shares)
         internal
         returns (uint256 _withdrawable)
@@ -179,26 +179,26 @@ contract GenericUnionVault is ERC20, Ownable {
         return _withdrawable;
     }
 
-    /// @notice Unstake cvxCrv in proportion to the amount of shares sent
-    /// @param _to - address to send cvxCrv to
+    /// @notice Unstake underlying token in proportion to the amount of shares sent
+    /// @param _to - address to send underlying to
     /// @param _shares - the number of shares sent
-    /// @return withdrawn - the amount of cvxCRV returned to the user
+    /// @return withdrawn - the amount of underlying returned to the user
     function withdraw(address _to, uint256 _shares)
         public
         notToZeroAddress(_to)
         returns (uint256 withdrawn)
     {
-        // Withdraw requested amount of cvxCrv
+        // Withdraw requested amount of underlying
         uint256 _withdrawable = _withdraw(_shares);
-        // And sends back cvxCrv to user
+        // And sends back underlying to user
         IERC20(underlyingToken).safeTransfer(_to, _withdrawable);
         emit Withdraw(msg.sender, _to, _withdrawable);
         return _withdrawable;
     }
 
-    /// @notice Withdraw all of a users' position as cvxCRV
-    /// @param _to - address to send cvxCrv to
-    /// @return withdrawn - the amount of cvxCRV returned to the user
+    /// @notice Withdraw all of a users' position as underlying
+    /// @param _to - address to send underlying to
+    /// @return withdrawn - the amount of underlying returned to the user
     function withdrawAll(address _to)
         external
         notToZeroAddress(_to)
