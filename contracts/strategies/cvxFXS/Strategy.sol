@@ -77,17 +77,13 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
 
     /// @notice Claim rewards and swaps them to FXS for restaking
     /// @dev Can be called by the vault only
-    /// @param _platformFee - the platform fee
-    /// @param _callIncentive - the caller fee
     /// @param _caller - the address calling the harvest on the vault
-    /// @param _platform - the address receiving the platform fees
     /// @return harvested - the amount harvested
-    function harvest(
-        uint256 _platformFee,
-        uint256 _callIncentive,
-        address _caller,
-        address _platform
-    ) external onlyVault returns (uint256 harvested) {
+    function harvest(address _caller)
+        external
+        onlyVault
+        returns (uint256 harvested)
+    {
         // claim rewards
         cvxFxsStaking.getReward();
 
@@ -116,17 +112,20 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
             // if this is the last call, no fees
             if (IGenericVault(vault).totalSupply() != 0) {
                 // Deduce and pay out incentive to caller (not needed for final exit)
-                if (_callIncentive > 0) {
-                    uint256 incentiveAmount = (_fxsBalance * _callIncentive) /
-                        FEE_DENOMINATOR;
+                if (IGenericVault(vault).callIncentive() > 0) {
+                    uint256 incentiveAmount = (_fxsBalance *
+                        IGenericVault(vault).callIncentive()) / FEE_DENOMINATOR;
                     IERC20(FXS_TOKEN).safeTransfer(_caller, incentiveAmount);
                     _stakingAmount = _stakingAmount - incentiveAmount;
                 }
                 // Deduce and pay platform fee
-                if (_platformFee > 0) {
-                    uint256 feeAmount = (_fxsBalance * _platformFee) /
-                        FEE_DENOMINATOR;
-                    IERC20(FXS_TOKEN).safeTransfer(_platform, feeAmount);
+                if (IGenericVault(vault).platformFee() > 0) {
+                    uint256 feeAmount = (_fxsBalance *
+                        IGenericVault(vault).platformFee()) / FEE_DENOMINATOR;
+                    IERC20(FXS_TOKEN).safeTransfer(
+                        IGenericVault(vault).platform(),
+                        feeAmount
+                    );
                     _stakingAmount = _stakingAmount - feeAmount;
                 }
             }

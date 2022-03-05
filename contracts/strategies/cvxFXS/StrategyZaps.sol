@@ -37,7 +37,10 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase {
         IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
 
         IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
-        IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
+        IERC20(CVXFXS_TOKEN).safeApprove(
+            CURVE_CVXFXS_FXS_POOL,
+            type(uint256).max
+        );
 
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
@@ -92,6 +95,7 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase {
         uint256 minAmountOut,
         address to
     ) external notToZeroAddress(to) {
+        require(lpTokenAmount + crvAmount + cvxAmount > 0, "cheap");
         if (lpTokenAmount > 0) {
             IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeTransferFrom(
                 msg.sender,
