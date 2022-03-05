@@ -10,5 +10,8 @@ interface IQuoter {
         uint160 sqrtPriceLimitX96
     ) external view returns (uint256 amountOut);
 
-    function quoteExactInput(bytes memory path, uint256 amountIn) external view returns (uint256 amountOut);
+    function quoteExactInput(bytes memory path, uint256 amountIn)
+        external
+        view
+        returns (uint256 amountOut);
 }

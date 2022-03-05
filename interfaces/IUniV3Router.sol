@@ -14,8 +14,9 @@ interface IUniV3Router {
     }
 
     function exactInputSingle(ExactInputSingleParams calldata params)
-    external payable
-    returns (uint256 amountOut);
+        external
+        payable
+        returns (uint256 amountOut);
 
     struct ExactInputParams {
         bytes path;
@@ -25,5 +26,8 @@ interface IUniV3Router {
         uint256 amountOutMinimum;
     }
 
-    function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);
+    function exactInput(ExactInputParams calldata params)
+        external
+        payable
+        returns (uint256 amountOut);
 }

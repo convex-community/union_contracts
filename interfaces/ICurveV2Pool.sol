@@ -15,11 +15,11 @@ interface ICurveV2Pool {
         uint256 min_dy
     ) external payable returns (uint256);
 
-    function add_liquidity(
-        uint256[2] calldata amounts,
-        uint256 min_mint_amount)
-    external returns (uint256);
+    function add_liquidity(uint256[2] calldata amounts, uint256 min_mint_amount)
+        external
+        returns (uint256);
 
     function future_A_gamma_time() external view returns (uint256);
+
     function lp_price() external view returns (uint256);
 }
