@@ -94,7 +94,7 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
         // sell CVX rewards for ETH
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
         if (_cvxBalance > 0) {
-            _swapCrvToEth(_cvxBalance);
+            _swapCvxToEth(_cvxBalance);
         }
 
         // sell CRV rewards for ETH

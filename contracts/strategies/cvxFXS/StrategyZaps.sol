@@ -36,6 +36,9 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase {
         IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
         IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
 
+        IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
+        IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
+
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
     }
