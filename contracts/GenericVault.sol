@@ -17,7 +17,7 @@ contract GenericUnionVault is ERC20, Ownable {
     uint256 public constant MAX_CALL_INCENTIVE = 500;
     uint256 public constant FEE_DENOMINATOR = 10000;
 
-    address public immutable underlyingToken;
+    address public immutable underlying;
     address public strategy;
     address public platform;
 
@@ -37,7 +37,7 @@ contract GenericUnionVault is ERC20, Ownable {
             string(abi.encodePacked("u", ERC20(_token).symbol()))
         )
     {
-        underlyingToken = _token;
+        underlying = _token;
     }
 
     /// @notice Updates the withdrawal penalty
@@ -88,11 +88,6 @@ contract GenericUnionVault is ERC20, Ownable {
         emit StrategySet(_strategy);
     }
 
-    /// @notice Returns the address of the underlying token
-    function underlying() external view returns (address) {
-        return underlyingToken;
-    }
-
     /// @notice Query the amount currently staked
     /// @return total - the total amount of tokens staked
     function totalUnderlying() public view returns (uint256 total) {
@@ -125,7 +120,7 @@ contract GenericUnionVault is ERC20, Ownable {
         require(_amount > 0, "Deposit too small");
 
         uint256 _before = totalUnderlying();
-        IERC20(underlyingToken).safeTransferFrom(msg.sender, strategy, _amount);
+        IERC20(underlying).safeTransferFrom(msg.sender, strategy, _amount);
         IStrategy(strategy).stake(_amount);
 
         // Issues shares in proportion of deposit to pool amount
@@ -144,7 +139,7 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @param _to - the address that will receive the shares
     /// @return _shares - the amount of shares issued
     function depositAll(address _to) external returns (uint256 _shares) {
-        return deposit(_to, IERC20(underlyingToken).balanceOf(msg.sender));
+        return deposit(_to, IERC20(underlying).balanceOf(msg.sender));
     }
 
     /// @notice Unstake underlying in proportion to the amount of shares sent
@@ -163,7 +158,7 @@ contract GenericUnionVault is ERC20, Ownable {
         if (totalSupply() == 0) {
             harvest();
             IStrategy(strategy).withdraw(totalUnderlying());
-            _withdrawable = IERC20(underlyingToken).balanceOf(address(this));
+            _withdrawable = IERC20(underlying).balanceOf(address(this));
         }
         // Otherwise compute share and unstake
         else {
@@ -191,7 +186,7 @@ contract GenericUnionVault is ERC20, Ownable {
         // Withdraw requested amount of underlying
         uint256 _withdrawable = _withdraw(_shares);
         // And sends back underlying to user
-        IERC20(underlyingToken).safeTransfer(_to, _withdrawable);
+        IERC20(underlying).safeTransfer(_to, _withdrawable);
         emit Withdraw(msg.sender, _to, _withdrawable);
         return _withdrawable;
     }
