@@ -2,7 +2,6 @@ from brownie import interface, chain
 import brownie
 from tests.utils import CURVE_CRV_ETH_POOL, CURVE_CVXCRV_CRV_POOL, approx
 from tests.utils.constants import (
-    CVXCRV_REWARDS,
     CRV_TOKEN,
     ADDRESS_ZERO,
     SPELL,
