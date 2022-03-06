@@ -40,6 +40,8 @@ contract CvxFxsStrategyBase {
         0xF3A43307DcAFa93275993862Aae628fCB50dC768;
     address public constant USDT_TOKEN =
         0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    address public constant USDC_TOKEN =
+        0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant FRAX_TOKEN =
         0x853d955aCEf822Db058eb8505911ED77F175b99e;
 
@@ -242,7 +244,7 @@ contract CvxFxsStrategyBase {
                     abi.encodePacked(
                         WETH_TOKEN,
                         fee,
-                        USDT_TOKEN,
+                        USDC_TOKEN,
                         fee,
                         FRAX_TOKEN
                     ),

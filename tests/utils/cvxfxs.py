@@ -13,7 +13,7 @@ from .constants import (
     UNI_QUOTER,
     WETH,
     FRAX,
-    USDT,
+    USDC,
     UNI_ROUTER,
     CVXFXS,
 )
@@ -84,7 +84,7 @@ def calc_harvest_amount_uniswap(strategy):
 
 def eth_fxs_unistable(amount):
     path = encode_single_packed(
-        "(address,uint24,address,uint24,address)", [WETH, 500, USDT, 500, FRAX]
+        "(address,uint24,address,uint24,address)", [WETH, 500, USDC, 500, FRAX]
     )
     stable_balance = interface.IQuoter(UNI_QUOTER).quoteExactInput(path, amount)
     return interface.IUniV2Router(UNI_ROUTER).getAmountsOut(
