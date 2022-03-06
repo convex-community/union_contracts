@@ -3,15 +3,21 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./StrategyBase.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/IUniV2Router.sol";
+import "../../../interfaces/ICurveTriCrypto.sol";
 
-contract CvxFxsZaps is Ownable, CvxFxsStrategyBase {
+contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
+
+    address private constant TRICRYPTO =
+        0xD51a44d3FaE010294C616388b506AcdA1bfAAE46;
+    ICurveTriCrypto triCryptoSwap = ICurveTriCrypto(TRICRYPTO);
 
     constructor(address _vault) {
         vault = _vault;
@@ -187,6 +193,142 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase {
             block.timestamp + 1
         );
         _depositFromEth(address(this).balance, minAmountOut, to);
+    }
+
+    /// @notice Remove liquidity from the Curve pool for either asset
+    /// @param _amount - amount to withdraw
+    /// @param _assetIndex - asset to withdraw (0: FXS, 1: cvxFXS)
+    /// @param _minAmountOut - minimum amount of LP tokens expected
+    /// @param _to - address to send withdrawn underlying to
+    /// @return amount of underlying withdrawn
+    function _claimAsUnderlying(
+        uint256 _amount,
+        uint256 _assetIndex,
+        uint256 _minAmountOut,
+        address _to
+    ) internal returns (uint256) {
+        return
+            cvxFxsFxsSwap.remove_liquidity_one_coin(
+                _amount,
+                _assetIndex,
+                _minAmountOut,
+                false,
+                _to
+            );
+    }
+
+    /// @notice Retrieves a user's vault shares and withdraw all
+    /// @param _amount - amount of shares to retrieve
+    function _claimAndWithdraw(uint256 _amount) internal {
+        IERC20(vault).safeTransferFrom(msg.sender, address(this), _amount);
+        IGenericVault(vault).withdrawAll(address(this));
+    }
+
+    /// @notice Claim as either FXS or cvxFXS
+    /// @param amount - amount to withdraw
+    /// @param assetIndex - asset to withdraw (0: FXS, 1: cvxFXS)
+    /// @param minAmountOut - minimum amount of LP tokens expected
+    /// @param to - address to send withdrawn underlying to
+    /// @return amount of underlying withdrawn
+    function claimFromVaultAsUnderlying(
+        uint256 amount,
+        uint256 assetIndex,
+        uint256 minAmountOut,
+        address to
+    ) public notToZeroAddress(to) returns (uint256) {
+        _claimAndWithdraw(amount);
+        return
+            _claimAsUnderlying(
+                IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).balanceOf(address(this)),
+                assetIndex,
+                minAmountOut,
+                to
+            );
+    }
+
+    /// @notice Claim as native ETH
+    /// @param amount - amount to withdraw
+    /// @param minAmountOut - minimum amount of ETH expected
+    /// @param to - address to send ETH to
+    /// @return amount of ETH withdrawn
+    function claimFromVaultAsEth(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) public nonReentrant notToZeroAddress(to) returns (uint256) {
+        uint256 _ethAmount = _claimAsEth(amount);
+        require(_ethAmount >= minAmountOut, "Slippage");
+        (bool success, ) = to.call{value: _ethAmount}("");
+        require(success, "ETH transfer failed");
+        return _ethAmount;
+    }
+
+    /// @notice Withdraw as native ETH (internal)
+    /// @param amount - amount to withdraw
+    /// @return amount of ETH withdrawn
+    function _claimAsEth(uint256 amount) public nonReentrant returns (uint256) {
+        _claimAndWithdraw(amount);
+        uint256 _fxsAmount = _claimAsUnderlying(
+            IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).balanceOf(address(this)),
+            0,
+            0,
+            address(this)
+        );
+        return _swapFxsForEth(_fxsAmount, swapOption);
+    }
+
+    /// @notice Claim to any token via a univ2 router
+    /// @notice Use at your own risk
+    /// @param amount - amount of uFXS to unstake
+    /// @param minAmountOut - min amount of output token expected
+    /// @param router - address of the router to use. e.g. 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F for Sushi
+    /// @param outputToken - address of the token to swap to
+    /// @param to - address of the final recipient of the swapped tokens
+    function claimFromVaultViaUniV2EthPair(
+        uint256 amount,
+        uint256 minAmountOut,
+        address router,
+        address outputToken,
+        address to
+    ) public notToZeroAddress(to) {
+        require(router != address(0));
+        _claimAsEth(amount);
+        address[] memory _path = new address[](2);
+        _path[0] = WETH_TOKEN;
+        _path[1] = outputToken;
+        IUniV2Router(router).swapExactETHForTokens{
+            value: address(this).balance
+        }(minAmountOut, _path, to, block.timestamp + 1);
+    }
+
+    /// @notice Claim as USDT via Tricrypto
+    /// @param amount - the amount of uFXS to unstake
+    /// @param minAmountOut - the min expected amount of USDT to receive
+    /// @param to - the adress that will receive the USDT
+    /// @return amount of USDT obtained
+    function claimFromVaultAsUsdt(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) public notToZeroAddress(to) returns (uint256) {
+        uint256 _ethAmount = _claimAsEth(amount);
+        _swapEthToUsdt(_ethAmount, minAmountOut);
+        uint256 _usdtAmount = IERC20(USDT_TOKEN).balanceOf(address(this));
+        IERC20(USDT_TOKEN).safeTransfer(to, _usdtAmount);
+        return _usdtAmount;
+    }
+
+    /// @notice swap ETH to USDT via Curve's tricrypto
+    /// @param _amount - the amount of ETH to swap
+    /// @param _minAmountOut - the minimum amount expected
+    function _swapEthToUsdt(uint256 _amount, uint256 _minAmountOut) internal {
+        triCryptoSwap.exchange{value: _amount}(
+            2, // ETH
+            0, // USDT
+            _amount,
+            _minAmountOut,
+            true
+        );
     }
 
     /// @notice Execute calls on behalf of contract

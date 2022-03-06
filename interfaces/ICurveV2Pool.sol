@@ -19,7 +19,13 @@ interface ICurveV2Pool {
         external
         returns (uint256);
 
-    function future_A_gamma_time() external view returns (uint256);
-
     function lp_price() external view returns (uint256);
+
+    function remove_liquidity_one_coin(
+        uint256 token_amount,
+        uint256 i,
+        uint256 min_amount,
+        bool use_eth,
+        address receiver
+    ) external returns (uint256);
 }
