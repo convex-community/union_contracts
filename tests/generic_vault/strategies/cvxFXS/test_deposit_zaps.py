@@ -12,7 +12,7 @@ from ....utils.constants import (
     CRV,
     CVX,
     CURVE_CRV_ETH_POOL,
-    CURVE_CVX_ETH_POOL, CURVE_CVXFXS_FXS_LP_TOKEN,
+    CURVE_CVX_ETH_POOL, CURVE_CVXFXS_FXS_LP_TOKEN, SPELL, SUSHI_ROUTER, WETH,
 )
 from ....utils.cvxfxs import (
     estimate_lp_tokens_received,
@@ -122,4 +122,58 @@ def test_deposit_with_rewards(
     assert vault.balanceOfUnderlying(alice) == lp_tokens_from_fxs + amount_lp
     assert vault.balanceOf(alice) == lp_tokens_from_fxs + amount_lp
 
+    chain.revert()
+
+
+def test_deposit_from_eth(
+    alice, zaps, owner, vault, strategy
+):
+    chain.snapshot()
+    zaps.setSwapOption(0, {"from": owner})
+
+    amount = 1e18
+
+    with brownie.reverts():
+        zaps.depositFromEth(0, ADDRESS_ZERO, {"value": amount, "from": alice}
+        )
+
+    fxs_amount = eth_fxs_curve(amount)
+
+    lp_tokens_from_fxs = estimate_lp_tokens_received(fxs_amount)
+    zaps.depositFromEth(
+        0, alice, {"value": amount, "from": alice}
+    )
+
+    assert vault.balanceOfUnderlying(alice) == lp_tokens_from_fxs
+    assert vault.balanceOf(alice) == lp_tokens_from_fxs
+    chain.revert()
+
+
+def test_deposit_from_sushi(
+    alice, zaps, owner, vault, strategy
+):
+    chain.snapshot()
+    zaps.setSwapOption(0, {"from": owner})
+
+    amount = 1e18
+    interface.IERC20(SPELL).transfer(alice.address, 2e22, {"from": SPELL})
+    interface.IERC20(SPELL).approve(zaps, 2 ** 256 - 1, {"from": alice})
+
+    with brownie.reverts():
+        zaps.depositViaUniV2EthPair(amount, 0, SUSHI_ROUTER, SPELL, ADDRESS_ZERO, {"from": alice}
+        )
+
+    eth_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
+        amount, [SPELL, WETH]
+    )[-1]
+
+    fxs_amount = eth_fxs_curve(eth_amount)
+
+    lp_tokens_from_fxs = estimate_lp_tokens_received(fxs_amount)
+    zaps.depositViaUniV2EthPair(
+        amount, 0, SUSHI_ROUTER, SPELL, alice, {"from": alice}
+    )
+
+    assert vault.balanceOfUnderlying(alice) == lp_tokens_from_fxs
+    assert vault.balanceOf(alice) == lp_tokens_from_fxs
     chain.revert()
