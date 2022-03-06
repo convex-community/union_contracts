@@ -1,6 +1,6 @@
 import pytest
 import brownie
-from brownie import GenericUnionVault, CvxFxsStrategy, interface
+from brownie import GenericUnionVault, CvxFxsZaps, CvxFxsStrategy, interface
 from ....utils.constants import (
     CVXCRV,
     VE_FXS,
@@ -24,6 +24,13 @@ def strategy(owner, vault):
     strategy.setApprovals({"from": owner})
     vault.setStrategy(strategy, {"from": owner})
     yield strategy
+
+
+@pytest.fixture(scope="module")
+def zaps(owner, vault):
+    zaps = CvxFxsZaps.deploy(vault, {"from": owner})
+    zaps.setApprovals({"from": owner})
+    yield zaps
 
 
 @pytest.fixture(scope="module", autouse=True)
