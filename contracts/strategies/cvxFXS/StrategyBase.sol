@@ -206,23 +206,25 @@ contract CvxFxsStrategyBase {
             );
     }
 
-
     /// @notice Swap native ETH for FXS via different routes
     /// @param _ethAmount - amount to swap
     /// @param _option - the option to use when swapping
     /// @return amount of FXS obtained after the swap
-    function _swapEthForFxs(uint256 _ethAmount, SwapOption _option)         internal
-        returns (uint256) {
+    function _swapEthForFxs(uint256 _ethAmount, SwapOption _option)
+        internal
+        returns (uint256)
+    {
         return _swapEthFxs(_ethAmount, _option, true);
     }
-
 
     /// @notice Swap FXS for native ETH via different routes
     /// @param _fxsAmount - amount to swap
     /// @param _option - the option to use when swapping
     /// @return amount of ETH obtained after the swap
-    function _swapFxsForEth(uint256 _fxsAmount, SwapOption _option)         internal
-    returns (uint256) {
+    function _swapFxsForEth(uint256 _fxsAmount, SwapOption _option)
+        internal
+        returns (uint256)
+    {
         return _swapEthFxs(_fxsAmount, _option, false);
     }
 
@@ -230,140 +232,131 @@ contract CvxFxsStrategyBase {
     /// @param _amount - amount to swap
     /// @param _ethToFxs - whether to swap from eth to fxs or the inverse
     /// @return amount of token obtained after the swap
-    function _curveEthFxsSwap(uint256 _amount, bool _ethToFxs) internal returns (uint256) {
+    function _curveEthFxsSwap(uint256 _amount, bool _ethToFxs)
+        internal
+        returns (uint256)
+    {
         return
-        fxsEthSwap.exchange_underlying{value: _ethToFxs ? _amount : 0}(
-            _ethToFxs ? 0 : 1,
-            _ethToFxs ? 1: 0,
-            _amount,
-            0
-        );
+            fxsEthSwap.exchange_underlying{value: _ethToFxs ? _amount : 0}(
+                _ethToFxs ? 0 : 1,
+                _ethToFxs ? 1 : 0,
+                _amount,
+                0
+            );
     }
-
 
     /// @notice Swap ETH<->FXS on UniV3 FXSETH pool
     /// @param _amount - amount to swap
     /// @param _ethToFxs - whether to swap from eth to fxs or the inverse
     /// @return amount of token obtained after the swap
-    function _uniV3EthFxsSwap(uint256 _amount, bool _ethToFxs) internal returns (uint256) {
+    function _uniV3EthFxsSwap(uint256 _amount, bool _ethToFxs)
+        internal
+        returns (uint256)
+    {
         IUniV3Router.ExactInputSingleParams memory _params = IUniV3Router
-        .ExactInputSingleParams(
-            _ethToFxs ? WETH_TOKEN : FXS_TOKEN,
-            _ethToFxs ? FXS_TOKEN : WETH_TOKEN,
-            10000,
-            address(this),
-            block.timestamp + 1,
-            _amount,
-            1,
-            0
-        );
+            .ExactInputSingleParams(
+                _ethToFxs ? WETH_TOKEN : FXS_TOKEN,
+                _ethToFxs ? FXS_TOKEN : WETH_TOKEN,
+                10000,
+                address(this),
+                block.timestamp + 1,
+                _amount,
+                1,
+                0
+            );
         return
-        IUniV3Router(UNIV3_ROUTER).exactInputSingle{value: _ethToFxs ? _amount : 0}(
-            _params
-        );
+            IUniV3Router(UNIV3_ROUTER).exactInputSingle{
+                value: _ethToFxs ? _amount : 0
+            }(_params);
     }
 
     /// @notice Swap ETH->FXS on UniV3 via stable pair
     /// @param _amount - amount to swap
     /// @return amount of token obtained after the swap
-    function _uniStableEthToFxsSwap(uint256 _amount) internal returns (uint256) {
+    function _uniStableEthToFxsSwap(uint256 _amount)
+        internal
+        returns (uint256)
+    {
         uint24 fee = 500;
         IUniV3Router.ExactInputParams memory _params = IUniV3Router
-        .ExactInputParams(
-            abi.encodePacked(
-                WETH_TOKEN,
-                fee,
-                USDC_TOKEN,
-                fee,
-                FRAX_TOKEN
-            ),
-            address(this),
-            block.timestamp + 1,
-            _amount,
-            0
-        );
+            .ExactInputParams(
+                abi.encodePacked(WETH_TOKEN, fee, USDC_TOKEN, fee, FRAX_TOKEN),
+                address(this),
+                block.timestamp + 1,
+                _amount,
+                0
+            );
 
         uint256 _fraxAmount = IUniV3Router(UNIV3_ROUTER).exactInput{
-        value: _amount
+            value: _amount
         }(_params);
         address[] memory _path = new address[](2);
         _path[0] = FRAX_TOKEN;
         _path[1] = FXS_TOKEN;
         uint256[] memory amounts = IUniV2Router(UNISWAP_ROUTER)
-        .swapExactTokensForTokens(
-            _fraxAmount,
-            1,
-            _path,
-            address(this),
-            block.timestamp + 1
-        );
+            .swapExactTokensForTokens(
+                _fraxAmount,
+                1,
+                _path,
+                address(this),
+                block.timestamp + 1
+            );
         return amounts[0];
     }
-
 
     /// @notice Swap FXS->ETH on UniV3 via stable pair
     /// @param _amount - amount to swap
     /// @return amount of token obtained after the swap
-    function _uniStableFxsToEthSwap(uint256 _amount) internal returns (uint256) {
-
+    function _uniStableFxsToEthSwap(uint256 _amount)
+        internal
+        returns (uint256)
+    {
         address[] memory _path = new address[](2);
         _path[0] = FXS_TOKEN;
         _path[1] = FRAX_TOKEN;
         uint256[] memory amounts = IUniV2Router(UNISWAP_ROUTER)
-        .swapExactTokensForTokens(
-            _amount,
-            1,
-            _path,
-            address(this),
-            block.timestamp + 1
-        );
+            .swapExactTokensForTokens(
+                _amount,
+                1,
+                _path,
+                address(this),
+                block.timestamp + 1
+            );
 
         uint256 _fraxAmount = amounts[0];
         uint24 fee = 500;
 
         IUniV3Router.ExactInputParams memory _params = IUniV3Router
-        .ExactInputParams(
-            abi.encodePacked(
-                FRAX_TOKEN,
-                fee,
-                USDC_TOKEN,
-                fee,
-                WETH_TOKEN
-            ),
-            address(this),
-            block.timestamp + 1,
-            _fraxAmount,
-            0
-        );
+            .ExactInputParams(
+                abi.encodePacked(FRAX_TOKEN, fee, USDC_TOKEN, fee, WETH_TOKEN),
+                address(this),
+                block.timestamp + 1,
+                _fraxAmount,
+                0
+            );
 
-        return IUniV3Router(UNIV3_ROUTER).exactInput{
-        value: 0
-        }(_params);
-
+        return IUniV3Router(UNIV3_ROUTER).exactInput{value: 0}(_params);
     }
-
 
     /// @notice Swap native ETH for FXS via different routes
     /// @param _amount - amount to swap
     /// @param _option - the option to use when swapping
     /// @param _ethToFxs - whether to swap from eth to fxs or the inverse
     /// @return amount of token obtained after the swap
-    function _swapEthFxs(uint256 _amount, SwapOption _option, bool _ethToFxs)
-        internal
-        returns (uint256)
-    {
+    function _swapEthFxs(
+        uint256 _amount,
+        SwapOption _option,
+        bool _ethToFxs
+    ) internal returns (uint256) {
         if (_option == SwapOption.Curve) {
-
             return _curveEthFxsSwap(_amount, _ethToFxs);
-
         } else if (_option == SwapOption.Uniswap) {
-
             return _uniV3EthFxsSwap(_amount, _ethToFxs);
-
         } else {
-
-            return _ethToFxs ? _uniStableEthToFxsSwap(_amount) : _uniStableFxsToEthSwap(_amount);
-
+            return
+                _ethToFxs
+                    ? _uniStableEthToFxsSwap(_amount)
+                    : _uniStableFxsToEthSwap(_amount);
         }
     }
 
