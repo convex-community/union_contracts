@@ -42,6 +42,9 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
         IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
         IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
 
+        IERC20(FXS_TOKEN).safeApprove(CURVE_FXS_ETH_POOL, 0);
+        IERC20(FXS_TOKEN).safeApprove(CURVE_FXS_ETH_POOL, type(uint256).max);
+
         IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
         IERC20(CVXFXS_TOKEN).safeApprove(
             CURVE_CVXFXS_FXS_POOL,
@@ -329,6 +332,22 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
             _minAmountOut,
             true
         );
+    }
+
+    /// @notice Claim as CVX via CurveCVX
+    /// @param amount - the amount of uFXS to unstake
+    /// @param minAmountOut - the min expected amount of USDT to receive
+    /// @param to - the adress that will receive the CVX
+    /// @return amount of CVX obtained
+    function claimFromVaultAsUsdt(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) public notToZeroAddress(to) returns (uint256) {
+        uint256 _ethAmount = _claimAsEth(amount);
+        uint256 _cvxAmount = _swapEthToCvx(_ethAmount, minAmountOut);
+        IERC20(CVX_TOKEN).safeTransfer(to, _cvxAmount);
+        return _cvxAmount;
     }
 
     /// @notice Execute calls on behalf of contract
