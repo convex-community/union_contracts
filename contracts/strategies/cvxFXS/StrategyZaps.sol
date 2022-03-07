@@ -342,7 +342,7 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
     /// @param minAmountOut - the min expected amount of USDT to receive
     /// @param to - the adress that will receive the CVX
     /// @return amount of CVX obtained
-    function claimFromVaultAsUsdt(
+    function claimFromVaultAsCvx(
         uint256 amount,
         uint256 minAmountOut,
         address to
