@@ -11,8 +11,7 @@ from ....utils.cvxfxs import (
 
 
 @pytest.mark.parametrize("option", [0, 1, 2])
-def test_harvest_single_staker(alice, bob, owner, vault, strategy, option):
-    chain.snapshot()
+def test_harvest_single_staker(fn_isolation, alice, bob, owner, vault, strategy, option):
     strategy.setSwapOption(option, {"from": owner})
     alice_initial_balance = cvxfxs_lp_balance(alice)
     bob_initial_balance = fxs_balance(bob)
@@ -55,14 +54,12 @@ def test_harvest_single_staker(alice, bob, owner, vault, strategy, option):
         alice_initial_balance + estimated_harvest,
         1e-5,
     )
-    chain.revert()
 
 
 @pytest.mark.parametrize("option", [0, 1, 2])
 def test_harvest_multiple_stakers(
-    alice, bob, charlie, dave, erin, owner, vault, strategy, option
+    fn_isolation, alice, bob, charlie, dave, erin, owner, vault, strategy, option
 ):
-    chain.snapshot()
     strategy.setSwapOption(option, {"from": owner})
     initial_balances = {}
     accounts = [alice, bob, charlie, dave, erin]
@@ -115,4 +112,3 @@ def test_harvest_multiple_stakers(
             (estimated_harvest) // len(accounts),
             1e5,
         )
-    chain.revert()

@@ -15,13 +15,22 @@ from .constants import (
     FRAX,
     USDC,
     UNI_ROUTER,
-    CVXFXS,
+    CVXFXS, CVXFXS_FXS_GAUGE_DEPOSIT,
 )
+
+random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
+
+
+def estimate_underlying_received(amount, token):
+    interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(CURVE_CVXFXS_FXS_POOL, 2 ** 256 - 1, {'from': CVXFXS_FXS_GAUGE_DEPOSIT})
+    tx = interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).remove_liquidity_one_coin(amount, token, 0, False, random_wallet, {'from': CVXFXS_FXS_GAUGE_DEPOSIT})
+    value = tx.return_value
+    chain.undo(2)
+    return value
 
 
 def estimate_lp_tokens_received(amount, amount_cvxfxs=0):
     lpt = interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN)
-    random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
     fxs = interface.IERC20(FXS)
     if amount == 0 and amount_cvxfxs == 0:
         return 0
@@ -74,6 +83,12 @@ def eth_fxs_uniswap(amount):
     )
 
 
+def fxs_eth_uniswap(amount):
+    return interface.IQuoter(UNI_QUOTER).quoteExactInputSingle(
+        FXS, WETH, 10000, amount, 0
+    )
+
+
 def calc_harvest_amount_uniswap(strategy):
     fxs_balance, eth_balance = calc_rewards(strategy)
     if eth_balance > 0:
@@ -92,6 +107,15 @@ def eth_fxs_unistable(amount):
     )[-1]
 
 
+def fxs_eth_unistable(amount):
+    stable_balance = interface.IUniV2Router(UNI_ROUTER).getAmountsOut(
+        amount, [FXS, FRAX])[-1]
+    path = encode_single_packed(
+        "(address,uint24,address,uint24,address)", [FRAX, 500, USDC, 500, WETH]
+    )
+    return interface.IQuoter(UNI_QUOTER).quoteExactInput(path, stable_balance)
+
+
 def calc_harvest_amount_unistable(strategy):
     fxs_balance, eth_balance = calc_rewards(strategy)
     if eth_balance > 0:
@@ -103,6 +127,14 @@ def calc_harvest_amount_unistable(strategy):
 def eth_fxs_curve(amount):
     return (
         interface.ICurveV2Pool(CURVE_FXS_ETH_POOL).get_dy(0, 1, amount)
+        if amount > 0
+        else 0
+    )
+
+
+def fxs_eth_curve(amount):
+    return (
+        interface.ICurveV2Pool(CURVE_FXS_ETH_POOL).get_dy(1, 0, amount)
         if amount > 0
         else 0
     )

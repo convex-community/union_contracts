@@ -5,6 +5,7 @@ import "../../../interfaces/ICurveV2Pool.sol";
 import "../../../interfaces/ICurveFactoryPool.sol";
 import "../../../interfaces/IBasicRewards.sol";
 import "../../../interfaces/IBooster.sol";
+import "../../../interfaces/IWETH.sol";
 import "../../../interfaces/IUniV3Router.sol";
 import "../../../interfaces/IUniV2Router.sol";
 
@@ -264,8 +265,8 @@ contract CvxFxsStrategyBase {
                 1,
                 0
             );
-        return
-            IUniV3Router(UNIV3_ROUTER).exactInputSingle{
+
+            return IUniV3Router(UNIV3_ROUTER).exactInputSingle{
                 value: _ethToFxs ? _amount : 0
             }(_params);
     }
@@ -301,7 +302,7 @@ contract CvxFxsStrategyBase {
                 address(this),
                 block.timestamp + 1
             );
-        return amounts[0];
+        return amounts[1];
     }
 
     /// @notice Swap FXS->ETH on UniV3 via stable pair
@@ -323,7 +324,7 @@ contract CvxFxsStrategyBase {
                 block.timestamp + 1
             );
 
-        uint256 _fraxAmount = amounts[0];
+        uint256 _fraxAmount = amounts[1];
         uint24 fee = 500;
 
         IUniV3Router.ExactInputParams memory _params = IUniV3Router
@@ -335,7 +336,9 @@ contract CvxFxsStrategyBase {
                 0
             );
 
-        return IUniV3Router(UNIV3_ROUTER).exactInput{value: 0}(_params);
+        uint256 _ethAmount = IUniV3Router(UNIV3_ROUTER).exactInput{value: 0}(_params);
+        IWETH(WETH_TOKEN).withdraw(_ethAmount);
+        return _ethAmount;
     }
 
     /// @notice Swap native ETH for FXS via different routes

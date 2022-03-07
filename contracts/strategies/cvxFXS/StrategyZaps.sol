@@ -48,6 +48,12 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
         IERC20(FXS_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
         IERC20(FXS_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
 
+        IERC20(FXS_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(FXS_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
+
         IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
         IERC20(CVXFXS_TOKEN).safeApprove(
             CURVE_CVXFXS_FXS_POOL,
