@@ -266,9 +266,13 @@ contract CvxFxsStrategyBase {
                 0
             );
 
-            return IUniV3Router(UNIV3_ROUTER).exactInputSingle{
+            uint256 _receivedAmount =  IUniV3Router(UNIV3_ROUTER).exactInputSingle{
                 value: _ethToFxs ? _amount : 0
             }(_params);
+            if (!_ethToFxs) {
+                IWETH(WETH_TOKEN).withdraw(_receivedAmount);
+            }
+            return _receivedAmount;
     }
 
     /// @notice Swap ETH->FXS on UniV3 via stable pair
