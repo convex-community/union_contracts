@@ -11,7 +11,9 @@ from ....utils.cvxfxs import (
 
 
 @pytest.mark.parametrize("option", [0, 1, 2])
-def test_harvest_single_staker(fn_isolation, alice, bob, owner, vault, strategy, option):
+def test_harvest_single_staker(
+    fn_isolation, alice, bob, owner, vault, strategy, option
+):
     strategy.setSwapOption(option, {"from": owner})
     alice_initial_balance = cvxfxs_lp_balance(alice)
     bob_initial_balance = fxs_balance(bob)

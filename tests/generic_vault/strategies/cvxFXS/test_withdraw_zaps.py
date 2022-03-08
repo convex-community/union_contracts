@@ -5,13 +5,28 @@ from decimal import Decimal
 
 from ....utils.constants import (
     TRICRYPTO,
-    USDT_TOKEN, CURVE_CVX_ETH_POOL, CVX, CVXFXS, FXS, SUSHI_ROUTER, WETH, SPELL, ADDRESS_ZERO,
+    USDT_TOKEN,
+    CURVE_CVX_ETH_POOL,
+    CVX,
+    CVXFXS,
+    FXS,
+    SUSHI_ROUTER,
+    WETH,
+    SPELL,
+    ADDRESS_ZERO,
 )
-from ....utils.cvxfxs import estimate_underlying_received, fxs_eth_curve, fxs_eth_uniswap, fxs_eth_unistable
+from ....utils.cvxfxs import (
+    estimate_underlying_received,
+    fxs_eth_curve,
+    fxs_eth_uniswap,
+    fxs_eth_unistable,
+)
 
 
 @pytest.mark.parametrize("option", [0, 1, 2])
-def test_claim_as_usdt(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option):
+def test_claim_as_usdt(
+    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option
+):
     amount = int(1e21)
     zaps.setSwapOption(option, {"from": owner})
     for i, account in enumerate([alice, bob, charlie]):
@@ -38,7 +53,9 @@ def test_claim_as_usdt(fn_isolation, alice, bob, charlie, owner, vault, strategy
 
 
 @pytest.mark.parametrize("option", [0, 1, 2])
-def test_claim_as_cvx(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option):
+def test_claim_as_cvx(
+    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option
+):
     amount = int(1e21)
     zaps.setSwapOption(option, {"from": owner})
     for i, account in enumerate([alice, bob, charlie]):
@@ -65,7 +82,9 @@ def test_claim_as_cvx(fn_isolation, alice, bob, charlie, owner, vault, strategy,
 
 
 @pytest.mark.parametrize("option", [0, 1, 2])
-def test_claim_as_eth(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option):
+def test_claim_as_eth(
+    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option
+):
     amount = int(1e21)
     alice_original_balance = alice.balance()
     zaps.setSwapOption(option, {"from": owner})
@@ -92,26 +111,37 @@ def test_claim_as_eth(fn_isolation, alice, bob, charlie, owner, vault, strategy,
 
 
 @pytest.mark.parametrize("asset_index", [0, 1])
-def test_claim_as_underlying(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, asset_index):
+def test_claim_as_underlying(
+    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, asset_index
+):
     amount = int(1e21)
     for i, account in enumerate([alice, bob, charlie]):
         vault.deposit(account, amount, {"from": account})
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
-    fxs_amount = estimate_underlying_received(amount * (1 - withdrawal_penalty), asset_index)
+    fxs_amount = estimate_underlying_received(
+        amount * (1 - withdrawal_penalty), asset_index
+    )
 
     asset = [FXS, CVXFXS]
     initial_balance = interface.IERC20(asset[asset_index]).balanceOf(alice)
 
     vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
 
-    zaps.claimFromVaultAsUnderlying(vault.balanceOf(alice), asset_index, 0, alice.address, {"from": alice})
-    assert interface.IERC20(asset[asset_index]).balanceOf(alice) == fxs_amount + initial_balance
+    zaps.claimFromVaultAsUnderlying(
+        vault.balanceOf(alice), asset_index, 0, alice.address, {"from": alice}
+    )
+    assert (
+        interface.IERC20(asset[asset_index]).balanceOf(alice)
+        == fxs_amount + initial_balance
+    )
 
 
 @pytest.mark.parametrize("option", [0, 1, 2])
-def test_claim_as_spell(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option):
+def test_claim_as_spell(
+    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option
+):
     amount = int(1e21)
     zaps.setSwapOption(option, {"from": owner})
     for i, account in enumerate([alice, bob, charlie]):
@@ -145,18 +175,30 @@ def test_not_to_zero(alice, vault, strategy, zaps):
 
     with brownie.reverts("Invalid address!"):
         zaps.claimFromVaultViaUniV2EthPair(
-            vault.balanceOf(alice), 0, SUSHI_ROUTER, SPELL, ADDRESS_ZERO, {"from": alice}
+            vault.balanceOf(alice),
+            0,
+            SUSHI_ROUTER,
+            SPELL,
+            ADDRESS_ZERO,
+            {"from": alice},
         )
 
     with brownie.reverts("Invalid address!"):
-        zaps.claimFromVaultAsEth(vault.balanceOf(alice), 0, ADDRESS_ZERO, {"from": alice})
+        zaps.claimFromVaultAsEth(
+            vault.balanceOf(alice), 0, ADDRESS_ZERO, {"from": alice}
+        )
 
     with brownie.reverts("Invalid address!"):
-        zaps.claimFromVaultAsUnderlying(vault.balanceOf(alice), 0, 0, ADDRESS_ZERO, {"from": alice})
+        zaps.claimFromVaultAsUnderlying(
+            vault.balanceOf(alice), 0, 0, ADDRESS_ZERO, {"from": alice}
+        )
 
     with brownie.reverts("Invalid address!"):
-        zaps.claimFromVaultAsCvx(vault.balanceOf(alice), 0, ADDRESS_ZERO, {"from": alice})
+        zaps.claimFromVaultAsCvx(
+            vault.balanceOf(alice), 0, ADDRESS_ZERO, {"from": alice}
+        )
 
     with brownie.reverts("Invalid address!"):
-        zaps.claimFromVaultAsUsdt(vault.balanceOf(alice), 0, ADDRESS_ZERO, {"from": alice})
-
+        zaps.claimFromVaultAsUsdt(
+            vault.balanceOf(alice), 0, ADDRESS_ZERO, {"from": alice}
+        )

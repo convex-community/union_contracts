@@ -12,7 +12,11 @@ from ....utils.constants import (
     CRV,
     CVX,
     CURVE_CRV_ETH_POOL,
-    CURVE_CVX_ETH_POOL, CURVE_CVXFXS_FXS_LP_TOKEN, SPELL, SUSHI_ROUTER, WETH,
+    CURVE_CVX_ETH_POOL,
+    CURVE_CVXFXS_FXS_LP_TOKEN,
+    SPELL,
+    SUSHI_ROUTER,
+    WETH,
 )
 from ....utils.cvxfxs import (
     estimate_lp_tokens_received,
@@ -22,8 +26,7 @@ from ....utils.cvxfxs import (
 )
 
 
-def test_deposit_from_underlying(alice, zaps, vault, strategy):
-    chain.snapshot()
+def test_deposit_from_underlying(fn_isolation, alice, zaps, vault, strategy):
 
     alice_initial_balance = cvxfxs_lp_balance(alice)
 
@@ -67,16 +70,13 @@ def test_deposit_from_underlying(alice, zaps, vault, strategy):
     vault.withdrawAll(alice, {"from": alice})
     assert cvxfxs_lp_balance(alice) > alice_initial_balance
 
-    chain.revert()
-
 
 @pytest.mark.parametrize("amount_crv", [0, 1e21])
 @pytest.mark.parametrize("amount_cvx", [0, 1e21])
 @pytest.mark.parametrize("amount_lp", [0, 1e21])
 def test_deposit_with_rewards(
-    alice, zaps, owner, vault, strategy, amount_crv, amount_cvx, amount_lp
+    fn_isolation, alice, zaps, owner, vault, strategy, amount_crv, amount_cvx, amount_lp
 ):
-    chain.snapshot()
     zaps.setSwapOption(0, {"from": owner})
 
     print(f"CVX: {amount_cvx}, CRV: {amount_crv}, LP: {amount_lp}")
@@ -97,7 +97,9 @@ def test_deposit_with_rewards(
 
     interface.IERC20(CVX).approve(zaps, 2 ** 256 - 1, {"from": alice})
     interface.IERC20(CRV).approve(zaps, 2 ** 256 - 1, {"from": alice})
-    interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(zaps, 2 ** 256 - 1, {"from": alice})
+    interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(
+        zaps, 2 ** 256 - 1, {"from": alice}
+    )
 
     """
     disabled for crashing RPC trace
@@ -122,37 +124,25 @@ def test_deposit_with_rewards(
     assert vault.balanceOfUnderlying(alice) == lp_tokens_from_fxs + amount_lp
     assert vault.balanceOf(alice) == lp_tokens_from_fxs + amount_lp
 
-    chain.revert()
 
-
-def test_deposit_from_eth(
-    alice, zaps, owner, vault, strategy
-):
-    chain.snapshot()
+def test_deposit_from_eth(fn_isolation, alice, zaps, owner, vault, strategy):
     zaps.setSwapOption(0, {"from": owner})
 
     amount = 1e18
 
     with brownie.reverts():
-        zaps.depositFromEth(0, ADDRESS_ZERO, {"value": amount, "from": alice}
-        )
+        zaps.depositFromEth(0, ADDRESS_ZERO, {"value": amount, "from": alice})
 
     fxs_amount = eth_fxs_curve(amount)
 
     lp_tokens_from_fxs = estimate_lp_tokens_received(fxs_amount)
-    zaps.depositFromEth(
-        0, alice, {"value": amount, "from": alice}
-    )
+    zaps.depositFromEth(0, alice, {"value": amount, "from": alice})
 
     assert vault.balanceOfUnderlying(alice) == lp_tokens_from_fxs
     assert vault.balanceOf(alice) == lp_tokens_from_fxs
-    chain.revert()
 
 
-def test_deposit_from_sushi(
-    alice, zaps, owner, vault, strategy
-):
-    chain.snapshot()
+def test_deposit_from_sushi(fn_isolation, alice, zaps, owner, vault, strategy):
     zaps.setSwapOption(0, {"from": owner})
 
     amount = 1e18
@@ -160,7 +150,8 @@ def test_deposit_from_sushi(
     interface.IERC20(SPELL).approve(zaps, 2 ** 256 - 1, {"from": alice})
 
     with brownie.reverts():
-        zaps.depositViaUniV2EthPair(amount, 0, SUSHI_ROUTER, SPELL, ADDRESS_ZERO, {"from": alice}
+        zaps.depositViaUniV2EthPair(
+            amount, 0, SUSHI_ROUTER, SPELL, ADDRESS_ZERO, {"from": alice}
         )
 
     eth_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
@@ -170,10 +161,7 @@ def test_deposit_from_sushi(
     fxs_amount = eth_fxs_curve(eth_amount)
 
     lp_tokens_from_fxs = estimate_lp_tokens_received(fxs_amount)
-    zaps.depositViaUniV2EthPair(
-        amount, 0, SUSHI_ROUTER, SPELL, alice, {"from": alice}
-    )
+    zaps.depositViaUniV2EthPair(amount, 0, SUSHI_ROUTER, SPELL, alice, {"from": alice})
 
     assert vault.balanceOfUnderlying(alice) == lp_tokens_from_fxs
     assert vault.balanceOf(alice) == lp_tokens_from_fxs
-    chain.revert()

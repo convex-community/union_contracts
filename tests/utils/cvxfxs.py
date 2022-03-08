@@ -15,15 +15,20 @@ from .constants import (
     FRAX,
     USDC,
     UNI_ROUTER,
-    CVXFXS, CVXFXS_FXS_GAUGE_DEPOSIT,
+    CVXFXS,
+    CVXFXS_FXS_GAUGE_DEPOSIT,
 )
 
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
 
 
 def estimate_underlying_received(amount, token):
-    interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(CURVE_CVXFXS_FXS_POOL, 2 ** 256 - 1, {'from': CVXFXS_FXS_GAUGE_DEPOSIT})
-    tx = interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).remove_liquidity_one_coin(amount, token, 0, False, random_wallet, {'from': CVXFXS_FXS_GAUGE_DEPOSIT})
+    interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(
+        CURVE_CVXFXS_FXS_POOL, 2 ** 256 - 1, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
+    )
+    tx = interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).remove_liquidity_one_coin(
+        amount, token, 0, False, random_wallet, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
+    )
     value = tx.return_value
     chain.undo(2)
     return value
@@ -109,7 +114,8 @@ def eth_fxs_unistable(amount):
 
 def fxs_eth_unistable(amount):
     stable_balance = interface.IUniV2Router(UNI_ROUTER).getAmountsOut(
-        amount, [FXS, FRAX])[-1]
+        amount, [FXS, FRAX]
+    )[-1]
     path = encode_single_packed(
         "(address,uint24,address,uint24,address)", [FRAX, 500, USDC, 500, WETH]
     )
