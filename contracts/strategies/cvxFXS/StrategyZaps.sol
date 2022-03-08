@@ -267,7 +267,7 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
         uint256 amount,
         uint256 minAmountOut,
         address to
-    ) public nonReentrant notToZeroAddress(to) returns (uint256) {
+    ) public notToZeroAddress(to) returns (uint256) {
         uint256 _ethAmount = _claimAsEth(amount);
         require(_ethAmount >= minAmountOut, "Slippage");
         (bool success, ) = to.call{value: _ethAmount}("");
