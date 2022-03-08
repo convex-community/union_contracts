@@ -9,7 +9,8 @@ def test_set_swap_option_non_owner(alice, vault, strategy):
         strategy.setSwapOption(0, {"from": alice})
 
 
-def test_set_swap_option(fn_isolation, owner, vault, strategy):
+def test_set_swap_option(owner, vault, strategy):
+    chain.snapshot()
     for i in range(3):
         tx = strategy.setSwapOption(i, {"from": owner})
         assert strategy.swapOption() == i
@@ -17,3 +18,4 @@ def test_set_swap_option(fn_isolation, owner, vault, strategy):
 
     with brownie.reverts():
         strategy.setSwapOption(4, {"from": owner})
+    chain.revert()
