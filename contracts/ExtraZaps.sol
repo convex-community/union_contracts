@@ -348,16 +348,5 @@ contract ExtraZaps is Ownable, UnionBase {
         _depositFromEth(address(this).balance, minAmountOut, to);
     }
 
-    /// @notice Execute calls on behalf of contract
-    /// (for instance to retrieve locked tokens)
-    function execute(
-        address _to,
-        uint256 _value,
-        bytes calldata _data
-    ) external onlyOwner returns (bool, bytes memory) {
-        (bool success, bytes memory result) = _to.call{value: _value}(_data);
-        return (success, result);
-    }
-
     receive() external payable {}
 }
