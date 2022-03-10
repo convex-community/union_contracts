@@ -9,15 +9,19 @@ import "./StrategyBase.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/IUniV2Router.sol";
 import "../../../interfaces/ICurveTriCrypto.sol";
+import "../../../interfaces/ICVXLocker.sol";
 
 contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
 
+    address private constant CONVEX_LOCKER =
+    0x72a19342e8F1838460eBFCCEf09F6585e32db86E;
     address private constant TRICRYPTO =
         0xD51a44d3FaE010294C616388b506AcdA1bfAAE46;
     ICurveTriCrypto triCryptoSwap = ICurveTriCrypto(TRICRYPTO);
+    ICVXLocker locker = ICVXLocker(CONVEX_LOCKER);
 
     constructor(address _vault) {
         vault = _vault;
@@ -59,6 +63,9 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
             CURVE_CVXFXS_FXS_POOL,
             type(uint256).max
         );
+
+        IERC20(CVX_TOKEN).safeApprove(CONVEX_LOCKER, 0);
+        IERC20(CVX_TOKEN).safeApprove(CONVEX_LOCKER, type(uint256).max);
 
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
@@ -239,7 +246,7 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
     /// @notice Claim as either FXS or cvxFXS
     /// @param amount - amount to withdraw
     /// @param assetIndex - asset to withdraw (0: FXS, 1: cvxFXS)
-    /// @param minAmountOut - minimum amount of LP tokens expected
+    /// @param minAmountOut - minimum amount of underlying tokens expected
     /// @param to - address to send withdrawn underlying to
     /// @return amount of underlying withdrawn
     function claimFromVaultAsUnderlying(
@@ -347,15 +354,21 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
     /// @param amount - the amount of uFXS to unstake
     /// @param minAmountOut - the min expected amount of USDT to receive
     /// @param to - the adress that will receive the CVX
+    /// @param lock - whether to lock the CVX or not
     /// @return amount of CVX obtained
     function claimFromVaultAsCvx(
         uint256 amount,
         uint256 minAmountOut,
-        address to
+        address to,
+        bool lock
     ) public notToZeroAddress(to) returns (uint256) {
         uint256 _ethAmount = _claimAsEth(amount);
         uint256 _cvxAmount = _swapEthToCvx(_ethAmount, minAmountOut);
-        IERC20(CVX_TOKEN).safeTransfer(to, _cvxAmount);
+        if (lock) {
+            locker.lock(to, _cvxAmount, 0);
+        } else {
+            IERC20(CVX_TOKEN).safeTransfer(to, _cvxAmount);
+        }
         return _cvxAmount;
     }
 
