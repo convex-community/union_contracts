@@ -11,6 +11,13 @@ def test_harvest_non_vault(alice, owner, vault, strategy):
         strategy.harvest(AIRFORCE_SAFE, {"from": alice})
 
 
+def test_stake_non_vault(alice, owner, vault, strategy):
+    with brownie.reverts("Vault calls only"):
+        strategy.stake(10, {"from": owner})
+    with brownie.reverts("Vault calls only"):
+        strategy.stake(10, {"from": alice})
+
+
 def test_withdraw_non_vault(alice, owner, vault, strategy):
     with brownie.reverts("Vault calls only"):
         strategy.withdraw(20, {"from": owner})

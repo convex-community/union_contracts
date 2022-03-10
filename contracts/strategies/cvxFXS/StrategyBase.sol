@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "../../../interfaces/ICurveV2Pool.sol";
 import "../../../interfaces/ICurveFactoryPool.sol";
 import "../../../interfaces/IBasicRewards.sol";
-import "../../../interfaces/IBooster.sol";
 import "../../../interfaces/IWETH.sol";
 import "../../../interfaces/IUniV3Router.sol";
 import "../../../interfaces/IUniV2Router.sol";
@@ -12,8 +11,6 @@ import "../../../interfaces/IUniV2Router.sol";
 contract CvxFxsStrategyBase {
     address public constant CVXFXS_STAKING_CONTRACT =
         0xf27AFAD0142393e4b3E5510aBc5fe3743Ad669Cb;
-    address public constant BOOSTER =
-        0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
     address public constant CURVE_CRV_ETH_POOL =
         0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511;
     address public constant CURVE_CVX_ETH_POOL =
@@ -62,7 +59,7 @@ contract CvxFxsStrategyBase {
 
     IBasicRewards cvxFxsStaking = IBasicRewards(CVXFXS_STAKING_CONTRACT);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
-    IBooster booster = IBooster(BOOSTER);
+
     ICurveV2Pool crvEthSwap = ICurveV2Pool(CURVE_CRV_ETH_POOL);
     ICurveV2Pool fxsEthSwap = ICurveV2Pool(CURVE_FXS_ETH_POOL);
     ICurveV2Pool cvxFxsFxsSwap = ICurveV2Pool(CURVE_CVXFXS_FXS_POOL);
@@ -266,13 +263,13 @@ contract CvxFxsStrategyBase {
                 0
             );
 
-            uint256 _receivedAmount =  IUniV3Router(UNIV3_ROUTER).exactInputSingle{
-                value: _ethToFxs ? _amount : 0
-            }(_params);
-            if (!_ethToFxs) {
-                IWETH(WETH_TOKEN).withdraw(_receivedAmount);
-            }
-            return _receivedAmount;
+        uint256 _receivedAmount = IUniV3Router(UNIV3_ROUTER).exactInputSingle{
+            value: _ethToFxs ? _amount : 0
+        }(_params);
+        if (!_ethToFxs) {
+            IWETH(WETH_TOKEN).withdraw(_receivedAmount);
+        }
+        return _receivedAmount;
     }
 
     /// @notice Swap ETH->FXS on UniV3 via stable pair
@@ -340,7 +337,9 @@ contract CvxFxsStrategyBase {
                 0
             );
 
-        uint256 _ethAmount = IUniV3Router(UNIV3_ROUTER).exactInput{value: 0}(_params);
+        uint256 _ethAmount = IUniV3Router(UNIV3_ROUTER).exactInput{value: 0}(
+            _params
+        );
         IWETH(WETH_TOKEN).withdraw(_ethAmount);
         return _ethAmount;
     }
