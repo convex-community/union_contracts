@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./StrategyBase.sol";
+import "../../../interfaces/IBooster.sol";
 import "../../../interfaces/IStrategy.sol";
 import "../../../interfaces/IGenericVault.sol";
 
@@ -16,6 +17,9 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
     uint256 public constant FEE_DENOMINATOR = 10000;
 
     uint256 private constant PID = 72;
+    address private constant BOOSTER =
+    0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
+    IBooster booster = IBooster(BOOSTER);
 
     constructor(address _vault) {
         vault = _vault;
@@ -55,7 +59,7 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
     }
 
     /// @notice Deposits all underlying tokens in the staking contract
-    function stake(uint256 _amount) external {
+    function stake(uint256 _amount) external onlyVault {
         require(booster.deposit(PID, _amount, true));
     }
 
