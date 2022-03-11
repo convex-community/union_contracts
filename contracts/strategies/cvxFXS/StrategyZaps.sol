@@ -17,7 +17,7 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
     address public immutable vault;
 
     address private constant CONVEX_LOCKER =
-    0x72a19342e8F1838460eBFCCEf09F6585e32db86E;
+        0x72a19342e8F1838460eBFCCEf09F6585e32db86E;
     address private constant TRICRYPTO =
         0xD51a44d3FaE010294C616388b506AcdA1bfAAE46;
     ICurveTriCrypto triCryptoSwap = ICurveTriCrypto(TRICRYPTO);

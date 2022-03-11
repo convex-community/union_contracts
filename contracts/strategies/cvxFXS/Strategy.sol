@@ -8,6 +8,7 @@ import "./StrategyBase.sol";
 import "../../../interfaces/IBooster.sol";
 import "../../../interfaces/IStrategy.sol";
 import "../../../interfaces/IGenericVault.sol";
+import "../../../interfaces/ICvxFxsDeposit.sol";
 
 contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
     using SafeERC20 for IERC20;
@@ -18,8 +19,10 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
 
     uint256 private constant PID = 72;
     address private constant BOOSTER =
-    0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
+        0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
     IBooster booster = IBooster(BOOSTER);
+    address private constant FXS_DEPOSIT =
+        0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e;
 
     constructor(address _vault) {
         vault = _vault;
@@ -32,6 +35,15 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
 
         IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
         IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
+
+        IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
+        IERC20(CVXFXS_TOKEN).safeApprove(
+            CURVE_CVXFXS_FXS_POOL,
+            type(uint256).max
+        );
+
+        IERC20(FXS_TOKEN).safeApprove(FXS_DEPOSIT, 0);
+        IERC20(FXS_TOKEN).safeApprove(FXS_DEPOSIT, type(uint256).max);
 
         IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(BOOSTER, 0);
         IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(
@@ -133,9 +145,16 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
                     _stakingAmount = _stakingAmount - feeAmount;
                 }
             }
-
-            // Add liquidity on Curve
-            _staked = cvxFxsFxsSwap.add_liquidity([_stakingAmount, 0], 0);
+            // check if there is a premium on cvxFXS
+            if (cvxFxsFxsSwap.price_oracle() > 1 ether) {
+                // lock and deposit as cvxFxs
+                ICvxFxsDeposit(FXS_DEPOSIT).deposit(_stakingAmount, true);
+                _staked = cvxFxsFxsSwap.add_liquidity([0, _stakingAmount], 0);
+            }
+            // If not add liquidity on Curve
+            else {
+                _staked = cvxFxsFxsSwap.add_liquidity([_stakingAmount, 0], 0);
+            }
             // Stake on Convex
             require(booster.depositAll(PID, true));
         }

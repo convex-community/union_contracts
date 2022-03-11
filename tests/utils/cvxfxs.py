@@ -17,6 +17,7 @@ from .constants import (
     UNI_ROUTER,
     CVXFXS,
     CVXFXS_FXS_GAUGE_DEPOSIT,
+    CVX_MINING_LIB,
 )
 
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
@@ -63,7 +64,8 @@ def estimate_lp_tokens_received(amount, amount_cvxfxs=0):
 def calc_rewards(strategy):
     staking = interface.IBasicRewards(CVXFXS_STAKING_CONTRACT)
     crv_rewards = staking.earned(strategy)
-    cvx_rewards = interface.IBasicRewards(staking.extraRewards(0)).earned(strategy)
+    cvx_rewards = interface.ICvxMining(CVX_MINING_LIB).ConvertCrvToCvx(crv_rewards)
+    cvx_rewards += interface.IBasicRewards(staking.extraRewards(0)).earned(strategy)
     fxs_rewards = interface.IBasicRewards(staking.extraRewards(1)).earned(strategy)
 
     eth_balance = get_cvx_to_eth_amount(cvx_rewards)
