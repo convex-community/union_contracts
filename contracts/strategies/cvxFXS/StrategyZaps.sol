@@ -372,17 +372,6 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
         return _cvxAmount;
     }
 
-    /// @notice Execute calls on behalf of contract
-    /// (for instance to retrieve locked tokens)
-    function execute(
-        address _to,
-        uint256 _value,
-        bytes calldata _data
-    ) external onlyOwner returns (bool, bytes memory) {
-        (bool success, bytes memory result) = _to.call{value: _value}(_data);
-        return (success, result);
-    }
-
     modifier notToZeroAddress(address _to) {
         require(_to != address(0), "Invalid address!");
         _;
