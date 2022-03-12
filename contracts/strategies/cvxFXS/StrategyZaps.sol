@@ -67,6 +67,9 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
         IERC20(CVX_TOKEN).safeApprove(CONVEX_LOCKER, 0);
         IERC20(CVX_TOKEN).safeApprove(CONVEX_LOCKER, type(uint256).max);
 
+        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
+
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
     }

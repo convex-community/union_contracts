@@ -22,7 +22,7 @@ from ....utils.cvxfxs import (
     estimate_lp_tokens_received,
     get_crv_to_eth_amount,
     get_cvx_to_eth_amount,
-    eth_fxs_curve,
+    eth_fxs_curve, eth_fxs_uniswap, eth_fxs_unistable,
 )
 
 
@@ -125,16 +125,23 @@ def test_deposit_with_rewards(
     assert vault.balanceOf(alice) == lp_tokens_from_fxs + amount_lp
 
 
-def test_deposit_from_eth(fn_isolation, alice, zaps, owner, vault, strategy):
+@pytest.mark.parametrize("option", [0, 1, 2])
+def test_deposit_from_eth(fn_isolation, option, alice, zaps, owner, vault, strategy):
     zaps.setSwapOption(0, {"from": owner})
 
     amount = 1e18
 
+    zaps.setSwapOption(option, {"from": owner})
     with brownie.reverts():
         zaps.depositFromEth(0, ADDRESS_ZERO, {"value": amount, "from": alice})
 
-    fxs_amount = eth_fxs_curve(amount)
-
+    if option == 0:
+        fxs_amount = eth_fxs_curve(amount)
+    elif option == 1:
+        fxs_amount = eth_fxs_uniswap(amount)
+    elif option == 2:
+        fxs_amount = eth_fxs_unistable(amount)
+        
     lp_tokens_from_fxs = estimate_lp_tokens_received(fxs_amount)
     zaps.depositFromEth(0, alice, {"value": amount, "from": alice})
 
