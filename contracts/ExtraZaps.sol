@@ -34,7 +34,7 @@ contract ExtraZaps is Ownable, UnionBase {
     address private constant CONVEX_TRIPOOL_REWARDS =
         0x689440f2Ff927E1f24c72F1087E1FAF471eCe1c8;
     address private constant CONVEX_LOCKER =
-        0xD18140b4B819b895A3dba5442F959fA44994AF50;
+        0x72a19342e8F1838460eBFCCEf09F6585e32db86E;
 
     ICurveTriCrypto triCryptoSwap = ICurveTriCrypto(TRICRYPTO);
     ITriPool triPool = ITriPool(TRIPOOL);
@@ -346,17 +346,6 @@ contract ExtraZaps is Ownable, UnionBase {
             block.timestamp + 1
         );
         _depositFromEth(address(this).balance, minAmountOut, to);
-    }
-
-    /// @notice Execute calls on behalf of contract
-    /// (for instance to retrieve locked tokens)
-    function execute(
-        address _to,
-        uint256 _value,
-        bytes calldata _data
-    ) external onlyOwner returns (bool, bytes memory) {
-        (bool success, bytes memory result) = _to.call{value: _value}(_data);
-        return (success, result);
     }
 
     receive() external payable {}
