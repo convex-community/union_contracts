@@ -32,12 +32,12 @@ def test_claim_and_swap_on_uniswap(
     ]
 
     expected_output_amount, eth_crv_ratio = estimate_output_amount(
-        REGULAR_TOKENS, union_contract, (4 ** (1 + len(params)) - 1) // 3
+        REGULAR_TOKENS, union_contract, (8 ** (1 + len(params)) - 1) // 7
     )
     union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
     tx = union_contract.distribute(
-        params, (4 ** (1 + len(params)) - 1) // 3, True, False, True, 0, {"from": owner}
+        params, (8 ** (1 + len(params)) - 1) // 7, True, False, True, 0, {"from": owner}
     )
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
     union_balance = (
@@ -81,7 +81,7 @@ def test_claim_and_swap_on_uniswap_and_sushi(
         for token in REGULAR_TOKENS
     ]
     routers = [random.randint(0, 1) for _ in REGULAR_TOKENS]
-    router_choices = sum([4 ** i * routers[i] for i, _ in enumerate(routers)])
+    router_choices = sum([8 ** i * routers[i] for i, _ in enumerate(routers)])
     print(f"ROUTER CHOICES: {router_choices} ({routers})")
     expected_output_amount, eth_crv_ratio = estimate_output_amount(
         REGULAR_TOKENS, union_contract, router_choices

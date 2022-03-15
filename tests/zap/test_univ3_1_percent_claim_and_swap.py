@@ -15,6 +15,7 @@ from ..utils.constants import (
 
 
 def test_claim_and_swap_on_uniswap_v3_01_percent(
+    fn_isolation,
     owner,
     union_contract,
     set_mock_claims_v3_1,
@@ -24,7 +25,6 @@ def test_claim_and_swap_on_uniswap_v3_01_percent(
 ):
 
     network.gas_price("0 gwei")
-    chain.snapshot()
     original_union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
     merkle_distributor_v2.unfreeze({"from": owner})
     proofs = claim_tree.get_proof(union_contract.address)
@@ -34,13 +34,13 @@ def test_claim_and_swap_on_uniswap_v3_01_percent(
     ]
 
     expected_output_amount, eth_crv_ratio = estimate_output_amount(
-        V3_1_TOKENS, union_contract, (4 ** (len(params) + 1)) - 1
+        V3_1_TOKENS, union_contract, ((8 ** len(params) - 1) * 3) // 7
     )
     union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
     tx = union_contract.distribute(
         params,
-        (4 ** (len(params) + 1)) - 1,
+        ((8 ** len(params) - 1) * 3) // 7,
         True,
         False,
         True,
@@ -78,10 +78,9 @@ def test_claim_and_swap_on_uniswap_v3_01_percent(
         src = "src" if "src" in transfer else "from"
         assert transfer[src] == ALCX_V3_1_SWAP_POOLS[i]
 
-    chain.revert()
-
 
 def test_claim_and_swap_on_uniswap_v3_1percent_and_sushi(
+    fn_isolation,
     owner,
     union_contract,
     set_mock_claims_v3_1,
@@ -90,7 +89,6 @@ def test_claim_and_swap_on_uniswap_v3_1percent_and_sushi(
     vault,
 ):
     network.gas_price("0 gwei")
-    chain.snapshot()
     original_union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
     merkle_distributor_v2.unfreeze({"from": owner})
     proofs = claim_tree.get_proof(union_contract.address)
@@ -99,7 +97,7 @@ def test_claim_and_swap_on_uniswap_v3_1percent_and_sushi(
         for token in V3_1_TOKENS
     ]
     routers = [random.choice([0, 3]) for _ in V3_1_TOKENS]
-    router_choices = sum([4 ** i * routers[i] for i, _ in enumerate(routers)])
+    router_choices = sum([8 ** i * routers[i] for i, _ in enumerate(routers)])
     print(f"ROUTER CHOICES: {router_choices} ({routers})")
     expected_output_amount, eth_crv_ratio = estimate_output_amount(
         V3_1_TOKENS, union_contract, router_choices
@@ -141,5 +139,3 @@ def test_claim_and_swap_on_uniswap_v3_1percent_and_sushi(
     assert approx(
         union_balance / distributor_balance, union_dues / 10000, 0.3
     )  # moe due to gas refunds
-
-    chain.revert()

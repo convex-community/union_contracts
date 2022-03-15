@@ -10,6 +10,7 @@ import "../interfaces/IWETH.sol";
 import "../interfaces/ICvxCrvDeposit.sol";
 import "../interfaces/IVotiumRegistry.sol";
 import "../interfaces/IUniV3Router.sol";
+import "../interfaces/ICurveV2Pool.sol";
 import "./UnionBase.sol";
 
 contract UnionZap is Ownable, UnionBase {
@@ -30,6 +31,8 @@ contract UnionZap is Ownable, UnionBase {
         0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae;
     address public constant VOTIUM_REGISTRY =
         0x92e6E43f99809dF84ed2D533e1FD8017eb966ee2;
+    address private constant T_TOKEN = 0xCdF7028ceAB81fA0C6971208e83fa7872994beE5;
+    address private constant T_ETH_POOL = 0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC;
 
     uint256 private constant BASE_TX_GAS = 21000;
     uint256 private constant FINAL_TRANSFER_GAS = 50000;
@@ -48,6 +51,13 @@ contract UnionZap is Ownable, UnionBase {
         bytes32[] merkleProof;
     }
 
+    struct curveSwapParams {
+        address pool;
+        uint16 ethIndex;
+    }
+
+    mapping (address => curveSwapParams) curveRegistry;
+
     event Received(address sender, uint256 amount);
     event Distributed(uint256 amount, uint256 fees, bool locked);
     event DistributorUpdated(address distributor);
@@ -61,6 +71,21 @@ contract UnionZap is Ownable, UnionBase {
         routers[1] = UNISWAP_ROUTER;
         fees[0] = 3000;
         fees[1] = 10000;
+        curveRegistry[CVX_TOKEN] = curveSwapParams(CURVE_CVX_ETH_POOL, 0);
+        curveRegistry[T_TOKEN] = curveSwapParams(T_ETH_POOL, 0);
+    }
+
+    /// @notice Add a pool and its swap params to the registry
+    /// @param token - Address of the token to swap on Curve
+    /// @param params - Address of the pool and WETH index there
+    function addCurvePool(address token, curveSwapParams calldata params) external onlyOwner {
+        curveRegistry[token] = params;
+    }
+
+    /// @notice Remove a pool from the registry
+    /// @param token - Address of token associated with the pool
+    function removeCurvePool(address token) external onlyOwner {
+        delete curveRegistry[token];
     }
 
     /// @notice Update union fees
@@ -136,6 +161,19 @@ contract UnionZap is Ownable, UnionBase {
             CVXCRV_STAKING_CONTRACT,
             type(uint256).max
         );
+    }
+
+    /// @notice Swap a token for ETH on Curve
+    /// @dev Needs the token to have been added to the registry with params
+    /// @param token - address of the token to swap
+    /// @param amount - amount of the token to swap
+    function _swapToETHCurve(address token, uint256 amount) internal {
+        curveSwapParams memory params = curveRegistry[token];
+        require (params.pool != address(0));
+        uint256 i = params.ethIndex == 0 ? 1 : 0;
+        IERC20(token).safeApprove(params.pool, 0);
+        IERC20(token).safeApprove(params.pool, amount);
+        ICurveV2Pool(params.pool).exchange_underlying(params.ethIndex ^ 1, params.ethIndex, amount, 0);
     }
 
     /// @notice Swap a token for ETH
@@ -216,12 +254,13 @@ contract UnionZap is Ownable, UnionBase {
     /// @param lock - whether to lock or swap crv to cvxcrv
     /// @param stake - whether to stake cvxcrv (if distributor is vault)
     /// @param minAmountOut - min output amount of cvxCRV or CRV (if locking)
-    /// @dev routerChoices is a 2-bit bitmap such that
-    /// 0b00 (0) - Sushi
-    /// 0b01 (1) - UniV2
-    /// 0b10 (2) - UniV3 0.3%
-    /// 0b11 (3) - UniV3 1%
-    /// Ex: 6 = 00 01 10 will swap token 1 on UniV3, 2 on UniV3, last on Sushi
+    /// @dev routerChoices is a 3-bit bitmap such that
+    /// 0b000 (0) - Sushi
+    /// 0b001 (1) - UniV2
+    /// 0b010 (2) - UniV3 0.3%
+    /// 0b011 (3) - UniV3 1%
+    /// 0b100 (4) - Curve
+    /// Ex: 136 = 010 001 000 will swap token 1 on UniV3, 2 on UniV3, last on Sushi
     /// Passing 0 will execute all swaps on sushi
     /// @dev claimBeforeSwap is used in case 3rd party already claimed on Votium
     function distribute(
@@ -261,14 +300,17 @@ contract UnionZap is Ownable, UnionBase {
             else if ((_token == CRV_TOKEN) || (_token == CVXCRV_TOKEN)) {
                 continue;
             } else {
-                uint256 _choice = routerChoices & 3;
-                if (_choice >= 2) {
+                uint256 _choice = routerChoices & 7;
+                if (_choice >= 4) {
+                    _swapToETHCurve(_token, _balance);
+                }
+                else if (_choice >= 2) {
                     _swapToETHUniV3(_token, _balance, fees[_choice - 2]);
                 } else {
                     _swapToETH(_token, _balance, routers[_choice]);
                 }
             }
-            routerChoices = routerChoices >> 2;
+            routerChoices = routerChoices >> 3;
         }
 
         uint256 _ethBalance = address(this).balance;
