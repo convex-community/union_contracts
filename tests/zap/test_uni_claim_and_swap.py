@@ -110,7 +110,7 @@ def test_claim_and_swap_on_uniswap_and_sushi(
         guy = "guy" if "guy" in approval else "spender"
         if approval[guy] in [vault, CVXCRV_REWARDS]:
             continue
-        if approval[wad] == 0:
+        if approval[wad] != CLAIM_AMOUNT - 1:
             continue
         if routers[index] == 1:
             assert approval[guy] == UNI_ROUTER
