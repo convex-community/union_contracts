@@ -22,7 +22,9 @@ from ....utils.cvxfxs import (
     estimate_lp_tokens_received,
     get_crv_to_eth_amount,
     get_cvx_to_eth_amount,
-    eth_fxs_curve, eth_fxs_uniswap, eth_fxs_unistable,
+    eth_fxs_curve,
+    eth_fxs_uniswap,
+    eth_fxs_unistable,
 )
 
 
@@ -141,7 +143,7 @@ def test_deposit_from_eth(fn_isolation, option, alice, zaps, owner, vault, strat
         fxs_amount = eth_fxs_uniswap(amount)
     elif option == 2:
         fxs_amount = eth_fxs_unistable(amount)
-        
+
     lp_tokens_from_fxs = estimate_lp_tokens_received(fxs_amount)
     zaps.depositFromEth(0, alice, {"value": amount, "from": alice})
 
