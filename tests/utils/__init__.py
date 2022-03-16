@@ -121,3 +121,10 @@ def estimate_output_amount(tokens, union_contract, router_choices):
     if CVXCRV in tokens:
         cvxcrv_amount += CLAIM_AMOUNT
     return cvxcrv_amount, eth_crv_ratio
+
+
+def eth_to_cvxcrv(amount):
+    if amount <= 0:
+        return 0
+    crv_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, amount)
+    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(1, 0, crv_amount)

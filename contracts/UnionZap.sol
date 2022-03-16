@@ -31,8 +31,10 @@ contract UnionZap is Ownable, UnionBase {
         0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae;
     address public constant VOTIUM_REGISTRY =
         0x92e6E43f99809dF84ed2D533e1FD8017eb966ee2;
-    address private constant T_TOKEN = 0xCdF7028ceAB81fA0C6971208e83fa7872994beE5;
-    address private constant T_ETH_POOL = 0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC;
+    address private constant T_TOKEN =
+        0xCdF7028ceAB81fA0C6971208e83fa7872994beE5;
+    address private constant T_ETH_POOL =
+        0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC;
 
     uint256 private constant BASE_TX_GAS = 21000;
     uint256 private constant FINAL_TRANSFER_GAS = 50000;
@@ -54,7 +56,7 @@ contract UnionZap is Ownable, UnionBase {
         uint16 ethIndex;
     }
 
-    mapping (address => curveSwapParams) public curveRegistry;
+    mapping(address => curveSwapParams) public curveRegistry;
 
     event Received(address sender, uint256 amount);
     event Distributed(uint256 amount, uint256 fees, bool locked);
@@ -76,7 +78,10 @@ contract UnionZap is Ownable, UnionBase {
     /// @notice Add a pool and its swap params to the registry
     /// @param token - Address of the token to swap on Curve
     /// @param params - Address of the pool and WETH index there
-    function addCurvePool(address token, curveSwapParams calldata params) external onlyOwner {
+    function addCurvePool(address token, curveSwapParams calldata params)
+        external
+        onlyOwner
+    {
         curveRegistry[token] = params;
         emit CurvePoolUpdated(token, params.pool);
     }
@@ -145,8 +150,17 @@ contract UnionZap is Ownable, UnionBase {
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
 
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
+
         IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, 0);
         IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, type(uint256).max);
+
+        IERC20(CVXCRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
+        IERC20(CVXCRV_TOKEN).safeApprove(
+            CURVE_CVXCRV_CRV_POOL,
+            type(uint256).max
+        );
 
         IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
         IERC20(CVXCRV_TOKEN).safeApprove(
@@ -161,10 +175,15 @@ contract UnionZap is Ownable, UnionBase {
     /// @param amount - amount of the token to swap
     function _swapToETHCurve(address token, uint256 amount) internal {
         curveSwapParams memory params = curveRegistry[token];
-        require (params.pool != address(0));
+        require(params.pool != address(0));
         IERC20(token).safeApprove(params.pool, 0);
         IERC20(token).safeApprove(params.pool, amount);
-        ICurveV2Pool(params.pool).exchange_underlying(params.ethIndex ^ 1, params.ethIndex, amount, 0);
+        ICurveV2Pool(params.pool).exchange_underlying(
+            params.ethIndex ^ 1,
+            params.ethIndex,
+            amount,
+            0
+        );
     }
 
     /// @notice Swap a token for ETH
@@ -294,8 +313,7 @@ contract UnionZap is Ownable, UnionBase {
                 uint256 _choice = routerChoices & 7;
                 if (_choice >= 4) {
                     _swapToETHCurve(_token, _balance);
-                }
-                else if (_choice >= 2) {
+                } else if (_choice >= 2) {
                     _swapToETHUniV3(_token, _balance, fees[_choice - 2]);
                 } else {
                     _swapToETH(_token, _balance, routers[_choice]);
@@ -346,9 +364,16 @@ contract UnionZap is Ownable, UnionBase {
         if (stake) {
             IMerkleDistributorV2(unionDistributor).stake();
         }
-        emit Distributed(_netDeposit, _netDeposit, _locked);
-    }
 
+        if (_gasCostInCrv > 0) {
+            uint256 _gasEth = _swapCrvToEth(
+                _swapCvxCrvToCrv(_gasCostInCrv, address(this))
+            );
+            (bool success, ) = (msg.sender).call{value: _gasEth}("");
+            require(success, "ETH transfer failed");
+        }
+        emit Distributed(_netDeposit, _gasCostInCrv, _locked);
+    }
 
     receive() external payable {
         emit Received(msg.sender, msg.value);

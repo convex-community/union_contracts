@@ -178,4 +178,3 @@ def test_remove_curve_pool(fn_isolation, owner, union_contract):
     assert registry_value[1] == 0
     assert tx.events["CurvePoolUpdated"]["token"] == NSBT
     assert tx.events["CurvePoolUpdated"]["pool"] == ADDRESS_ZERO
-
