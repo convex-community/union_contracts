@@ -14,35 +14,12 @@ from ..utils.constants import (
 )
 
 
-def test_set_union_dues(owner, union_contract):
-    tx = union_contract.setUnionDues(350, {"from": owner})
-    assert union_contract.unionDues() == 350
-    assert len(tx.events) == 1
-    assert "DuesUpdated" in tx.events
-    assert tx.events["DuesUpdated"]["dues"] == 350
-    chain.undo()
-
-
-def test_set_union_dues_non_owner(alice, union_contract):
-    with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.setUnionDues(150, {"from": alice})
-
-
-def test_set_union_dues_too_high(owner, union_contract):
-    with brownie.reverts("Dues too high"):
-        union_contract.setUnionDues(2 * 256 - 1, {"from": owner})
-
-    with brownie.reverts("Dues too high"):
-        union_contract.setUnionDues(500, {"from": owner})
-
-
-def test_update_distributor(owner, union_contract):
+def test_update_distributor(fn_isolation, owner, union_contract):
     tx = union_contract.updateDistributor(VOTIUM_DISTRIBUTOR, {"from": owner})
     assert union_contract.unionDistributor() == VOTIUM_DISTRIBUTOR
     assert len(tx.events) == 1
     assert "DistributorUpdated" in tx.events
     assert tx.events["DistributorUpdated"]["distributor"] == VOTIUM_DISTRIBUTOR
-    chain.undo()
 
 
 def test_update_distributor_non_owner(alice, union_contract):
@@ -55,13 +32,12 @@ def test_update_distributor_address_zero(owner, union_contract):
         union_contract.updateDistributor(ADDRESS_ZERO, {"from": owner})
 
 
-def test_update_votium_distributor(owner, union_contract):
+def test_update_votium_distributor(fn_isolation, owner, union_contract):
     tx = union_contract.updateVotiumDistributor(union_contract, {"from": owner})
     assert union_contract.votiumDistributor() == union_contract
     assert len(tx.events) == 1
     assert "VotiumDistributorUpdated" in tx.events
     assert tx.events["VotiumDistributorUpdated"]["distributor"] == union_contract
-    chain.undo()
 
 
 def test_update_votium_distributor_non_owner(alice, union_contract):
@@ -79,8 +55,7 @@ def test_update_votium_distributor_address_zero(owner, union_contract):
         union_contract.updateVotiumDistributor(ADDRESS_ZERO, {"from": owner})
 
 
-def test_retrieve_tokens(owner, bob, charlie, union_contract):
-    chain.snapshot()
+def test_retrieve_tokens(fn_isolation, owner, bob, charlie, union_contract):
     interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).exchange_underlying(
         0, 1, 1e18, 0, {"from": charlie, "value": 1e18}
     )
@@ -96,7 +71,6 @@ def test_retrieve_tokens(owner, bob, charlie, union_contract):
     assert tx.events["FundsRetrieved"]["token"] == CRV
     assert tx.events["FundsRetrieved"]["to"] == bob.address
     assert tx.events["FundsRetrieved"]["amount"] == crv_amount
-    chain.revert()
 
 
 def test_retrieve_tokens_non_owner(alice, union_contract):
@@ -121,8 +95,7 @@ def test_set_approvals_non_owner(alice, union_contract):
         union_contract.setApprovals({"from": alice})
 
 
-def test_set_forwarding(owner, union_contract):
-    chain.snapshot()
+def test_set_forwarding(fn_isolation, owner, union_contract):
     assert (
         interface.IVotiumRegistry(VOTIUM_REGISTRY).registry(union_contract.address)[1]
         == ADDRESS_ZERO
@@ -132,7 +105,6 @@ def test_set_forwarding(owner, union_contract):
         interface.IVotiumRegistry(VOTIUM_REGISTRY).registry(union_contract.address)[1]
         == VOTIUM_DISTRIBUTOR
     )
-    chain.revert()
 
 
 def test_set_forwarding_non_owner(alice, union_contract):
@@ -140,8 +112,7 @@ def test_set_forwarding_non_owner(alice, union_contract):
         union_contract.setForwarding(VOTIUM_DISTRIBUTOR, {"from": alice})
 
 
-def test_execute(owner, union_contract):
-    chain.snapshot()
+def test_execute(fn_isolation, owner, union_contract):
     nsbt_amount = 1e12
     nsbt = interface.IERC20(NSBT)
     nsbt.transfer(
@@ -155,7 +126,6 @@ def test_execute(owner, union_contract):
     union_contract.execute(NSBT, 0, calldata, {"from": owner})
     assert nsbt.balanceOf(union_contract) == 0
     assert nsbt.balanceOf(VOTIUM_REGISTRY) - previous_balance == nsbt_amount
-    chain.revert()
 
 
 def test_execute_non_owner(alice, union_contract):
@@ -168,49 +138,44 @@ def test_claim_non_owner(alice, union_contract):
         union_contract.claim([(ADDRESS_ZERO, 0, 0, ["0x0"])], {"from": alice})
 
 
-def test_stake_non_owner(alice, union_contract):
-    with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.stakeAccumulated({"from": alice})
-
-
-def test_stake(owner, union_contract):
-    chain.snapshot()
-    initial_balance = interface.IERC20(CVXCRV_TOKEN).balanceOf(owner)
-    amount = 1234567890
-    interface.IERC20(CVXCRV_TOKEN).transfer(
-        union_contract, amount, {"from": CURVE_CVXCRV_CRV_POOL}
-    )
-    union_contract.stakeAccumulated({"from": owner})
-    assert interface.IBasicRewards(CVXCRV_REWARDS).balanceOf(owner) == amount - 1
-    interface.IBasicRewards(CVXCRV_REWARDS).withdrawAll(False, {"from": owner})
-    assert (
-        interface.IERC20(CVXCRV_TOKEN).balanceOf(owner) - initial_balance == amount - 1
-    )
-    chain.revert()
-
-
-def test_claim_accumulated(owner, bob, union_contract):
-    chain.snapshot()
-    bob_initial_balance = interface.IERC20(CVXCRV_TOKEN).balanceOf(bob)
-    amount = 1234567890
-    interface.IERC20(CVXCRV_TOKEN).transfer(
-        union_contract, amount, {"from": CURVE_CVXCRV_CRV_POOL}
-    )
-    union_contract.claimAccumulated(amount, bob, {"from": owner})
-    assert interface.IERC20(CVXCRV_TOKEN).balanceOf(bob) - bob_initial_balance == amount
-    chain.revert()
-
-
-def test_claim_accumulated_non_owner(alice, union_contract):
-    with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.claimAccumulated(12345, alice, {"from": alice})
-
-
-def test_claim_accumulated_to_zero_address(owner, union_contract):
-    with brownie.reverts():
-        union_contract.claimAccumulated(12345, ADDRESS_ZERO, {"from": owner})
-
-
 def test_distribute_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
         union_contract.distribute([], 0, True, True, True, 0, {"from": alice})
+
+
+def test_add_curve_pool_non_owner(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.addCurvePool(NSBT, (NSBT, 0), {"from": alice})
+
+
+def test_remove_curve_pool_non_owner(fn_isolation, alice, owner, union_contract):
+    union_contract.addCurvePool(NSBT, (NSBT, 0), {"from": owner})
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.removeCurvePool(NSBT, {"from": alice})
+
+
+def test_add_curve_pool(fn_isolation, owner, union_contract):
+    tx = union_contract.addCurvePool(NSBT, (NSBT, 0), {"from": owner})
+    registry_value = union_contract.curveRegistry(NSBT)
+    assert registry_value[0] == NSBT
+    assert registry_value[1] == 0
+    assert tx.events["CurvePoolUpdated"]["token"] == NSBT
+    assert tx.events["CurvePoolUpdated"]["pool"] == NSBT
+
+    tx = union_contract.addCurvePool(NSBT, (VOTIUM_REGISTRY, 0), {"from": owner})
+    registry_value = union_contract.curveRegistry(NSBT)
+    assert registry_value[0] == VOTIUM_REGISTRY
+    assert registry_value[1] == 0
+    assert tx.events["CurvePoolUpdated"]["token"] == NSBT
+    assert tx.events["CurvePoolUpdated"]["pool"] == VOTIUM_REGISTRY
+
+
+def test_remove_curve_pool(fn_isolation, owner, union_contract):
+    union_contract.addCurvePool(NSBT, (NSBT, 0), {"from": owner})
+    tx = union_contract.removeCurvePool(NSBT, {"from": owner})
+    registry_value = union_contract.curveRegistry(NSBT)
+    assert registry_value[0] == ADDRESS_ZERO
+    assert registry_value[1] == 0
+    assert tx.events["CurvePoolUpdated"]["token"] == NSBT
+    assert tx.events["CurvePoolUpdated"]["pool"] == ADDRESS_ZERO
+

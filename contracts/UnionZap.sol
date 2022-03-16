@@ -37,9 +37,7 @@ contract UnionZap is Ownable, UnionBase {
     uint256 private constant BASE_TX_GAS = 21000;
     uint256 private constant FINAL_TRANSFER_GAS = 50000;
 
-    uint256 public unionDues = 200;
     uint256 public constant FEE_DENOMINATOR = 10000;
-    uint256 public constant MAX_DUES = 400;
 
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
@@ -56,14 +54,14 @@ contract UnionZap is Ownable, UnionBase {
         uint16 ethIndex;
     }
 
-    mapping (address => curveSwapParams) curveRegistry;
+    mapping (address => curveSwapParams) public curveRegistry;
 
     event Received(address sender, uint256 amount);
     event Distributed(uint256 amount, uint256 fees, bool locked);
     event DistributorUpdated(address distributor);
     event VotiumDistributorUpdated(address distributor);
-    event DuesUpdated(uint256 dues);
     event FundsRetrieved(address token, address to, uint256 amount);
+    event CurvePoolUpdated(address token, address pool);
 
     constructor(address distributor_) {
         unionDistributor = distributor_;
@@ -80,20 +78,14 @@ contract UnionZap is Ownable, UnionBase {
     /// @param params - Address of the pool and WETH index there
     function addCurvePool(address token, curveSwapParams calldata params) external onlyOwner {
         curveRegistry[token] = params;
+        emit CurvePoolUpdated(token, params.pool);
     }
 
     /// @notice Remove a pool from the registry
     /// @param token - Address of token associated with the pool
     function removeCurvePool(address token) external onlyOwner {
         delete curveRegistry[token];
-    }
-
-    /// @notice Update union fees
-    /// @param dues - Fees taken from the collected bribes in bips
-    function setUnionDues(uint256 dues) external onlyOwner {
-        require(dues <= MAX_DUES, "Dues too high");
-        unionDues = dues;
-        emit DuesUpdated(dues);
+        emit CurvePoolUpdated(token, address(0));
     }
 
     /// @notice Update the contract used to distribute funds
@@ -170,7 +162,6 @@ contract UnionZap is Ownable, UnionBase {
     function _swapToETHCurve(address token, uint256 amount) internal {
         curveSwapParams memory params = curveRegistry[token];
         require (params.pool != address(0));
-        uint256 i = params.ethIndex == 0 ? 1 : 0;
         IERC20(token).safeApprove(params.pool, 0);
         IERC20(token).safeApprove(params.pool, amount);
         ICurveV2Pool(params.pool).exchange_underlying(params.ethIndex ^ 1, params.ethIndex, amount, 0);
@@ -347,32 +338,17 @@ contract UnionZap is Ownable, UnionBase {
         // compute the ETH/CRV exchange rate based on previous curve swap
         uint256 _gasCostInCrv = (_gasUsed * tx.gasprice * _swappedCrv) /
             _ethBalance;
-        uint256 _fees = (_cvxCrvBalance * unionDues) / FEE_DENOMINATOR;
-        uint256 _netDeposit = _cvxCrvBalance - _fees - _gasCostInCrv;
+
+        uint256 _netDeposit = _cvxCrvBalance - _gasCostInCrv;
 
         // transfer funds
         IERC20(CVXCRV_TOKEN).safeTransfer(unionDistributor, _netDeposit);
         if (stake) {
             IMerkleDistributorV2(unionDistributor).stake();
         }
-        emit Distributed(_netDeposit, _cvxCrvBalance - _netDeposit, _locked);
+        emit Distributed(_netDeposit, _netDeposit, _locked);
     }
 
-    // @notice Stakes the accumulated cvxCrv for the owner
-    function stakeAccumulated() external onlyOwner {
-        cvxCrvStaking.stakeFor(
-            owner(),
-            IERC20(CVXCRV_TOKEN).balanceOf(address(this)) - 1
-        );
-    }
-
-    // @notice retrieves part of the cvxCRV and transfers it to a wallet
-    // @param amount - the amount to claim
-    // @param to - the address to send the cvxCRV to
-    function claimAccumulated(uint256 amount, address to) external onlyOwner {
-        require(to != address(0));
-        IERC20(CVXCRV_TOKEN).safeTransfer(to, amount);
-    }
 
     receive() external payable {
         emit Received(msg.sender, msg.value);
