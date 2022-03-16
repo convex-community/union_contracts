@@ -161,6 +161,7 @@ def test_add_curve_pool(fn_isolation, owner, union_contract):
     assert registry_value[1] == 0
     assert tx.events["CurvePoolUpdated"]["token"] == NSBT
     assert tx.events["CurvePoolUpdated"]["pool"] == NSBT
+    assert interface.ERC20(NSBT).allowance(union_contract, NSBT) == 2 ** 256 - 1
 
     tx = union_contract.addCurvePool(NSBT, (VOTIUM_REGISTRY, 0), {"from": owner})
     registry_value = union_contract.curveRegistry(NSBT)
@@ -168,13 +169,17 @@ def test_add_curve_pool(fn_isolation, owner, union_contract):
     assert registry_value[1] == 0
     assert tx.events["CurvePoolUpdated"]["token"] == NSBT
     assert tx.events["CurvePoolUpdated"]["pool"] == VOTIUM_REGISTRY
+    assert (
+        interface.ERC20(NSBT).allowance(union_contract, VOTIUM_REGISTRY) == 2 ** 256 - 1
+    )
 
 
 def test_remove_curve_pool(fn_isolation, owner, union_contract):
-    union_contract.addCurvePool(NSBT, (NSBT, 0), {"from": owner})
+    union_contract.addCurvePool(NSBT, (VOTIUM_REGISTRY, 0), {"from": owner})
     tx = union_contract.removeCurvePool(NSBT, {"from": owner})
     registry_value = union_contract.curveRegistry(NSBT)
     assert registry_value[0] == ADDRESS_ZERO
     assert registry_value[1] == 0
     assert tx.events["CurvePoolUpdated"]["token"] == NSBT
     assert tx.events["CurvePoolUpdated"]["pool"] == ADDRESS_ZERO
+    assert interface.ERC20(NSBT).allowance(union_contract, VOTIUM_REGISTRY) == 0

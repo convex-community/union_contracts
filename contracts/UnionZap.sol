@@ -83,12 +83,15 @@ contract UnionZap is Ownable, UnionBase {
         onlyOwner
     {
         curveRegistry[token] = params;
+        IERC20(token).safeApprove(params.pool, 0);
+        IERC20(token).safeApprove(params.pool, type(uint256).max);
         emit CurvePoolUpdated(token, params.pool);
     }
 
     /// @notice Remove a pool from the registry
     /// @param token - Address of token associated with the pool
     function removeCurvePool(address token) external onlyOwner {
+        IERC20(token).safeApprove(curveRegistry[token].pool, 0);
         delete curveRegistry[token];
         emit CurvePoolUpdated(token, address(0));
     }
