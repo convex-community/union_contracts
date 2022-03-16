@@ -44,7 +44,6 @@ def test_claim_and_swap_on_curve(
         union_contract,
         ((8 ** len(params) - 1) * 4) // 7,
     )
-    union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
     tx = union_contract.distribute(
         params,
@@ -56,22 +55,15 @@ def test_claim_and_swap_on_curve(
         {"from": owner},
     )
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
-    union_balance = (
-        interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
-    )
-    gas_fees = (
-        int((union_balance + distributor_balance) * Decimal(10000 - union_dues))
-        // 10000
-        - distributor_balance
-    )
+    union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
+
     assert distributor_balance > 0
-    assert union_balance > 0
+    assert union_balance == original_union_balance
     assert merkle_distributor_v2.frozen() == True
-    assert approx(tx.gas_price * tx.gas_used * eth_crv_ratio, gas_fees, 0.5)
-    assert union_balance + distributor_balance == expected_output_amount
-    assert approx(
-        union_balance / distributor_balance, union_dues / 10000, 0.3
-    )  # moe due to gas refunds
+
+    gas_fees_in_crv = tx.events["Distributed"]["fees"]
+    assert distributor_balance == expected_output_amount - gas_fees_in_crv
+
     for approval in tx.events["Approval"]:
         guy = "guy" if "guy" in approval else "spender"
         if approval[guy] in [vault, CVXCRV_REWARDS]:
@@ -103,22 +95,15 @@ def test_claim_and_swap_on_curve_uniswap_v3_v2_and_sushi(
     expected_output_amount, eth_crv_ratio = estimate_output_amount(
         CURVE_TOKENS + OTHER_TOKENS, union_contract, router_choices
     )
-    union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
     tx = union_contract.distribute(
         params, router_choices, True, False, True, 0, {"from": owner}
     )
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
-    union_balance = (
-        interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
-    )
-    gas_fees = (
-        int((union_balance + distributor_balance) * Decimal(10000 - union_dues))
-        // 10000
-        - distributor_balance
-    )
+    union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
+
     assert distributor_balance > 0
-    assert union_balance > 0
+    assert union_balance == original_union_balance
     assert merkle_distributor_v2.frozen() == True
 
     index = 0
@@ -141,8 +126,5 @@ def test_claim_and_swap_on_curve_uniswap_v3_v2_and_sushi(
             assert approval[guy] == SUSHI_ROUTER
         index += 1
 
-    assert approx(tx.gas_price * tx.gas_used * eth_crv_ratio, gas_fees, 0.5)
-    assert union_balance + distributor_balance == expected_output_amount
-    assert approx(
-        union_balance / distributor_balance, union_dues / 10000, 0.3
-    )  # moe due to gas refunds
+    gas_fees_in_crv = tx.events["Distributed"]["fees"]
+    assert distributor_balance == expected_output_amount - gas_fees_in_crv

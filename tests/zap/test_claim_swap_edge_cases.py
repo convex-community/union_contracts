@@ -12,9 +12,14 @@ from ..utils.constants import (
 
 
 def test_claim_and_swap_no_discount(
-    owner, union_contract, set_mock_claims, claim_tree, merkle_distributor_v2, vault
+    fn_isolation,
+    owner,
+    union_contract,
+    set_mock_claims,
+    claim_tree,
+    merkle_distributor_v2,
+    vault,
 ):
-    chain.snapshot()
     network.gas_price("0 gwei")
     original_union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
     merkle_distributor_v2.unfreeze({"from": owner})
@@ -43,18 +48,25 @@ def test_claim_and_swap_no_discount(
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
     )
+
+    gas_fees_in_crv = tx.events["Distributed"]["fees"]
+
     assert distributor_balance > 0
-    assert union_balance > 0
+    assert union_balance == 0
     assert merkle_distributor_v2.frozen() == True
-    assert union_balance + distributor_balance == expected_output_amount
+    assert distributor_balance == expected_output_amount - gas_fees_in_crv
     assert tx.events[-1]["locked"] == True
-    chain.revert()
 
 
 def test_claim_and_swap_no_discount_slippage_protection(
-    owner, union_contract, set_mock_claims, claim_tree, merkle_distributor_v2, vault
+    fn_isolation,
+    owner,
+    union_contract,
+    set_mock_claims,
+    claim_tree,
+    merkle_distributor_v2,
+    vault,
 ):
-    chain.snapshot()
     network.gas_price("0 gwei")
     original_union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
     merkle_distributor_v2.unfreeze({"from": owner})
@@ -79,7 +91,7 @@ def test_claim_and_swap_no_discount_slippage_protection(
     )
     union_contract.setApprovals({"from": owner})
     with brownie.reverts():
-        tx = union_contract.distribute(
+        union_contract.distribute(
             params, 0, True, True, True, expected_output_amount * 1.25, {"from": owner}
         )
     tx = union_contract.distribute(
@@ -89,12 +101,12 @@ def test_claim_and_swap_no_discount_slippage_protection(
     union_balance = (
         interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
     )
+    gas_fees_in_crv = tx.events["Distributed"]["fees"]
     assert distributor_balance > 0
-    assert union_balance > 0
+    assert union_balance == 0
     assert merkle_distributor_v2.frozen() == True
-    assert union_balance + distributor_balance == expected_output_amount
+    assert distributor_balance == expected_output_amount - gas_fees_in_crv
     assert tx.events[-1]["locked"] == True
-    chain.revert()
 
 
 def test_claim_and_swap_not_owner(

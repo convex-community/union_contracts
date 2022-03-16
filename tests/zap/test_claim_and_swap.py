@@ -14,7 +14,7 @@ def test_claim_and_swap(
     claim_tree,
     merkle_distributor_v2,
 ):
-    network.gas_price("20 gwei")
+    network.gas_price("0 gwei")
     merkle_distributor_v2.unfreeze({"from": owner})
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
