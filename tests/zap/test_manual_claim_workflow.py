@@ -14,9 +14,14 @@ from ..utils.constants import (
 
 
 def test_manual_claim_workflow(
-    owner, union_contract, set_mock_claims, claim_tree, merkle_distributor_v2, vault
+    fn_isolation,
+    owner,
+    union_contract,
+    set_mock_claims,
+    claim_tree,
+    merkle_distributor_v2,
+    vault,
 ):
-    chain.snapshot()
     network.gas_price("0 gwei")
     original_union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
     proofs = claim_tree.get_proof(union_contract.address)
@@ -34,7 +39,6 @@ def test_manual_claim_workflow(
     expected_output_amount, eth_crv_ratio = estimate_output_amount(
         TOKENS, union_contract, 0
     )
-    union_dues = union_contract.unionDues()
     union_contract.setApprovals({"from": owner})
 
     # Manually handle ALCX swapping
@@ -52,22 +56,17 @@ def test_manual_claim_workflow(
     )
     eth_amount = single_swap_tx.return_value[-1]
     owner.transfer(union_contract, eth_amount)
+    original_caller_balance = owner.balance()
     tx = union_contract.distribute(params, 0, True, False, True, 0, {"from": owner})
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
-    union_balance = (
-        interface.IERC20(CVXCRV).balanceOf(union_contract) - original_union_balance
-    )
-    gas_fees = (
-        int((union_balance + distributor_balance) * Decimal(10000 - union_dues))
-        // 10000
-        - distributor_balance
-    )
+    union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
+
+    gas_used = tx.gas_price * tx.gas_used
+    gas_fees = original_caller_balance - owner.balance() + gas_used
+    gas_fees_in_crv = tx.events["Distributed"]["fees"]
     assert distributor_balance > 0
-    assert union_balance > 0
+    assert union_balance == original_union_balance
     assert merkle_distributor_v2.frozen() == True
-    assert approx(tx.gas_price * tx.gas_used * eth_crv_ratio, gas_fees, 0.5)
-    assert union_balance + distributor_balance == expected_output_amount
-    assert approx(
-        union_balance / distributor_balance, union_dues / 10000, 0.3
-    )  # moe due to gas refunds
-    chain.revert()
+    assert gas_fees >= tx.gas_price
+    assert merkle_distributor_v2.frozen() == True
+    assert distributor_balance == expected_output_amount - gas_fees_in_crv

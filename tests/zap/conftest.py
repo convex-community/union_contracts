@@ -17,6 +17,7 @@ from ..utils.constants import (
     REGULAR_TOKENS,
     V3_TOKENS,
     V3_1_TOKENS,
+    CURVE_TOKENS,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -114,3 +115,8 @@ def set_mock_claims_v3(claim_tree):
 @pytest.fixture(scope="module")
 def set_mock_claims_v3_1(claim_tree):
     mock_claims(claim_tree, V3_1_TOKENS)
+
+
+@pytest.fixture(scope="module")
+def set_mock_claims_curve(claim_tree):
+    mock_claims(claim_tree, CURVE_TOKENS + V3_1_TOKENS)

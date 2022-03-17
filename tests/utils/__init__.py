@@ -18,6 +18,7 @@ from .constants import (
     UNI_QUOTER,
     CURVE_CVXFXS_FXS_LP_TOKEN,
     FXS,
+    CURVE_CONTRACT_REGISTRY,
 )
 
 
@@ -80,23 +81,29 @@ def estimate_output_amount(tokens, union_contract, router_choices):
         elif token == WETH:
             eth_amount += CLAIM_AMOUNT - 1
         else:
-            if router_choices & 3 == 2:
+            choice = router_choices & 7
+            if choice >= 4:
+                pool, index = CURVE_CONTRACT_REGISTRY[token.lower()]
+                eth_amount += interface.ICurveV2Pool(pool).get_dy(
+                    index ^ 1, index, CLAIM_AMOUNT - 1
+                )
+            elif choice == 2:
                 eth_amount += interface.IQuoter(UNI_QUOTER).quoteExactInputSingle(
                     token, WETH, 3000, CLAIM_AMOUNT - 1, 0
                 )
-            elif router_choices & 3 == 3:
+            elif choice == 3:
                 eth_amount += interface.IQuoter(UNI_QUOTER).quoteExactInputSingle(
                     token, WETH, 10000, CLAIM_AMOUNT - 1, 0
                 )
             else:
-                router = UNI_ROUTER if (router_choices & 3 == 1) else SUSHI_ROUTER
+                router = UNI_ROUTER if (choice == 1) else SUSHI_ROUTER
                 print(
                     f"Token: {token} swapped on {'Uni' if router == UNI_ROUTER else 'Sushi'}"
                 )
                 eth_amount += interface.IUniV2Router(router).getAmountsOut(
                     CLAIM_AMOUNT - 1, [token, WETH]
                 )[-1]
-        router_choices = router_choices // 4
+        router_choices = router_choices // 8
 
     print("ETH Amount: ", eth_amount)
 
@@ -114,3 +121,10 @@ def estimate_output_amount(tokens, union_contract, router_choices):
     if CVXCRV in tokens:
         cvxcrv_amount += CLAIM_AMOUNT
     return cvxcrv_amount, eth_crv_ratio
+
+
+def eth_to_cvxcrv(amount):
+    if amount <= 0:
+        return 0
+    crv_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, amount)
+    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(1, 0, crv_amount)
