@@ -38,7 +38,7 @@ contract UnionZap is Ownable, UnionBase {
 
     uint256 private constant BASE_TX_GAS = 21000;
     uint256 private constant FINAL_TRANSFER_GAS = 50000;
-    
+
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
 
