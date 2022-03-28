@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-
 contract AssetRegistry {
     // assetChoices records the proportions of different output assets
     // that a Union member would like to split their bribes between.
@@ -13,8 +12,7 @@ contract AssetRegistry {
     // would be equivalent.
     mapping(address => uint16[16]) public assetChoices;
 
-    function recordPreferences(uint32[16] calldata choices) external {
+    function recordPreferences(uint16[16] calldata choices) external {
         assetChoices[msg.sender] = choices;
     }
-
 }
