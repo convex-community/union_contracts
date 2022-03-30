@@ -197,5 +197,4 @@ contract FXSHandler {
         }
     }
 
-    receive() external payable {}
 }
