@@ -11,9 +11,10 @@ import "../interfaces/ICvxCrvDeposit.sol";
 import "../interfaces/IVotiumRegistry.sol";
 import "../interfaces/IUniV3Router.sol";
 import "../interfaces/ICurveV2Pool.sol";
+import "./utils/FXSHandler.sol";
 import "./UnionBase.sol";
 
-contract UnionZap is Ownable, UnionBase {
+contract UnionZap is Ownable, UnionBase, FXSHandler {
     using SafeERC20 for IERC20;
 
     address public votiumDistributor =
@@ -22,11 +23,6 @@ contract UnionZap is Ownable, UnionBase {
 
     address private constant SUSHI_ROUTER =
         0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
-    address private constant UNISWAP_ROUTER =
-        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address private constant UNIV3_ROUTER =
-        0xE592427A0AEce92De3Edee1F18E0157C05861564;
-    address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private constant CVXCRV_DEPOSIT =
         0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae;
     address public constant VOTIUM_REGISTRY =
@@ -38,6 +34,7 @@ contract UnionZap is Ownable, UnionBase {
 
     uint256 private constant BASE_TX_GAS = 21000;
     uint256 private constant FINAL_TRANSFER_GAS = 50000;
+    uint256 private constant DECIMALS = 10000;
 
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
@@ -200,7 +197,7 @@ contract UnionZap is Ownable, UnionBase {
         require(router != address(0));
         address[] memory _path = new address[](2);
         _path[0] = token;
-        _path[1] = WETH;
+        _path[1] = WETH_TOKEN;
 
         IERC20(token).safeApprove(router, 0);
         IERC20(token).safeApprove(router, amount);
@@ -228,7 +225,7 @@ contract UnionZap is Ownable, UnionBase {
         IUniV3Router.ExactInputSingleParams memory _params = IUniV3Router
             .ExactInputSingleParams(
                 token,
-                WETH,
+                WETH_TOKEN,
                 fee,
                 address(this),
                 block.timestamp + 1,
@@ -239,7 +236,7 @@ contract UnionZap is Ownable, UnionBase {
         uint256 _wethReceived = IUniV3Router(UNIV3_ROUTER).exactInputSingle(
             _params
         );
-        IWETH(WETH).withdraw(_wethReceived);
+        IWETH(WETH_TOKEN).withdraw(_wethReceived);
     }
 
     /// @notice Claims all specified rewards from Votium
@@ -262,9 +259,8 @@ contract UnionZap is Ownable, UnionBase {
     /// @param claimParams - an array containing the info necessary to claim
     /// @param routerChoices - the router to use for the swap
     /// @param claimBeforeSwap - whether to claim on Votium or not
-    /// @param lock - whether to lock or swap crv to cvxcrv
-    /// @param stake - whether to stake cvxcrv (if distributor is vault)
-    /// @param minAmountOut - min output amount of cvxCRV or CRV (if locking)
+    /// @param minAmountOut - min output amount in ETH value
+    /// @param weights - weight of output assets (cvxCRV, FXS, CVX) in bips
     /// @dev routerChoices is a 3-bit bitmap such that
     /// 0b000 (0) - Sushi
     /// 0b001 (1) - UniV2
@@ -274,14 +270,16 @@ contract UnionZap is Ownable, UnionBase {
     /// Ex: 136 = 010 001 000 will swap token 1 on UniV3, 2 on UniV3, last on Sushi
     /// Passing 0 will execute all swaps on sushi
     /// @dev claimBeforeSwap is used in case 3rd party already claimed on Votium
-    function distribute(
+    /// @dev weights must sum to 10000
+    function swap(
         IMultiMerkleStash.claimParam[] calldata claimParams,
         uint256 routerChoices,
         bool claimBeforeSwap,
-        bool lock,
-        bool stake,
-        uint256 minAmountOut
-    ) external onlyOwner {
+        uint256 minAmountOut,
+        uint64[3] calldata weights) external onlyOwner,
+    {
+        require(weights[0] + weights[1] + weights[2] == DECIMALS);
+
         // initialize gas counting
         uint256 _startGas = gasleft();
         bool _locked = false;
@@ -304,11 +302,15 @@ contract UnionZap is Ownable, UnionBase {
                 _balance -= 1;
             }
             // unwrap WETH
-            if (_token == WETH) {
-                IWETH(WETH).withdraw(_balance);
+            if (_token == WETH_TOKEN) {
+                IWETH(WETH_TOKEN).withdraw(_balance);
             }
-            // no need to swap bribes paid out in cvxCRV or CRV
-            else if ((_token == CRV_TOKEN) || (_token == CVXCRV_TOKEN)) {
+            // we handle swaps for output tokens later individually
+            else if (
+                (_token == FXS_TOKEN && weights[1] > 0) ||
+                (_token == CVX_TOKEN && weights[2] > 0) ||
+                ((_token == CRV_TOKEN) && weights[0] > 0)
+            ) {
                 continue;
             } else {
                 uint256 _choice = routerChoices & 7;
@@ -323,7 +325,47 @@ contract UnionZap is Ownable, UnionBase {
             routerChoices = routerChoices >> 3;
         }
 
+        // estimate gas cost
+        uint256 _gasUsed = _startGas -
+            gasleft() +
+            BASE_TX_GAS +
+            16 *
+            msg.data.length +
+            FINAL_TRANSFER_GAS;
+
+        (bool success, ) = (msg.sender).call{value: _gasUsed}("");
+            require(success, "ETH transfer failed");
+    }
+
+    /// @notice Splits contract balance into output tokens and distributes them
+    /// @param lock - whether to lock or swap crv to cvxcrv
+    /// @param minAmountOut - min output amount in ETH value
+    /// @param weights - weight of output assets (cvxCRV, FXS, CVX) in bips
+    /// @dev weights must sum to 10000
+    function distribute(
+        bool lock,
+        uint256 minAmountOut,
+        uint64[3] calldata weights
+    ) external onlyOwner {
+        // TODO: have as modifier
+        require(weights[0] + weights[1] + weights[2] == DECIMALS);
+
         uint256 _ethBalance = address(this).balance;
+
+        // start calculating the allocations of output tokens
+        uint256 _totalEthBalance = address(this).balance;
+
+        uint256[3] memory prices;
+        address[3] memory tokenPools = [CURVE_CRV_ETH_POOL, CURVE_FXS_ETH_POOL, CURVE_CVX_ETH_POOL];
+        address[3] memory tokens = [CRV_TOKEN, FXS_TOKEN, CVX_TOKEN];
+        for (uint256 i; i < 3; ++i) {
+            if (weights[i] > 0) {
+                prices[i] = ICurveV2Pool(tokenPools[i]).price_oracle();
+                uint256 _currentAmount = IERC20(tokens[i]).balanceOf(address(this));
+                // add the ETH value of token to current ETH value in contract
+                _totalEthBalance += (_currentAmount * prices[i]) / 1 ether;
+            }
+        }
 
         // if locking, we apply minAmount to CRV - otherwise will do on cvxCRV
         uint256 minCrvOut = lock ? minAmountOut : 0;
@@ -339,7 +381,6 @@ contract UnionZap is Ownable, UnionBase {
         // otherwise deposit & lock
         else {
             ICvxCrvDeposit(CVXCRV_DEPOSIT).deposit(_crvBalance, true);
-            _locked = true;
         }
 
         uint256 _cvxCrvBalance = IERC20(CVXCRV_TOKEN).balanceOf(address(this));
@@ -347,33 +388,12 @@ contract UnionZap is Ownable, UnionBase {
         // freeze distributor before transferring funds
         IMerkleDistributorV2(unionDistributor).freeze();
 
-        // estimate gas cost
-        uint256 _gasUsed = _startGas -
-            gasleft() +
-            BASE_TX_GAS +
-            16 *
-            msg.data.length +
-            FINAL_TRANSFER_GAS;
-        // compute the ETH/CRV exchange rate based on previous curve swap
-        uint256 _gasCostInCrv = (_gasUsed * tx.gasprice * _swappedCrv) /
-            _ethBalance;
-
-        uint256 _netDeposit = _cvxCrvBalance - _gasCostInCrv;
-
         // transfer funds
-        IERC20(CVXCRV_TOKEN).safeTransfer(unionDistributor, _netDeposit);
-        if (stake) {
-            IMerkleDistributorV2(unionDistributor).stake();
-        }
+        IERC20(CVXCRV_TOKEN).safeTransfer(unionDistributor, _cvxCrvBalance);
 
-        if (_gasCostInCrv > 0) {
-            uint256 _gasEth = _swapCrvToEth(
-                _swapCvxCrvToCrv(_gasCostInCrv, address(this))
-            );
-            (bool success, ) = (msg.sender).call{value: _gasEth}("");
-            require(success, "ETH transfer failed");
-        }
-        emit Distributed(_netDeposit, _gasCostInCrv, _locked);
+        IMerkleDistributorV2(unionDistributor).stake();
+
+        emit Distributed(_cvxCrvBalance, _cvxCrvBalance, lock);
     }
 
     receive() external payable {
