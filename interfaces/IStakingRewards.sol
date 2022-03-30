@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.9;
 
-interface IBasicRewards {
+interface IStakingRewards {
     function stakeFor(address, uint256) external returns (bool);
 
     function balanceOf(address) external view returns (uint256);
@@ -23,4 +23,12 @@ interface IBasicRewards {
     function extraRewards(uint256) external view returns (address);
 
     function exit() external returns (bool);
+
+    function setDistributor(address _distributor) external;
+
+    function setRewardsDuration(uint256 _rewardsDuration) external;
+
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external;
+
+    function notifyRewardAmount(uint256 reward) external;
 }
