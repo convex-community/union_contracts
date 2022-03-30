@@ -32,9 +32,9 @@ contract StakingRewards is ReentrancyGuard, Ownable {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        address _distributor,
         address _rewardsToken,
-        address _stakingToken
+        address _stakingToken,
+        address _distributor
     ) {
         rewardsToken = IERC20(_rewardsToken);
         stakingToken = IERC20(_stakingToken);
@@ -87,38 +87,49 @@ contract StakingRewards is ReentrancyGuard, Ownable {
         external
         nonReentrant
         updateReward(msg.sender)
+        returns (bool)
     {
         require(amount > 0, "Cannot stake 0");
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
+        return true;
     }
 
     function withdraw(uint256 amount)
         public
         nonReentrant
         updateReward(msg.sender)
+        returns (bool)
     {
         require(amount > 0, "Cannot withdraw 0");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
+        return true;
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward()
+        public
+        nonReentrant
+        updateReward(msg.sender)
+        returns (bool)
+    {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
             rewardsToken.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
+        return true;
     }
 
-    function exit() external {
+    function exit() external returns (bool) {
         withdraw(_balances[msg.sender]);
         getReward();
+        return true;
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -171,6 +182,11 @@ contract StakingRewards is ReentrancyGuard, Ownable {
         );
         rewardsDuration = _rewardsDuration;
         emit RewardsDurationUpdated(rewardsDuration);
+    }
+
+    function setDistributor(address _distributor) external onlyOwner {
+        require(_distributor != address(0));
+        distributor = _distributor;
     }
 
     /* ========== MODIFIERS ========== */
