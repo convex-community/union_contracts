@@ -48,7 +48,7 @@ contract PCvxStrategy is Ownable, IStrategy {
     /// @param _amount - the amount to withdraw
     /// @dev Can only be called by the vault
     function withdraw(uint256 _amount) external onlyVault {
-        IStakingRewards(stakingRewards).withdraw(_amount, false);
+        IStakingRewards(stakingRewards).withdraw(_amount);
         IERC20(pCVX).safeTransfer(vault, _amount);
     }
 

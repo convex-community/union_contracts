@@ -10,7 +10,7 @@ interface IStakingRewards {
 
     function withdrawAll(bool) external returns (bool);
 
-    function withdraw(uint256, bool) external returns (bool);
+    function withdraw(uint256) external returns (bool);
 
     function withdrawAndUnwrap(uint256 amount, bool claim)
         external
