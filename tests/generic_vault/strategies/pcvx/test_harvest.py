@@ -112,3 +112,67 @@ def test_harvest_multiple_stakers(
             (estimated_harvest) // len(accounts),
             1e5,
         )
+
+
+def test_harvest_multiple_stakers_multiple_deposits(
+    fn_isolation,
+    alice,
+    bob,
+    charlie,
+    dave,
+    erin,
+    owner,
+    vault,
+    strategy,
+    staking_rewards,
+    pcvx,
+):
+    initial_balances = {}
+    accounts = [alice, bob, charlie]
+    accounts2 = [dave, erin]
+
+    for account in accounts:
+        initial_balances[account.address] = pcvx.balanceOf(account)
+        vault.depositAll(account, {"from": account})
+
+    vault.setCallIncentive(0, {"from": owner})
+    vault.setPlatformFee(0, {"from": owner})
+
+    amount = 1e26
+    pcvx.mint(owner, amount, {"from": owner})
+    pcvx.transfer(staking_rewards, amount, {"from": owner})
+    staking_rewards.notifyRewardAmount(amount, {"from": owner})
+
+    chain.sleep(60 * 60 * 24 * 30)
+    chain.mine(1)
+
+    vault.harvest({"from": bob})
+
+    for account in accounts2:
+        initial_balances[account.address] = pcvx.balanceOf(account)
+        vault.depositAll(account, {"from": account})
+
+    amount = 1e26
+    pcvx.mint(owner, amount, {"from": owner})
+    pcvx.transfer(staking_rewards, amount, {"from": owner})
+    staking_rewards.notifyRewardAmount(amount, {"from": owner})
+
+    chain.sleep(60 * 60 * 24 * 30)
+    chain.mine(1)
+
+    vault.harvest({"from": bob})
+    estimated_harvest = amount * 2
+
+    for account in accounts:
+        assert approx(
+            vault.balanceOfUnderlying(account) - initial_balances[account.address],
+            amount // len(accounts) + amount // len(accounts + accounts2),
+            1e5,
+        )
+
+    for account in accounts2:
+        assert approx(
+            vault.balanceOfUnderlying(account) - initial_balances[account.address],
+            amount // len(accounts + accounts2),
+            1e5,
+        )
