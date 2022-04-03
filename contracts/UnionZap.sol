@@ -276,7 +276,7 @@ contract UnionZap is Ownable, UnionBase, FXSHandler {
         uint256 routerChoices,
         bool claimBeforeSwap,
         uint256 minAmountOut,
-        uint64[3] calldata weights) external onlyOwner,
+        uint64[3] calldata weights) external onlyOwner
     {
         require(weights[0] + weights[1] + weights[2] == DECIMALS);
 
@@ -305,14 +305,21 @@ contract UnionZap is Ownable, UnionBase, FXSHandler {
             if (_token == WETH_TOKEN) {
                 IWETH(WETH_TOKEN).withdraw(_balance);
             }
-            // we handle swaps for output tokens later individually
+            // we handle swaps for output tokens later when distributing
             else if (
                 (_token == FXS_TOKEN && weights[1] > 0) ||
                 (_token == CVX_TOKEN && weights[2] > 0) ||
-                ((_token == CRV_TOKEN) && weights[0] > 0)
+                (_token == CRV_TOKEN && weights[0] > 0)
             ) {
                 continue;
-            } else {
+            }
+            // if we're outputing to more tokens than just cvxCRV, we need to swap back to CRV here
+            // so that the token amount is included in the calcs and can be potentially swapped to ETH
+            // on distribution.
+            else if ((_token == CVXCRV_TOKEN) && weights[0] > 0 && weights[0] != DECIMALS) {
+                _swapCvxCrvToCrv(IERC20(CVXCRV_TOKEN).balanceOf(address(this)), address(this), 0);
+            }
+            else {
                 uint256 _choice = routerChoices & 7;
                 if (_choice >= 4) {
                     _swapToETHCurve(_token, _balance);
@@ -337,6 +344,20 @@ contract UnionZap is Ownable, UnionBase, FXSHandler {
             require(success, "ETH transfer failed");
     }
 
+    /// @notice Internal function used to sell output tokens for ETH
+    /// @param _token - the token to sell
+    /// @param _amount - how much of that token to sell
+    function _sell(address _token, uint256 _amount) {
+
+    }
+
+    /// @notice Internal function used to buy output tokens from ETH
+    /// @param _token - the token to sell
+    /// @param _amount - how much of that token to sell
+    function _buy(address _token, uint256 _amount) {
+
+    }
+
     /// @notice Splits contract balance into output tokens and distributes them
     /// @param lock - whether to lock or swap crv to cvxcrv
     /// @param minAmountOut - min output amount in ETH value
@@ -358,14 +379,41 @@ contract UnionZap is Ownable, UnionBase, FXSHandler {
         uint256[3] memory prices;
         address[3] memory tokenPools = [CURVE_CRV_ETH_POOL, CURVE_FXS_ETH_POOL, CURVE_CVX_ETH_POOL];
         address[3] memory tokens = [CRV_TOKEN, FXS_TOKEN, CVX_TOKEN];
+        uint256[3] memory amounts;
+        // first loop to calculate total ETH amounts and store oracle prices
         for (uint256 i; i < 3; ++i) {
             if (weights[i] > 0) {
                 prices[i] = ICurveV2Pool(tokenPools[i]).price_oracle();
-                uint256 _currentAmount = IERC20(tokens[i]).balanceOf(address(this));
+                // compute ETH value of current token balance
+                amounts[i] = (IERC20(tokens[i]).balanceOf(address(this)) * prices[i]) / 1e18;
                 // add the ETH value of token to current ETH value in contract
-                _totalEthBalance += (_currentAmount * prices[i]) / 1 ether;
+                _totalEthBalance += amounts[i];
             }
         }
+
+        // we're going to track the ETH value of tokens after all swaps
+        // to compare to minAmountOut
+        uint256 _ethValue = 0;
+
+        // second loop to balance the amounts with buys and sells
+        for (uint256 i; i < 3; ++i) {
+            if (weights[i] > 0) {
+                uint256 _desired = _totalEthBalance * weights[i] / DECIMALS;
+                if (amounts[i] > _desired) {
+                    uint256 _sellAmount = ((amounts[i] - _desired) * 1e18) / prices[i];
+                    _sell(tokens[i], _sellAmount);
+                }
+                else {
+                    _buy(tokens[i], _desired - amounts[i]);
+                }
+                _ethValue += (IERC20(tokens[i]).balanceOf(address(this)) * prices[i]) / 1e18;
+            }
+        }
+
+        // slippage check before distribution
+        require(_ethValue > minAmountOut, "SLIPPAGE!");
+
+        // Distribution logic
 
         // if locking, we apply minAmount to CRV - otherwise will do on cvxCRV
         uint256 minCrvOut = lock ? minAmountOut : 0;
