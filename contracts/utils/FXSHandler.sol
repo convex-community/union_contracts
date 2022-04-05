@@ -196,5 +196,4 @@ contract FXSHandler {
                     : _uniStableFxsToEthSwap(_amount);
         }
     }
-
 }

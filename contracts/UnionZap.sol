@@ -73,7 +73,12 @@ contract UnionZap is Ownable, UnionBase {
     event VotiumDistributorUpdated(address distributor);
     event FundsRetrieved(address token, address to, uint256 amount);
     event CurvePoolUpdated(address token, address pool);
-    event OutputTokenUpdated(address token, address pool, address swapper, address distributor);
+    event OutputTokenUpdated(
+        address token,
+        address pool,
+        address swapper,
+        address distributor
+    );
 
     constructor(address distributor_) {
         routers[0] = SUSHI_ROUTER;
@@ -103,8 +108,8 @@ contract UnionZap is Ownable, UnionBase {
     /// @dev No removal options to avoid indexing errors, can just pass 0 weight if unused
     /// @dev Pool needs to be Curve v2 pool with price oracle
     function updateOutputToken(address token, tokenContracts calldata params)
-    external
-    onlyOwner
+        external
+        onlyOwner
     {
         assert(params.pool != address(0));
         // if we don't have any pool info, it's an addition
@@ -112,7 +117,12 @@ contract UnionZap is Ownable, UnionBase {
             outputTokens.push(token);
         }
         tokenInfo[token] = params;
-        emit OutputTokenUpdated(token, params.pool, params.swapper, params.distributor);
+        emit OutputTokenUpdated(
+            token,
+            params.pool,
+            params.swapper,
+            params.distributor
+        );
     }
 
     /// @notice Remove a pool from the registry
@@ -284,7 +294,7 @@ contract UnionZap is Ownable, UnionBase {
     /// @param routerChoices - the router to use for the swap
     /// @param claimBeforeSwap - whether to claim on Votium or not
     /// @param minAmountOut - min output amount in ETH value
-    /// @param weights - weight of output assets (cvxCRV, FXS, CVX) in bips
+    /// @param weights - weight of output assets (cvxCRV, FXS, CVX...) in bips
     /// @dev routerChoices is a 3-bit bitmap such that
     /// 0b000 (0) - Sushi
     /// 0b001 (1) - UniV2
@@ -300,9 +310,8 @@ contract UnionZap is Ownable, UnionBase {
         uint256 routerChoices,
         bool claimBeforeSwap,
         uint256 minAmountOut,
-        uint16[] calldata weights) external onlyOwner validWeights(weights)
-    {
-
+        uint16[] calldata weights
+    ) public onlyOwner validWeights(weights) {
         // initialize gas counting
         uint256 _startGas = gasleft();
         bool _locked = false;
@@ -330,8 +339,16 @@ contract UnionZap is Ownable, UnionBase {
             }
             // if we're outputing to more tokens than just cvxCRV, we need to swap back to CRV
             // in the (unlikely) event an incentive is paid in cvxCRV
-            else if ((_token == CVXCRV_TOKEN) && weights[0] > 0 && weights[0] != DECIMALS) {
-                _swapCvxCrvToCrv(IERC20(CVXCRV_TOKEN).balanceOf(address(this)), address(this), 0);
+            else if (
+                (_token == CVXCRV_TOKEN) &&
+                weights[0] > 0 &&
+                weights[0] != DECIMALS
+            ) {
+                _swapCvxCrvToCrv(
+                    IERC20(CVXCRV_TOKEN).balanceOf(address(this)),
+                    address(this),
+                    0
+                );
             }
             // we handle swaps for output tokens later when distributing
             // so any non-zero output token will be skipped here
@@ -370,7 +387,7 @@ contract UnionZap is Ownable, UnionBase {
             FINAL_TRANSFER_GAS;
 
         (bool success, ) = (msg.sender).call{value: _gasUsed}("");
-            require(success, "ETH transfer failed");
+        require(success, "ETH transfer failed");
     }
 
     /// @notice Internal function used to sell output tokens for ETH
@@ -379,11 +396,9 @@ contract UnionZap is Ownable, UnionBase {
     function _sell(address _token, uint256 _amount) internal {
         if (_token == CRV_TOKEN) {
             _crvToEth(_amount, 0);
-        }
-        else if (_token == CVX_TOKEN) {
+        } else if (_token == CVX_TOKEN) {
             _swapToETHCurve(_token, _amount);
-        }
-        else {
+        } else {
             IERC20(_token).safeApprove(tokenInfo[_token].swapper, 0);
             IERC20(_token).safeApprove(tokenInfo[_token].swapper, _amount);
             ISwapper(tokenInfo[_token].swapper).sell(_amount);
@@ -396,8 +411,7 @@ contract UnionZap is Ownable, UnionBase {
     function _buy(address _token, uint256 _amount) internal {
         if (_token == CRV_TOKEN) {
             _ethToCrv(_amount, 0);
-        }
-        else if (_token == CVX_TOKEN) {
+        } else if (_token == CVX_TOKEN) {
             _ethToCvx(_amount, 0);
         }
     }
@@ -406,7 +420,10 @@ contract UnionZap is Ownable, UnionBase {
     /// @param _minAmountOut - the min amount of cvxCRV expected
     /// @param _lock - whether to lock or swap
     /// @return the amount of cvxCrv obtained
-    function _toCvxCrv(uint256 _minAmountOut, bool _lock) internal returns (uint256) {
+    function _toCvxCrv(uint256 _minAmountOut, bool _lock)
+        internal
+        returns (uint256)
+    {
         uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
         // swap on Curve if there is a premium for doing so
         if (!_lock) {
@@ -421,9 +438,13 @@ contract UnionZap is Ownable, UnionBase {
         }
     }
 
-    function distribute(
-        uint16[] calldata weights) external onlyOwner validWeights(weights) {
-
+    /// @notice Deposits rewards to their respective merkle distributors
+    /// @param weights - weights of output assets (cvxCRV, FXS, CVX...)
+    function distribute(uint16[] calldata weights)
+        public
+        onlyOwner
+        validWeights(weights)
+    {
         for (uint256 i; i < weights.length; ++i) {
             if (weights[i] > 0) {
                 address _outputToken = outputTokens[i];
@@ -433,7 +454,9 @@ contract UnionZap is Ownable, UnionBase {
                 if (_outputToken == CRV_TOKEN) {
                     _outputToken = CVXCRV_TOKEN;
                 }
-                uint256 _balance = IERC20(_outputToken).balanceOf(address(this));
+                uint256 _balance = IERC20(_outputToken).balanceOf(
+                    address(this)
+                );
                 // transfer to distributor
                 IERC20(_outputToken).safeTransfer(_distributor, _balance);
                 // stake
@@ -452,8 +475,7 @@ contract UnionZap is Ownable, UnionBase {
         bool lock,
         uint16[] calldata weights,
         uint256[] calldata minAmounts
-    ) external onlyOwner validWeights(weights) {
-
+    ) public onlyOwner validWeights(weights) {
         // start calculating the allocations of output tokens
         uint256 _totalEthBalance = address(this).balance;
 
@@ -465,9 +487,13 @@ contract UnionZap is Ownable, UnionBase {
         for (uint256 i; i < weights.length; ++i) {
             if (weights[i] > 0) {
                 _outputToken = outputTokens[i];
-                prices[i] = ICurveV2Pool(tokenInfo[_outputToken].pool).price_oracle();
+                prices[i] = ICurveV2Pool(tokenInfo[_outputToken].pool)
+                    .price_oracle();
                 // compute ETH value of current token balance
-                amounts[i] = (IERC20(_outputToken).balanceOf(address(this)) * prices[i]) / 1e18;
+                amounts[i] =
+                    (IERC20(_outputToken).balanceOf(address(this)) *
+                        prices[i]) /
+                    1e18;
                 // add the ETH value of token to current ETH value in contract
                 _totalEthBalance += amounts[i];
             }
@@ -478,23 +504,40 @@ contract UnionZap is Ownable, UnionBase {
             if (weights[i] > 0) {
                 _outputToken = outputTokens[i];
                 // amount adjustments
-                uint256 _desired = _totalEthBalance * weights[i] / DECIMALS;
+                uint256 _desired = (_totalEthBalance * weights[i]) / DECIMALS;
                 if (amounts[i] > _desired) {
-                    _sell(_outputToken, (((amounts[i] - _desired) * 1e18) / prices[i]));
-                }
-                else {
+                    _sell(
+                        _outputToken,
+                        (((amounts[i] - _desired) * 1e18) / prices[i])
+                    );
+                } else {
                     _buy(_outputToken, _desired - amounts[i]);
                 }
                 if (_outputToken == CRV_TOKEN) {
                     // convert all CRV to cvxCRV and update balance
                     _toCvxCrv(minAmounts[i], lock);
-                }
-                else {
+                } else {
                     // slippage check
-                    assert(IERC20(_outputToken).balanceOf(address(this)) > minAmounts[i]);
+                    assert(
+                        IERC20(_outputToken).balanceOf(address(this)) >
+                            minAmounts[i]
+                    );
                 }
             }
         }
+    }
+
+    function processIncentives(
+        IMultiMerkleStash.claimParam[] calldata claimParams,
+        uint256 routerChoices,
+        bool claimBeforeSwap,
+        bool lock,
+        uint256[] calldata minAmounts,
+        uint16[] calldata weights
+    ) external onlyOwner validWeights(weights) {
+        swap(claimParams, routerChoices, claimBeforeSwap, 0, weights);
+        adjust(lock, weights, minAmounts);
+        distribute(weights);
     }
 
     receive() external payable {
@@ -502,7 +545,10 @@ contract UnionZap is Ownable, UnionBase {
     }
 
     modifier validWeights(uint16[] calldata _weights) {
-        require(_weights.length == outputTokens.length, "Invalid weight length");
+        require(
+            _weights.length == outputTokens.length,
+            "Invalid weight length"
+        );
         uint256 _totalWeights;
         for (uint256 i; i < _weights.length; ++i) {
             _totalWeights += _weights[i];

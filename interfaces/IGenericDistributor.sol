@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 interface IGenericDistributor {
-
     function vault() external view returns (address);
 
     function merkleRoot() external view returns (bytes32);
