@@ -69,8 +69,7 @@ contract UnionZap is Ownable, UnionBase {
     mapping(address => curveSwapParams) public curveRegistry;
 
     event Received(address sender, uint256 amount);
-    event Distributed(uint256 amount, uint256 fees, bool locked);
-    event DistributorUpdated(address distributor);
+    event Distributed(uint256 amount, address token, address distributor);
     event VotiumDistributorUpdated(address distributor);
     event FundsRetrieved(address token, address to, uint256 amount);
     event CurvePoolUpdated(address token, address pool);
@@ -122,14 +121,6 @@ contract UnionZap is Ownable, UnionBase {
         IERC20(token).safeApprove(curveRegistry[token].pool, 0);
         delete curveRegistry[token];
         emit CurvePoolUpdated(token, address(0));
-    }
-
-    /// @notice Update the contract used to distribute funds
-    /// @param distributor_ - Address of the new contract
-    function updateDistributor(address distributor_) external onlyOwner {
-        require(distributor_ != address(0));
-        unionDistributor = distributor_;
-        emit DistributorUpdated(distributor_);
     }
 
     /// @notice Change forwarding address in Votium registry
@@ -337,9 +328,8 @@ contract UnionZap is Ownable, UnionBase {
             if (_token == WETH_TOKEN) {
                 IWETH(WETH_TOKEN).withdraw(_balance);
             }
-            // if we're outputing to more tokens than just cvxCRV, we need to swap back to CRV here
-            // so that the token amount is included in the calcs and can be potentially swapped to ETH
-            // on distribution.
+            // if we're outputing to more tokens than just cvxCRV, we need to swap back to CRV
+            // in the (unlikely) event an incentive is paid in cvxCRV
             else if ((_token == CVXCRV_TOKEN) && weights[0] > 0 && weights[0] != DECIMALS) {
                 _swapCvxCrvToCrv(IERC20(CVXCRV_TOKEN).balanceOf(address(this)), address(this), 0);
             }
@@ -368,6 +358,9 @@ contract UnionZap is Ownable, UnionBase {
             routerChoices = routerChoices >> 3;
         }
 
+        // slippage check
+        assert(address(this).balance > minAmountOut);
+
         // estimate gas cost
         uint256 _gasUsed = _startGas -
             gasleft() +
@@ -391,9 +384,9 @@ contract UnionZap is Ownable, UnionBase {
             _swapToETHCurve(_token, _amount);
         }
         else {
-            IERC20(_token).safeApprove(tokenContracts[_token].swapper, 0);
-            IERC20(_token).safeApprove(tokenContracts[_token].swapper, _amount);
-            ISwapper(tokenContracts[_token].swapper).sell(amount);
+            IERC20(_token).safeApprove(tokenInfo[_token].swapper, 0);
+            IERC20(_token).safeApprove(tokenInfo[_token].swapper, _amount);
+            ISwapper(tokenInfo[_token].swapper).sell(_amount);
         }
     }
 
@@ -409,94 +402,106 @@ contract UnionZap is Ownable, UnionBase {
         }
     }
 
-    /// @notice Splits contract balance into output tokens and distributes them
+    /// @notice Swap or lock all CRV for cvxCRV
+    /// @param _minAmountOut - the min amount of cvxCRV expected
+    /// @param _lock - whether to lock or swap
+    /// @return the amount of cvxCrv obtained
+    function _toCvxCrv(uint256 _minAmountOut, bool _lock) internal returns (uint256) {
+        uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
+        // swap on Curve if there is a premium for doing so
+        if (!_lock) {
+            return _swapCrvToCvxCrv(_crvBalance, address(this), _minAmountOut);
+        }
+        // otherwise deposit & lock
+        else {
+            // slippage check
+            assert(_crvBalance > _minAmountOut);
+            ICvxCrvDeposit(CVXCRV_DEPOSIT).deposit(_crvBalance, true);
+            return _crvBalance;
+        }
+    }
+
+    function distribute(
+        uint16[] calldata weights) external onlyOwner validWeights(weights) {
+
+        for (uint256 i; i < weights.length; ++i) {
+            if (weights[i] > 0) {
+                address _outputToken = outputTokens[i];
+                address _distributor = tokenInfo[_outputToken].distributor;
+                IMerkleDistributorV2(_distributor).freeze();
+                // edge case for CRV as we gotta keep using existing distributor
+                if (_outputToken == CRV_TOKEN) {
+                    _outputToken = CVXCRV_TOKEN;
+                }
+                uint256 _balance = IERC20(_outputToken).balanceOf(address(this));
+                // transfer to distributor
+                IERC20(_outputToken).safeTransfer(_distributor, _balance);
+                // stake
+                IMerkleDistributorV2(_distributor).stake();
+                emit Distributed(_balance, _outputToken, _distributor);
+            }
+        }
+    }
+
+    /// @notice Splits contract balance into output tokens as per weights
     /// @param lock - whether to lock or swap crv to cvxcrv
-    /// @param minAmountOut - min output amount in ETH value
+    /// @param minAmounts - min amount out of each output token (cvxCRV for CRV)
     /// @param weights - weight of output assets (cvxCRV, FXS, CVX) in bips
     /// @dev weights must sum to 10000
-    function distribute(
+    function adjust(
         bool lock,
-        uint256 minAmountOut,
-        uint16[] calldata weights
-    ) external onlyOwner validWeights {
-
-        uint256 _ethBalance = address(this).balance;
+        uint16[] calldata weights,
+        uint256[] calldata minAmounts
+    ) external onlyOwner validWeights(weights) {
 
         // start calculating the allocations of output tokens
         uint256 _totalEthBalance = address(this).balance;
 
         uint256[] memory prices;
         uint256[] memory amounts;
+        address _outputToken;
 
         // first loop to calculate total ETH amounts and store oracle prices
         for (uint256 i; i < weights.length; ++i) {
             if (weights[i] > 0) {
-                address _token = outputTokens[i];
-                prices[i] = ICurveV2Pool(tokenContracts[_token].pool).price_oracle();
+                _outputToken = outputTokens[i];
+                prices[i] = ICurveV2Pool(tokenInfo[_outputToken].pool).price_oracle();
                 // compute ETH value of current token balance
-                amounts[i] = (IERC20(_token).balanceOf(address(this)) * prices[i]) / 1e18;
+                amounts[i] = (IERC20(_outputToken).balanceOf(address(this)) * prices[i]) / 1e18;
                 // add the ETH value of token to current ETH value in contract
                 _totalEthBalance += amounts[i];
             }
         }
 
-        // we're going to track the ETH value of tokens after all swaps
-        // to compare to minAmountOut
-        uint256 _ethValue = 0;
-
-        // second loop to balance the amounts with buys and sells
+        // second loop to balance the amounts with buys and sells before distribution
         for (uint256 i; i < weights.length; ++i) {
             if (weights[i] > 0) {
+                _outputToken = outputTokens[i];
+                // amount adjustments
                 uint256 _desired = _totalEthBalance * weights[i] / DECIMALS;
                 if (amounts[i] > _desired) {
-                    uint256 _sellAmount = ((amounts[i] - _desired) * 1e18) / prices[i];
-                    _sell(outputTokens[i], _sellAmount);
+                    _sell(_outputToken, (((amounts[i] - _desired) * 1e18) / prices[i]));
                 }
                 else {
-                    _buy(outputTokens[i], _desired - amounts[i]);
+                    _buy(_outputToken, _desired - amounts[i]);
                 }
-                _ethValue += (IERC20(outputTokens[i]).balanceOf(address(this)) * prices[i]) / 1e18;
+                if (_outputToken == CRV_TOKEN) {
+                    // convert all CRV to cvxCRV and update balance
+                    _toCvxCrv(minAmounts[i], lock);
+                }
+                else {
+                    // slippage check
+                    assert(IERC20(_outputToken).balanceOf(address(this)) > minAmounts[i]);
+                }
             }
         }
-
-        // slippage check before distribution
-        require(_ethValue > minAmountOut, "SLIPPAGE!");
-
-        // Distribution logic
-
-        // swap CRV to CvxCRV
-        // if locking, we apply minAmount to CRV - otherwise will do on cvxCRV
-        uint256 minCrvOut = lock ? minAmountOut : 0;
-        // swap from ETH to CRV
-        uint256 _swappedCrv = _swapEthToCrv(_ethBalance, minCrvOut);
-        uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
-        // swap on Curve if there is a premium for doing so
-        if (!lock) {
-            _swapCrvToCvxCrv(_crvBalance, address(this), minAmountOut);
-        }
-        // otherwise deposit & lock
-        else {
-            ICvxCrvDeposit(CVXCRV_DEPOSIT).deposit(_crvBalance, true);
-        }
-
-        uint256 _cvxCrvBalance = IERC20(CVXCRV_TOKEN).balanceOf(address(this));
-
-        // freeze distributor before transferring funds
-        IMerkleDistributorV2(unionDistributor).freeze();
-
-        // transfer funds
-        IERC20(CVXCRV_TOKEN).safeTransfer(unionDistributor, _cvxCrvBalance);
-
-        IMerkleDistributorV2(unionDistributor).stake();
-
-        emit Distributed(_cvxCrvBalance, _cvxCrvBalance, lock);
     }
 
     receive() external payable {
         emit Received(msg.sender, msg.value);
     }
 
-    modifier validWeights(uint16[] _weights) {
+    modifier validWeights(uint16[] calldata _weights) {
         require(_weights.length == outputTokens.length, "Invalid weight length");
         uint256 _totalWeights;
         for (uint256 i; i < _weights.length; ++i) {
