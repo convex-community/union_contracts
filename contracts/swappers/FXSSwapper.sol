@@ -29,7 +29,7 @@ contract FXSSwapper is Ownable {
         0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant FRAX_TOKEN =
         0x853d955aCEf822Db058eb8505911ED77F175b99e;
-    address public constant vault;
+    address public vault;
 
     ICurveV2Pool fxsEthSwap = ICurveV2Pool(CURVE_FXS_ETH_POOL);
     // The swap strategy to use when going eth -> fxs
@@ -241,5 +241,6 @@ contract FXSSwapper is Ownable {
 
     modifier onlyVault() {
         require(msg.sender == vault, "Vault only");
+        _;
     }
 }

@@ -12,7 +12,6 @@ import "../interfaces/IVotiumRegistry.sol";
 import "../interfaces/IUniV3Router.sol";
 import "../interfaces/ICurveV2Pool.sol";
 import "../interfaces/ISwapper.sol";
-import "./utils/FXSHandler.sol";
 import "./UnionBase.sol";
 
 contract UnionZap is Ownable, UnionBase {
