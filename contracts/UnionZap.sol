@@ -399,8 +399,7 @@ contract UnionZap is Ownable, UnionBase {
         } else if (_token == CVX_TOKEN) {
             _swapToETHCurve(_token, _amount);
         } else {
-            IERC20(_token).safeApprove(tokenInfo[_token].swapper, 0);
-            IERC20(_token).safeApprove(tokenInfo[_token].swapper, _amount);
+            IERC20(_token).safeTransfer(tokenInfo[_token].swapper, _amount);
             ISwapper(tokenInfo[_token].swapper).sell(_amount);
         }
     }
@@ -413,6 +412,12 @@ contract UnionZap is Ownable, UnionBase {
             _ethToCrv(_amount, 0);
         } else if (_token == CVX_TOKEN) {
             _ethToCvx(_amount, 0);
+        } else {
+            (bool success, ) = tokenInfo[_token].swapper.call{value: _amount}(
+                ""
+            );
+            require(success, "ETH transfer failed");
+            ISwapper(tokenInfo[_token].swapper).buy(_amount);
         }
     }
 

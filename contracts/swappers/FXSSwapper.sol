@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/ICurveV2Pool.sol";
 import "../../interfaces/ICurveFactoryPool.sol";
 import "../../interfaces/IBasicRewards.sol";
@@ -8,7 +10,9 @@ import "../../interfaces/IWETH.sol";
 import "../../interfaces/IUniV3Router.sol";
 import "../../interfaces/IUniV2Router.sol";
 
-contract FXSHandler {
+contract FXSSwapper is Ownable {
+    using SafeERC20 for IERC20;
+
     address public constant CURVE_FXS_ETH_POOL =
         0x941Eb6F616114e4Ecaa85377945EA306002612FE;
     address public constant FXS_TOKEN =
@@ -25,6 +29,7 @@ contract FXSHandler {
         0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant FRAX_TOKEN =
         0x853d955aCEf822Db058eb8505911ED77F175b99e;
+    address public constant vault;
 
     ICurveV2Pool fxsEthSwap = ICurveV2Pool(CURVE_FXS_ETH_POOL);
     // The swap strategy to use when going eth -> fxs
@@ -33,7 +38,42 @@ contract FXSHandler {
         Uniswap,
         Unistables
     }
-    SwapOption public swapOption = SwapOption.Curve;
+    SwapOption public swapOption = SwapOption.Unistables;
+
+    constructor(address _vault) {
+        require(_vault != address(0));
+        vault = _vault;
+    }
+
+    /// @notice Change the vault authorized to call buy and sell functions
+    /// @param _vault - address of the new vault
+    function updateVault(address _vault) external onlyOwner {
+        require(_vault != address(0));
+        vault = _vault;
+    }
+
+    /// @notice Change the swap option for FXS/ETH
+    /// @param _option - the new swap option
+    function updateOption(SwapOption _option) external onlyOwner {
+        swapOption = _option;
+    }
+
+    /// @notice Buy FXS with ETH
+    /// @param amount - amount of ETH to buy with
+    /// @dev ETH must have been sent to the contract prior
+    function buy(uint256 amount) external onlyVault {
+        uint256 _received = _swapEthForFxs(amount, swapOption);
+        IERC20(FXS_TOKEN).safeTransfer(vault, _received);
+    }
+
+    /// @notice Sell FXS for ETH
+    /// @param amount - amount of FXS to sell
+    /// @dev FXS must have been sent to the contract prior
+    function sell(uint256 amount) external onlyVault {
+        uint256 _received = _swapFxsForEth(amount, swapOption);
+        (bool success, ) = vault.call{value: _received}("");
+        require(success, "ETH transfer failed");
+    }
 
     /// @notice Swap native ETH for FXS via different routes
     /// @param _ethAmount - amount to swap
@@ -195,5 +235,11 @@ contract FXSHandler {
                     ? _uniStableEthToFxsSwap(_amount)
                     : _uniStableFxsToEthSwap(_amount);
         }
+    }
+
+    receive() external payable {}
+
+    modifier onlyVault() {
+        require(msg.sender == vault, "Vault only");
     }
 }
