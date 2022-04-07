@@ -484,8 +484,8 @@ contract UnionZap is Ownable, UnionBase {
         // start calculating the allocations of output tokens
         uint256 _totalEthBalance = address(this).balance;
 
-        uint256[] memory prices;
-        uint256[] memory amounts;
+        uint256[] memory prices = new uint256[](outputTokens.length);
+        uint256[] memory amounts = new uint256[](outputTokens.length);
         address _outputToken;
 
         // first loop to calculate total ETH amounts and store oracle prices
