@@ -358,20 +358,21 @@ contract UnionZap is Ownable, UnionBase {
                         _isOutput = true;
                     }
                 }
+                // skip if output token
                 if (_isOutput) {
                     continue;
                 }
+                // otherwise execute the swaps
+                uint256 _choice = routerChoices & 7;
+                if (_choice >= 4) {
+                    _swapToETHCurve(_token, _balance);
+                } else if (_choice >= 2) {
+                    _swapToETHUniV3(_token, _balance, fees[_choice - 2]);
+                } else {
+                    _swapToETH(_token, _balance, routers[_choice]);
+                }
+                routerChoices = routerChoices >> 3;
             }
-            // otherwise execute the swaps
-            uint256 _choice = routerChoices & 7;
-            if (_choice >= 4) {
-                _swapToETHCurve(_token, _balance);
-            } else if (_choice >= 2) {
-                _swapToETHUniV3(_token, _balance, fees[_choice - 2]);
-            } else {
-                _swapToETH(_token, _balance, routers[_choice]);
-            }
-            routerChoices = routerChoices >> 3;
         }
 
         // slippage check
