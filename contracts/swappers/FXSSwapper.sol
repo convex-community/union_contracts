@@ -48,9 +48,6 @@ contract FXSSwapper is Ownable {
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
 
-        IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
-        IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
-
         IERC20(FXS_TOKEN).safeApprove(CURVE_FXS_ETH_POOL, 0);
         IERC20(FXS_TOKEN).safeApprove(CURVE_FXS_ETH_POOL, type(uint256).max);
 
@@ -80,7 +77,7 @@ contract FXSSwapper is Ownable {
     /// @notice Buy FXS with ETH
     /// @param amount - amount of ETH to buy with
     /// @dev ETH must have been sent to the contract prior
-    function onlyDepositor(uint256 amount) external onlyVault {
+    function buy(uint256 amount) external onlyDepositor {
         uint256 _received = _swapEthForFxs(amount, swapOption);
         IERC20(FXS_TOKEN).safeTransfer(depositor, _received);
     }
@@ -88,7 +85,7 @@ contract FXSSwapper is Ownable {
     /// @notice Sell FXS for ETH
     /// @param amount - amount of FXS to sell
     /// @dev FXS must have been sent to the contract prior
-    function onlyDepositor(uint256 amount) external onlyVault {
+    function sell(uint256 amount) external onlyDepositor {
         uint256 _received = _swapFxsForEth(amount, swapOption);
         (bool success, ) = depositor.call{value: _received}("");
         require(success, "ETH transfer failed");
