@@ -80,7 +80,6 @@ def vault(owner):
 @pytest.fixture(scope="module")
 def merkle_distributor_v2(owner, union_contract, vault):
     merkle = MerkleDistributorV2.deploy(vault, union_contract, {"from": owner})
-    union_contract.updateDistributor(merkle)
     merkle.setApprovals({"from": owner})
     yield merkle
 
@@ -122,13 +121,17 @@ def cvx_vault(owner):
 
 
 @pytest.fixture(scope="module")
-def fxs_distributor(owner, vault, union_contract, merkle_distributor_v2, fxs_zaps, fxs_swapper, fxs_vault, cvx_vault):
-    fxs_distributor = FXSMerkleDistributorV2.deploy(fxs_vault, union_contract, fxs_zaps)
-    # set up all the output tokens since all contracts are deployed
-    union_contract.updateOutputToken(CRV, [CURVE_CRV_ETH_POOL, ADDRESS_ZERO, merkle_distributor_v2])
-    union_contract.updateOutputToken(CVX, [CURVE_CVX_ETH_POOL, ADDRESS_ZERO, cvx_vault])
-    union_contract.updateOutputToken(FXS, [CURVE_FXS_ETH_POOL, fxs_swapper, merkle_distributor_v2])
+def fxs_distributor(owner, vault, union_contract, fxs_zaps, fxs_vault):
+    fxs_distributor = FXSMerkleDistributorV2.deploy(fxs_vault, union_contract, fxs_zaps, {'from': owner})
     yield fxs_distributor
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_up_ouput_tokens(owner, vault, union_contract, merkle_distributor_v2, fxs_zaps, fxs_swapper, cvx_vault, fxs_distributor):
+    # set up all the output tokens since all contracts are deployed
+    union_contract.updateOutputToken(CRV, [CURVE_CRV_ETH_POOL, ADDRESS_ZERO, merkle_distributor_v2], {'from': owner})
+    union_contract.updateOutputToken(CVX, [CURVE_CVX_ETH_POOL, ADDRESS_ZERO, cvx_vault], {'from': owner})
+    union_contract.updateOutputToken(FXS, [CURVE_FXS_ETH_POOL, fxs_swapper, fxs_distributor], {'from': owner})
 
 
 @pytest.fixture(scope="module")

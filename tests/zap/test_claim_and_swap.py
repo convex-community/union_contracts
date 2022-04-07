@@ -27,15 +27,8 @@ def test_claim_and_swap(
     )
     union_contract.setApprovals({"from": owner})
     original_caller_balance = owner.balance()
-    tx = union_contract.distribute(params, 0, True, False, True, 0, {"from": owner})
+    tx = union_contract.processIncentives(params, 0, True, False, [0, 0, 0], [10000, 0, 0], {"from": owner})
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
 
-    gas_used = tx.gas_price * tx.gas_used
-    gas_fees = original_caller_balance - owner.balance() + gas_used
-    gas_fees_in_crv = tx.events["Distributed"]["fees"]
-    assert approx(eth_to_cvxcrv(gas_fees), gas_fees_in_crv, 0.5)
-    assert approx(gas_used * eth_crv_ratio, gas_fees_in_crv, 0.5)
-    assert distributor_balance > 0
-    assert gas_fees >= tx.gas_price
     assert merkle_distributor_v2.frozen() == True
-    assert distributor_balance == expected_output_amount - gas_fees_in_crv
+    assert distributor_balance == expected_output_amount
