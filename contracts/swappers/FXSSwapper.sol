@@ -47,7 +47,6 @@ contract FXSSwapper is Ownable {
 
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
-
         IERC20(FXS_TOKEN).safeApprove(CURVE_FXS_ETH_POOL, 0);
         IERC20(FXS_TOKEN).safeApprove(CURVE_FXS_ETH_POOL, type(uint256).max);
 
