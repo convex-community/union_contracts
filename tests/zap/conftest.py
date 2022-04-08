@@ -24,7 +24,14 @@ from ..utils.constants import (
     REGULAR_TOKENS,
     V3_TOKENS,
     V3_1_TOKENS,
-    CURVE_TOKENS, CVX, CURVE_CVXCRV_CRV_POOL, CURVE_CRV_ETH_POOL, CURVE_CVX_ETH_POOL, CRV, FXS, CURVE_FXS_ETH_POOL,
+    CURVE_TOKENS,
+    CVX,
+    CURVE_CVXCRV_CRV_POOL,
+    CURVE_CRV_ETH_POOL,
+    CURVE_CVX_ETH_POOL,
+    CRV,
+    FXS,
+    CURVE_FXS_ETH_POOL,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -122,16 +129,33 @@ def cvx_vault(owner):
 
 @pytest.fixture(scope="module")
 def fxs_distributor(owner, vault, union_contract, fxs_zaps, fxs_vault):
-    fxs_distributor = FXSMerkleDistributorV2.deploy(fxs_vault, union_contract, fxs_zaps, {'from': owner})
+    fxs_distributor = FXSMerkleDistributorV2.deploy(
+        fxs_vault, union_contract, fxs_zaps, {"from": owner}
+    )
     yield fxs_distributor
 
 
 @pytest.fixture(scope="module", autouse=True)
-def set_up_ouput_tokens(owner, vault, union_contract, merkle_distributor_v2, fxs_zaps, fxs_swapper, cvx_vault, fxs_distributor):
+def set_up_ouput_tokens(
+    owner,
+    vault,
+    union_contract,
+    merkle_distributor_v2,
+    fxs_zaps,
+    fxs_swapper,
+    cvx_vault,
+    fxs_distributor,
+):
     # set up all the output tokens since all contracts are deployed
-    union_contract.updateOutputToken(CRV, [CURVE_CRV_ETH_POOL, ADDRESS_ZERO, merkle_distributor_v2], {'from': owner})
-    union_contract.updateOutputToken(CVX, [CURVE_CVX_ETH_POOL, ADDRESS_ZERO, cvx_vault], {'from': owner})
-    union_contract.updateOutputToken(FXS, [CURVE_FXS_ETH_POOL, fxs_swapper, fxs_distributor], {'from': owner})
+    union_contract.updateOutputToken(
+        CRV, [CURVE_CRV_ETH_POOL, ADDRESS_ZERO, merkle_distributor_v2], {"from": owner}
+    )
+    union_contract.updateOutputToken(
+        CVX, [CURVE_CVX_ETH_POOL, ADDRESS_ZERO, cvx_vault], {"from": owner}
+    )
+    union_contract.updateOutputToken(
+        FXS, [CURVE_FXS_ETH_POOL, fxs_swapper, fxs_distributor], {"from": owner}
+    )
 
 
 @pytest.fixture(scope="module")

@@ -27,8 +27,11 @@ def test_claim_and_swap(
     )
     union_contract.setApprovals({"from": owner})
     original_caller_balance = owner.balance()
-    tx = union_contract.processIncentives(params, 0, True, False, [0, 0, 0], [10000, 0, 0], {"from": owner})
+    tx = union_contract.processIncentives(
+        params, 0, True, False, [0, 0, 0], [10000, 0, 0], {"from": owner}
+    )
     distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
+    gas_fees = original_caller_balance - owner.balance()
 
     assert merkle_distributor_v2.frozen() == True
-    assert distributor_balance == expected_output_amount
+    assert distributor_balance == expected_output_amount - gas_fees
