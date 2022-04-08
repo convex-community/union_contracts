@@ -272,6 +272,18 @@ contract UnionZap is Ownable, UnionBase {
         IWETH(WETH_TOKEN).withdraw(_wethReceived);
     }
 
+    function _isEffectiveOutputToken(address _token, uint16[] calldata _weights)
+        internal
+        returns (bool)
+    {
+        for (uint256 j; j < _weights.length; ++j) {
+            if (_token == outputTokens[j] && _weights[j] > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// @notice Claims all specified rewards from Votium
     /// @param claimParams - an array containing the info necessary to claim for
     /// each available token
@@ -336,30 +348,11 @@ contract UnionZap is Ownable, UnionBase {
             if (_token == WETH_TOKEN) {
                 IWETH(WETH_TOKEN).withdraw(_balance);
             }
-            // if we're outputing to more tokens than just cvxCRV, we need to swap back to CRV
-            // in the (unlikely) event an incentive is paid in cvxCRV
-            else if (
-                (_token == CVXCRV_TOKEN) &&
-                weights[0] > 0 &&
-                weights[0] != DECIMALS
-            ) {
-                _swapCvxCrvToCrv(
-                    IERC20(CVXCRV_TOKEN).balanceOf(address(this)),
-                    address(this),
-                    0
-                );
-            }
             // we handle swaps for output tokens later when distributing
             // so any non-zero output token will be skipped here
             else {
-                bool _isOutput = false;
-                for (uint256 j; j < weights.length; ++j) {
-                    if (_token == outputTokens[j] && weights[j] > 0) {
-                        _isOutput = true;
-                    }
-                }
                 // skip if output token
-                if (_isOutput) {
+                if (_isEffectiveOutputToken(_token, weights)) {
                     continue;
                 }
                 // otherwise execute the swaps
@@ -518,6 +511,8 @@ contract UnionZap is Ownable, UnionBase {
                 } else {
                     _buy(_outputToken, _desired - amounts[i]);
                 }
+                // we need an edge case here since it's too late
+                // to update the cvxCRV distributor's stake function
                 if (_outputToken == CRV_TOKEN) {
                     // convert all CRV to cvxCRV and update balance
                     _toCvxCrv(minAmounts[i], lock);
