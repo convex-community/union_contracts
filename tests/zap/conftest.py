@@ -6,6 +6,9 @@ from brownie import (
     GenericUnionVault,
     CvxFxsStrategy,
     CvxFxsZaps,
+    StakingRewards,
+    GenericDistributor,
+    PCvxStrategy,
     FXSSwapper,
     UnionVault,
     UnionZap,
@@ -128,6 +131,26 @@ def cvx_vault(owner):
 
 
 @pytest.fixture(scope="module")
+def cvx_staking_rewards(owner):
+    yield StakingRewards.deploy(CVX, CVX, owner, {"from": owner})
+
+
+@pytest.fixture(scope="module")
+def cvx_strategy(owner, cvx_vault, cvx_staking_rewards):
+    strategy = PCvxStrategy.deploy(cvx_vault, cvx_staking_rewards, CVX, {"from": owner})
+    strategy.setApprovals({"from": owner})
+    cvx_vault.setStrategy(strategy, {"from": owner})
+    yield strategy
+
+
+@pytest.fixture(scope="module")
+def cvx_distributor(owner, cvx_vault, cvx_strategy, union_contract):
+    merkle = GenericDistributor.deploy(cvx_vault, union_contract, CVX, {"from": owner})
+    merkle.setApprovals({"from": owner})
+    yield merkle
+
+
+@pytest.fixture(scope="module")
 def fxs_distributor(owner, vault, union_contract, fxs_zaps, fxs_vault):
     fxs_distributor = FXSMerkleDistributorV2.deploy(
         fxs_vault, union_contract, fxs_zaps, {"from": owner}
@@ -145,13 +168,14 @@ def set_up_ouput_tokens(
     fxs_swapper,
     cvx_vault,
     fxs_distributor,
+    cvx_distributor,
 ):
     # set up all the output tokens since all contracts are deployed
     union_contract.updateOutputToken(
         CRV, [CURVE_CRV_ETH_POOL, ADDRESS_ZERO, merkle_distributor_v2], {"from": owner}
     )
     union_contract.updateOutputToken(
-        CVX, [CURVE_CVX_ETH_POOL, ADDRESS_ZERO, cvx_vault], {"from": owner}
+        CVX, [CURVE_CVX_ETH_POOL, ADDRESS_ZERO, cvx_distributor], {"from": owner}
     )
     union_contract.updateOutputToken(
         FXS, [CURVE_FXS_ETH_POOL, fxs_swapper, fxs_distributor], {"from": owner}
