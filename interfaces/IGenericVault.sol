@@ -44,5 +44,4 @@ interface IGenericVault {
     function callIncentive() external view returns (uint256);
 
     function platformFee() external view returns (uint256);
-
 }

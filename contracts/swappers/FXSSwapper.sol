@@ -60,11 +60,11 @@ contract FXSSwapper is Ownable {
         IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
     }
 
-    /// @notice Change the vault authorized to call buy and sell functions
-    /// @param _vault - address of the new vault
-    function updateVault(address _vault) external onlyOwner {
-        require(_vault != address(0));
-        depositor = _vault;
+    /// @notice Change the contract authorized to call buy and sell functions
+    /// @param _depositor - address of the new depositor
+    function updateDepositor(address _depositor) external onlyOwner {
+        require(_depositor != address(0));
+        depositor = _depositor;
     }
 
     /// @notice Change the swap option for FXS/ETH
@@ -75,19 +75,23 @@ contract FXSSwapper is Ownable {
 
     /// @notice Buy FXS with ETH
     /// @param amount - amount of ETH to buy with
+    /// @return amount of FXS bought
     /// @dev ETH must have been sent to the contract prior
-    function buy(uint256 amount) external onlyDepositor {
+    function buy(uint256 amount) external onlyDepositor returns (uint256) {
         uint256 _received = _swapEthForFxs(amount, swapOption);
         IERC20(FXS_TOKEN).safeTransfer(depositor, _received);
+        return _received;
     }
 
     /// @notice Sell FXS for ETH
     /// @param amount - amount of FXS to sell
+    /// @return amount of ETH bought
     /// @dev FXS must have been sent to the contract prior
-    function sell(uint256 amount) external onlyDepositor {
+    function sell(uint256 amount) external onlyDepositor returns (uint256) {
         uint256 _received = _swapFxsForEth(amount, swapOption);
         (bool success, ) = depositor.call{value: _received}("");
         require(success, "ETH transfer failed");
+        return _received;
     }
 
     /// @notice Swap native ETH for FXS via different routes

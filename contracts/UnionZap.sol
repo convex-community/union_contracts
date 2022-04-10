@@ -64,7 +64,7 @@ contract UnionZap is Ownable, UnionBase {
         uint16 ethIndex;
     }
 
-    mapping(address => tokenContracts) private tokenInfo;
+    mapping(address => tokenContracts) public tokenInfo;
     mapping(address => curveSwapParams) public curveRegistry;
 
     event Received(address sender, uint256 amount);
@@ -514,7 +514,7 @@ contract UnionZap is Ownable, UnionBase {
                 // we need an edge case here since it's too late
                 // to update the cvxCRV distributor's stake function
                 if (_outputToken == CRV_TOKEN) {
-                    // convert all CRV to cvxCRV and update balance
+                    // convert all CRV to cvxCRV
                     _toCvxCrv(minAmounts[i], lock);
                 } else {
                     // slippage check
