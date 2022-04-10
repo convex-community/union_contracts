@@ -88,8 +88,7 @@ def test_swap_adjust_distribute(
             0,
             1,
             (expected_eth_amount - gas_fees)
-            + interface.IERC20(CVX).balanceOf(union_contract),
-        )
+        ) + interface.IERC20(CVX).balanceOf(union_contract)
     else:
 
         if option == 0:
