@@ -59,9 +59,8 @@ contract GenericDistributor {
 
     /// @notice Set approvals for the tokens used when swapping
     function setApprovals() external onlyAdmin {
-        address _strategy = IGenericVault(vault).strategy();
-        IERC20(token).safeApprove(_strategy, 0);
-        IERC20(token).safeApprove(_strategy, type(uint256).max);
+        IERC20(token).safeApprove(vault, 0);
+        IERC20(token).safeApprove(vault, type(uint256).max);
     }
 
     /// @notice Check if the index has been marked as claimed.
