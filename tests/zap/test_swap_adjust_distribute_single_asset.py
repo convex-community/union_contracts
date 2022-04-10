@@ -116,6 +116,7 @@ def test_swap_adjust_distribute(
         params, 0, True, False, [0, 0, 0], weights, {"from": owner}
     )
 
+    assert union_contract.balance() == 0
     assert current_distributor.frozen() == True
     # approximate as gas fees will be different
     assert approx(

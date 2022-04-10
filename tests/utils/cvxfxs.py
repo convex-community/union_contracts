@@ -155,3 +155,12 @@ def calc_harvest_amount_curve(strategy):
         fxs_balance += eth_fxs_curve(eth_balance)
 
     return fxs_balance
+
+
+def eth_to_fxs(amount, option):
+    if option == 0:
+        return eth_fxs_curve(amount)
+    elif option == 1:
+        return eth_fxs_uniswap(amount)
+    else:
+        return eth_fxs_unistable(amount)
