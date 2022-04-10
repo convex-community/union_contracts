@@ -3,6 +3,7 @@ from brownie import interface, chain, network
 import pytest
 from ..utils import (
     estimate_amounts_after_swap,
+    approx,
 )
 from ..utils.constants import (
     CLAIM_AMOUNT,
@@ -10,10 +11,14 @@ from ..utils.constants import (
     CURVE_CRV_ETH_POOL,
     CRV,
     CURVE_CVXCRV_CRV_POOL,
-    CURVE_FXS_ETH_POOL,
-    FXS,
     CURVE_CVX_ETH_POOL,
     CVX,
+)
+from ..utils.cvxfxs import (
+    estimate_lp_tokens_received,
+    eth_fxs_curve,
+    eth_fxs_uniswap,
+    eth_fxs_unistable,
 )
 
 
@@ -33,6 +38,7 @@ def test_swap_adjust_distribute(
     vault,
     cvx_vault,
     fxs_vault,
+    fxs_swapper,
     claim_tree,
     merkle_distributor_v2,
     cvx_distributor,
@@ -42,6 +48,7 @@ def test_swap_adjust_distribute(
     network.gas_price("0 gwei")
     index = config["index"]
     weights = config["weights"]
+    option = fxs_swapper.swapOption()
     vaults = [vault, cvx_vault, fxs_vault]
     distributors = [merkle_distributor_v2, cvx_distributor, fxs_distributor]
     current_vault = vaults[index]
@@ -57,8 +64,11 @@ def test_swap_adjust_distribute(
     expected_eth_amount = estimate_amounts_after_swap(
         TOKENS, union_contract, 0, weights
     )
-    union_contract.setApprovals({"from": owner})
     original_caller_balance = owner.balance()
+
+    # take chain snapshot here
+    chain.snapshot()
+
     tx_swap = union_contract.swap(params, 0, True, 0, weights, {"from": owner})
     gas_fees = owner.balance() - original_caller_balance
 
@@ -81,20 +91,34 @@ def test_swap_adjust_distribute(
             + interface.IERC20(CVX).balanceOf(union_contract),
         )
     else:
-        expected_output_amount = interface.ICurveV2Pool(CURVE_FXS_ETH_POOL).get_dy(
-            0,
-            1,
-            (expected_eth_amount - gas_fees)
-            + interface.IERC20(FXS).balanceOf(union_contract),
-        )
+
+        if option == 0:
+            fxs_amount = eth_fxs_curve(expected_eth_amount - gas_fees)
+        elif option == 1:
+            fxs_amount = eth_fxs_uniswap(expected_eth_amount - gas_fees)
+        else:
+            fxs_amount = eth_fxs_unistable(expected_eth_amount - gas_fees)
+
+        expected_output_amount = estimate_lp_tokens_received(fxs_amount)
 
     tx_adjust = union_contract.adjust(False, weights, [0, 0, 0], {"from": owner})
 
     tx_distribute = union_contract.distribute(weights)
 
-    # tx = union_contract.processIncentives(params, 0, True, False, [0, 0, 0], weights, {"from": owner})
-
     distributor_balance = current_vault.balanceOfUnderlying(current_distributor)
 
     assert current_distributor.frozen() == True
     assert distributor_balance == expected_output_amount
+
+    # revert to test process incentives result
+    chain.revert()
+
+    tx = union_contract.processIncentives(
+        params, 0, True, False, [0, 0, 0], weights, {"from": owner}
+    )
+
+    assert current_distributor.frozen() == True
+    # approximate as gas fees will be different
+    assert approx(
+        distributor_balance, current_vault.balanceOfUnderlying(current_distributor)
+    )

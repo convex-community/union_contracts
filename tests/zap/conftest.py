@@ -71,7 +71,9 @@ def owner(accounts):
 
 @pytest.fixture(scope="module")
 def union_contract(owner):
-    yield UnionZap.deploy(ADDRESS_ZERO, {"from": owner})
+    union_contract = UnionZap.deploy(ADDRESS_ZERO, {"from": owner})
+    union_contract.setApprovals({"from": owner})
+    yield union_contract
 
 
 @pytest.fixture(scope="module")
@@ -102,23 +104,23 @@ def fxs_vault(owner):
 
 
 @pytest.fixture(scope="module")
-def strategy(owner, vault):
-    strategy = CvxFxsStrategy.deploy(vault, {"from": owner})
+def fxs_strategy(owner, fxs_vault):
+    strategy = CvxFxsStrategy.deploy(fxs_vault, {"from": owner})
     strategy.setApprovals({"from": owner})
-    vault.setStrategy(strategy, {"from": owner})
+    fxs_vault.setStrategy(strategy, {"from": owner})
     yield strategy
 
 
 @pytest.fixture(scope="module")
-def fxs_zaps(owner, vault):
-    zaps = CvxFxsZaps.deploy(vault, {"from": owner})
+def fxs_zaps(owner, fxs_vault):
+    zaps = CvxFxsZaps.deploy(fxs_vault, {"from": owner})
     zaps.setApprovals({"from": owner})
     yield zaps
 
 
 @pytest.fixture(scope="module")
-def fxs_swapper(owner, vault):
-    swaps = FXSSwapper.deploy(vault, {"from": owner})
+def fxs_swapper(owner, union_contract):
+    swaps = FXSSwapper.deploy(union_contract, {"from": owner})
     swaps.setApprovals({"from": owner})
     yield swaps
 
@@ -155,6 +157,7 @@ def fxs_distributor(owner, vault, union_contract, fxs_zaps, fxs_vault):
     fxs_distributor = FXSMerkleDistributorV2.deploy(
         fxs_vault, union_contract, fxs_zaps, {"from": owner}
     )
+    fxs_distributor.setApprovals({"from": owner})
     yield fxs_distributor
 
 
@@ -167,6 +170,8 @@ def set_up_ouput_tokens(
     fxs_zaps,
     fxs_swapper,
     cvx_vault,
+    fxs_vault,
+    fxs_strategy,
     fxs_distributor,
     cvx_distributor,
 ):
