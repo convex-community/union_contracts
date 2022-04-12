@@ -76,6 +76,8 @@ def test_swap_adjust_distribute(
         if output_token == CRV:
             output_token = CVXCRV
         balance = interface.IERC20(output_token).balanceOf(union_contract)
+        # account for the fact that we leave 1 token unit for gas saving when swapping
+        balance = 0 if balance == 1 else balance
         assert balance == output_amounts[i]
         # calculate spoth ETH price and store
         price = get_spot_prices(output_token)
