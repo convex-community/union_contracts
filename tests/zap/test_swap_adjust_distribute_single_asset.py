@@ -85,9 +85,7 @@ def test_swap_adjust_distribute(
         )
     elif index == 1:
         expected_output_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(
-            0,
-            1,
-            (expected_eth_amount - gas_fees)
+            0, 1, (expected_eth_amount - gas_fees)
         ) + interface.IERC20(CVX).balanceOf(union_contract)
     else:
 

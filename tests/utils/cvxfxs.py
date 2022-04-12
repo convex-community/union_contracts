@@ -164,3 +164,12 @@ def eth_to_fxs(amount, option):
         return eth_fxs_uniswap(amount)
     else:
         return eth_fxs_unistable(amount)
+
+
+def fxs_to_eth(amount, option):
+    if option == 0:
+        return fxs_eth_curve(amount)
+    elif option == 1:
+        return fxs_eth_uniswap(amount)
+    else:
+        return fxs_eth_unistable(amount)

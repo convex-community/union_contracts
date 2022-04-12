@@ -499,6 +499,7 @@ contract UnionZap is Ownable, UnionBase {
 
         // second loop to balance the amounts with buys and sells before distribution
         for (uint256 i; i < weights.length; ++i) {
+            // if weight == 0, the token would have been swapped already so no balance
             if (weights[i] > 0) {
                 _outputToken = outputTokens[i];
                 // amount adjustments

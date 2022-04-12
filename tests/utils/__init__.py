@@ -166,8 +166,21 @@ def estimate_amounts_after_swap(tokens, union_contract, router_choices, weights)
     return eth_amount
 
 
+def crv_to_cvxcrv(amount):
+    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(0, 1, amount)
+
+
 def eth_to_cvxcrv(amount):
+    return crv_to_cvxcrv(eth_to_crv(amount))
+
+
+def eth_to_crv(amount):
     if amount <= 0:
         return 0
-    crv_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, amount)
-    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(0, 1, crv_amount)
+    return interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, amount)
+
+
+def eth_to_cvx(amount):
+    if amount <= 0:
+        return 0
+    return interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, amount)
