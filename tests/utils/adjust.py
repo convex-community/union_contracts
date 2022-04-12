@@ -4,11 +4,8 @@ from requests_cache import CachedSession
 import requests
 import json
 
-from . import eth_to_crv, eth_to_cvxcrv, eth_to_cvx, crv_to_cvxcrv
+from . import eth_to_crv, eth_to_cvx, crv_to_cvxcrv
 from .constants import (
-    CURVE_FXS_ETH_POOL,
-    CURVE_CRV_ETH_POOL,
-    CURVE_CVX_ETH_POOL,
     CRV,
     CVX,
 )

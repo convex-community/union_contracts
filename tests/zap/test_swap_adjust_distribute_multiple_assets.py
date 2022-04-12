@@ -1,32 +1,26 @@
 import brownie
+from tabulate import tabulate
 from brownie import interface, chain, network
 import pytest
 from ..utils import (
     estimate_amounts_after_swap,
     approx,
 )
-from ..utils.adjust import simulate_adjust
-from ..utils.constants import (
-    CLAIM_AMOUNT,
-    TOKENS,
-    CURVE_CRV_ETH_POOL,
-    CRV,
-    CURVE_CVXCRV_CRV_POOL,
-    CURVE_CVX_ETH_POOL,
-    CVX,
-    FXS,
-    CVXCRV,
-    CURVE_CVXFXS_FXS_LP_TOKEN,
-)
-from ..utils.cvxfxs import (
-    estimate_lp_tokens_received,
-    eth_fxs_curve,
-    eth_fxs_uniswap,
-    eth_fxs_unistable,
-    eth_to_fxs,
-)
+from ..utils.adjust import simulate_adjust, get_spot_prices
+from ..utils.constants import CLAIM_AMOUNT, TOKENS, CRV, FXS, CVXCRV
+from ..utils.cvxfxs import estimate_lp_tokens_received
 
-data = [[10000, 0, 0], [0, 8000, 2000], [1000, 8000, 1000], [3000, 5000, 2000]]
+data = [
+    [10000, 0, 0],
+    [0, 10000, 0],
+    [0, 0, 10000],
+    [0, 8000, 2000],
+    [2000, 0, 8000],
+    [3334, 6666, 0],
+    [1000, 8000, 1000],
+    [3500, 2500, 4000],
+    [3000, 5000, 2000],
+]
 
 
 @pytest.mark.parametrize("weights", data)
@@ -76,16 +70,39 @@ def test_swap_adjust_distribute(
     )
 
     tx_adjust = union_contract.adjust(lock, weights, [0, 0, 0], {"from": owner})
+    spot_amounts = []
     for i, output_token in enumerate(output_tokens):
         # crv would have been swapped for CVXCRV already
         if output_token == CRV:
             output_token = CVXCRV
-        assert (
-            interface.IERC20(output_token).balanceOf(union_contract)
-            == output_amounts[i]
-        )
+        balance = interface.IERC20(output_token).balanceOf(union_contract)
+        assert balance == output_amounts[i]
+        # calculate spoth ETH price and store
+        price = get_spot_prices(output_token)
+        spot_amounts.append(balance * price)
         # unfreeze for distribution while we're at it
         distributors[i].unfreeze({"from": owner})
+
+    # we know double check that the adjustment done on-chain with oracles
+    # corresponds to the weights we get with spot prices
+    total_eth_value = sum(spot_amounts)
+    headers = ["Token", "Balance", "ETH Spot Value", "Weight", "Spot Weight"]
+    reports = []
+    for i, output_token in enumerate(output_tokens):
+        actual_weight = spot_amounts[i] / total_eth_value * 10000
+        # within 3%
+        assert approx(weights[i], actual_weight, 5e-2)
+        reports.append(
+            [
+                output_token[:8] + "...",
+                f"{output_amounts[i] * 1e-18:.2f}",
+                f"{spot_amounts[i] * 1e-18:.2f}",
+                f"{weights[i]}",
+                f"{int(actual_weight)}",
+            ]
+        )
+
+    print(tabulate(reports, headers=headers))
 
     # convert fxs to lp token to validate distributor balance
     fxs_index = output_tokens.index(FXS)
