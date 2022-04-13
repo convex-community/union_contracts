@@ -104,7 +104,7 @@ contract UnionZap is Ownable, UnionBase {
     /// @notice Add or update contracts used for distribution of output tokens
     /// @param token - Address of the output token
     /// @param params - The Curve pool and distributor associated w/ the token
-    /// @dev No removal options to avoid indexing errors, can just pass 0 weight if unused
+    /// @dev No removal options to avoid indexing errors with swaps, pass 0 weight for unused assets
     /// @dev Pool needs to be Curve v2 pool with price oracle
     function updateOutputToken(address token, tokenContracts calldata params)
         external
@@ -446,6 +446,7 @@ contract UnionZap is Ownable, UnionBase {
         uint16[] calldata weights,
         uint256[] calldata minAmounts
     ) public onlyOwner validWeights(weights) {
+        require(minAmounts.length == weights.length, "Invalid min amounts");
         // start calculating the allocations of output tokens
         uint256 _totalEthBalance = address(this).balance;
 
@@ -503,9 +504,9 @@ contract UnionZap is Ownable, UnionBase {
     /// @notice Deposits rewards to their respective merkle distributors
     /// @param weights - weights of output assets (cvxCRV, FXS, CVX...)
     function distribute(uint16[] calldata weights)
-    public
-    onlyOwner
-    validWeights(weights)
+        public
+        onlyOwner
+        validWeights(weights)
     {
         for (uint256 i; i < weights.length; ++i) {
             if (weights[i] > 0) {
@@ -554,7 +555,7 @@ contract UnionZap is Ownable, UnionBase {
         for (uint256 i; i < _weights.length; ++i) {
             _totalWeights += _weights[i];
         }
-        require(_totalWeights == DECIMALS, "Invalid address!");
+        require(_totalWeights == DECIMALS, "Invalid weights");
         _;
     }
 }

@@ -8,28 +8,8 @@ from ..utils.constants import (
     CURVE_CVXCRV_CRV_POOL,
     CVXCRV_DEPOSIT,
     VOTIUM_REGISTRY,
-    NSBT,
-    CVXCRV_TOKEN,
-    CVXCRV_REWARDS,
+    NSBT, DUMMY_PROOF,
 )
-
-
-def test_update_distributor(fn_isolation, owner, union_contract):
-    tx = union_contract.updateDistributor(VOTIUM_DISTRIBUTOR, {"from": owner})
-    assert union_contract.unionDistributor() == VOTIUM_DISTRIBUTOR
-    assert len(tx.events) == 1
-    assert "DistributorUpdated" in tx.events
-    assert tx.events["DistributorUpdated"]["distributor"] == VOTIUM_DISTRIBUTOR
-
-
-def test_update_distributor_non_owner(alice, union_contract):
-    with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.updateDistributor(VOTIUM_DISTRIBUTOR, {"from": alice})
-
-
-def test_update_distributor_address_zero(owner, union_contract):
-    with brownie.reverts():
-        union_contract.updateDistributor(ADDRESS_ZERO, {"from": owner})
 
 
 def test_update_votium_distributor(fn_isolation, owner, union_contract):
@@ -135,7 +115,22 @@ def test_execute_non_owner(alice, union_contract):
 
 def test_claim_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.claim([(ADDRESS_ZERO, 0, 0, ["0x0"])], {"from": alice})
+        union_contract.claim(DUMMY_PROOF, {"from": alice})
+
+
+def test_claim_no_claims(alice, union_contract):
+    with brownie.reverts("No claims"):
+        union_contract.claim([], {"from": alice})
+
+
+def test_swap_non_owner(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.swap(DUMMY_PROOF, 0, False, 0, [0, 0, 0], {"from": alice})
+
+
+def test_swap_invalid_weights(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.swap(DUMMY_PROOF, 0, False, 0, [0, 0, 0], {"from": alice})
 
 
 def test_distribute_non_owner(alice, union_contract):
