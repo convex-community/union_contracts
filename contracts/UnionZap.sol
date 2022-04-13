@@ -446,7 +446,10 @@ contract UnionZap is Ownable, UnionBase {
         uint16[] calldata weights,
         uint256[] calldata minAmounts
     ) public onlyOwner validWeights(weights) {
-        require(minAmounts.length == weights.length, "Invalid min amounts");
+        require(
+            minAmounts.length == outputTokens.length,
+            "Invalid min amounts"
+        );
         // start calculating the allocations of output tokens
         uint256 _totalEthBalance = address(this).balance;
 
@@ -534,9 +537,13 @@ contract UnionZap is Ownable, UnionBase {
         uint256 routerChoices,
         bool claimBeforeSwap,
         bool lock,
-        uint256[] calldata minAmounts,
-        uint16[] calldata weights
+        uint16[] calldata weights,
+        uint256[] calldata minAmounts
     ) external onlyOwner validWeights(weights) {
+        require(
+            minAmounts.length == outputTokens.length,
+            "Invalid min amounts"
+        );
         swap(claimParams, routerChoices, claimBeforeSwap, 0, weights);
         adjust(lock, weights, minAmounts);
         distribute(weights);
