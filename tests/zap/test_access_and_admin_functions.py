@@ -8,7 +8,10 @@ from ..utils.constants import (
     CURVE_CVXCRV_CRV_POOL,
     CVXCRV_DEPOSIT,
     VOTIUM_REGISTRY,
-    NSBT, DUMMY_PROOF,
+    NSBT,
+    DUMMY_PROOF,
+    OUTPUT_TOKEN_LENGTH,
+    FXS,
 )
 
 
@@ -118,24 +121,59 @@ def test_claim_non_owner(alice, union_contract):
         union_contract.claim(DUMMY_PROOF, {"from": alice})
 
 
-def test_claim_no_claims(alice, union_contract):
+def test_claim_no_claims(owner, union_contract):
     with brownie.reverts("No claims"):
-        union_contract.claim([], {"from": alice})
+        union_contract.claim([], {"from": owner})
 
 
 def test_swap_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.swap(DUMMY_PROOF, 0, False, 0, [0, 0, 0], {"from": alice})
+        union_contract.swap(DUMMY_PROOF, 0, False, 0, [10000, 0, 0], {"from": alice})
 
 
-def test_swap_invalid_weights(alice, union_contract):
+def test_swap_invalid_weights(owner, union_contract):
+    with brownie.reverts("Invalid weights"):
+        union_contract.swap(DUMMY_PROOF, 0, False, 0, [1, 2, 3], {"from": owner})
+
+
+def test_swap_invalid_weight_length(owner, union_contract):
+    with brownie.reverts("Invalid weight length"):
+        union_contract.swap(DUMMY_PROOF, 0, False, 0, [1, 2], {"from": owner})
+
+
+def test_adjust_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.swap(DUMMY_PROOF, 0, False, 0, [0, 0, 0], {"from": alice})
+        union_contract.adjust(False, [10000, 0, 0], [0, 0, 0], {"from": alice})
+
+
+def test_adjust_invalid_weights(owner, union_contract):
+    with brownie.reverts("Invalid weights"):
+        union_contract.adjust(False, [1, 2, 3], [0, 0, 0], {"from": owner})
+
+
+def test_adjust_invalid_weight_length(owner, union_contract):
+    with brownie.reverts("Invalid weight length"):
+        union_contract.adjust(False, [1], [0, 0, 0], {"from": owner})
+
+
+def test_adjust_invalid_min_amounts(owner, union_contract):
+    with brownie.reverts("Invalid min amounts"):
+        union_contract.adjust(False, [10000, 0, 0], [0, 0], {"from": owner})
 
 
 def test_distribute_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.distribute([], 0, True, True, True, 0, {"from": alice})
+        union_contract.distribute([10000, 0, 0], {"from": alice})
+
+
+def test_distribute_invalid_weights(owner, union_contract):
+    with brownie.reverts("Invalid weights"):
+        union_contract.distribute([1, 2, 3], {"from": owner})
+
+
+def test_distribute_invalid_weight_length(owner, union_contract):
+    with brownie.reverts("Invalid weight length"):
+        union_contract.distribute([1], {"from": owner})
 
 
 def test_add_curve_pool_non_owner(alice, union_contract):
@@ -178,3 +216,45 @@ def test_remove_curve_pool(fn_isolation, owner, union_contract):
     assert tx.events["CurvePoolUpdated"]["token"] == NSBT
     assert tx.events["CurvePoolUpdated"]["pool"] == ADDRESS_ZERO
     assert interface.ERC20(NSBT).allowance(union_contract, VOTIUM_REGISTRY) == 0
+
+
+def test_update_output_token_non_owner(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.updateOutputToken(NSBT, [NSBT, NSBT, NSBT], {"from": alice})
+
+
+def test_update_output_token_address_zero_pool(owner, union_contract):
+    with brownie.reverts():
+        union_contract.updateOutputToken(
+            NSBT, [ADDRESS_ZERO, NSBT, NSBT], {"from": owner}
+        )
+
+
+def test_update_output_token(fn_isolation, owner, union_contract):
+    tx = union_contract.updateOutputToken(
+        NSBT, [FXS, VOTIUM_REGISTRY, owner], {"from": owner}
+    )
+    assert union_contract.outputTokens(OUTPUT_TOKEN_LENGTH) == NSBT
+    assert union_contract.tokenInfo(NSBT) == (FXS, VOTIUM_REGISTRY, owner)
+    assert tx.events["OutputTokenUpdated"]["token"] == NSBT
+    assert tx.events["OutputTokenUpdated"]["pool"] == FXS
+    assert tx.events["OutputTokenUpdated"]["swapper"] == VOTIUM_REGISTRY
+    assert tx.events["OutputTokenUpdated"]["distributor"] == owner
+
+
+def test_update_output_token_replace_existing(fn_isolation, owner, union_contract):
+    union_contract.updateOutputToken(
+        NSBT, [FXS, VOTIUM_REGISTRY, owner], {"from": owner}
+    )
+    union_contract.updateOutputToken(
+        NSBT, [CURVE_CVXCRV_CRV_POOL, owner, CVXCRV_DEPOSIT], {"from": owner}
+    )
+
+    assert union_contract.outputTokens(OUTPUT_TOKEN_LENGTH) == NSBT
+    with brownie.reverts():
+        union_contract.outputTokens(OUTPUT_TOKEN_LENGTH + 1)
+    assert union_contract.tokenInfo(NSBT) == (
+        CURVE_CVXCRV_CRV_POOL,
+        owner,
+        CVXCRV_DEPOSIT,
+    )
