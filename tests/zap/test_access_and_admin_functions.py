@@ -176,6 +176,34 @@ def test_distribute_invalid_weight_length(owner, union_contract):
         union_contract.distribute([1], {"from": owner})
 
 
+def test_process_incentives_non_owner(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.processIncentives(
+            DUMMY_PROOF, 0, True, False, [10000, 0, 0], [0, 0, 0], {"from": alice}
+        )
+
+
+def test_process_incentives_invalid_weights(owner, union_contract):
+    with brownie.reverts("Invalid weights"):
+        union_contract.processIncentives(
+            DUMMY_PROOF, 0, True, False, [1, 2, 3], [0, 0, 0], {"from": owner}
+        )
+
+
+def test_process_incentives_invalid_weight_length(owner, union_contract):
+    with brownie.reverts("Invalid weight length"):
+        union_contract.processIncentives(
+            DUMMY_PROOF, 0, True, False, [1], [0, 0, 0], {"from": owner}
+        )
+
+
+def test_process_incentives_invalid_min_amounts(owner, union_contract):
+    with brownie.reverts("Invalid min amounts"):
+        union_contract.processIncentives(
+            DUMMY_PROOF, 0, True, False, [10000, 0, 0], [0, 0], {"from": owner}
+        )
+
+
 def test_add_curve_pool_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
         union_contract.addCurvePool(NSBT, (NSBT, 0), {"from": alice})

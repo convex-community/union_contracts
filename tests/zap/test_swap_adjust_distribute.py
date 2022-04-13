@@ -126,7 +126,7 @@ def test_swap_adjust_distribute(
     chain.revert()
 
     tx = union_contract.processIncentives(
-        params, 0, True, lock, [0, 0, 0], weights, {"from": owner}
+        params, 0, True, lock, weights, [0, 0, 0], {"from": owner}
     )
 
     for i, output_token in enumerate(output_tokens):
