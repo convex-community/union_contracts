@@ -436,34 +436,6 @@ contract UnionZap is Ownable, UnionBase {
         }
     }
 
-    /// @notice Deposits rewards to their respective merkle distributors
-    /// @param weights - weights of output assets (cvxCRV, FXS, CVX...)
-    function distribute(uint16[] calldata weights)
-        public
-        onlyOwner
-        validWeights(weights)
-    {
-        for (uint256 i; i < weights.length; ++i) {
-            if (weights[i] > 0) {
-                address _outputToken = outputTokens[i];
-                address _distributor = tokenInfo[_outputToken].distributor;
-                IMerkleDistributorV2(_distributor).freeze();
-                // edge case for CRV as we gotta keep using existing distributor
-                if (_outputToken == CRV_TOKEN) {
-                    _outputToken = CVXCRV_TOKEN;
-                }
-                uint256 _balance = IERC20(_outputToken).balanceOf(
-                    address(this)
-                );
-                // transfer to distributor
-                IERC20(_outputToken).safeTransfer(_distributor, _balance);
-                // stake
-                IMerkleDistributorV2(_distributor).stake();
-                emit Distributed(_balance, _outputToken, _distributor);
-            }
-        }
-    }
-
     /// @notice Splits contract balance into output tokens as per weights
     /// @param lock - whether to lock or swap crv to cvxcrv
     /// @param minAmounts - min amount out of each output token (cvxCRV for CRV)
@@ -524,6 +496,34 @@ contract UnionZap is Ownable, UnionBase {
                             minAmounts[i]
                     );
                 }
+            }
+        }
+    }
+
+    /// @notice Deposits rewards to their respective merkle distributors
+    /// @param weights - weights of output assets (cvxCRV, FXS, CVX...)
+    function distribute(uint16[] calldata weights)
+    public
+    onlyOwner
+    validWeights(weights)
+    {
+        for (uint256 i; i < weights.length; ++i) {
+            if (weights[i] > 0) {
+                address _outputToken = outputTokens[i];
+                address _distributor = tokenInfo[_outputToken].distributor;
+                IMerkleDistributorV2(_distributor).freeze();
+                // edge case for CRV as we gotta keep using existing distributor
+                if (_outputToken == CRV_TOKEN) {
+                    _outputToken = CVXCRV_TOKEN;
+                }
+                uint256 _balance = IERC20(_outputToken).balanceOf(
+                    address(this)
+                );
+                // transfer to distributor
+                IERC20(_outputToken).safeTransfer(_distributor, _balance);
+                // stake
+                IMerkleDistributorV2(_distributor).stake();
+                emit Distributed(_balance, _outputToken, _distributor);
             }
         }
     }
