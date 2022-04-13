@@ -210,7 +210,7 @@ contract UnionZap is Ownable, UnionBase {
         IERC20(token).safeApprove(params.pool, 0);
         IERC20(token).safeApprove(params.pool, amount);
         ICurveV2Pool(params.pool).exchange_underlying(
-            ~params.ethIndex,
+            params.ethIndex ^ 1,
             params.ethIndex,
             amount,
             0
