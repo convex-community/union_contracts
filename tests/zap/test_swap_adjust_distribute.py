@@ -24,6 +24,8 @@ data = [
 
 
 @pytest.mark.parametrize("weights", data)
+@pytest.mark.parametrize("lock", [True, False])
+@pytest.mark.parametrize("option", [0, 1, 2])
 def test_swap_adjust_distribute(
     fn_isolation,
     owner,
@@ -38,10 +40,11 @@ def test_swap_adjust_distribute(
     cvx_distributor,
     fxs_distributor,
     weights,
+    lock,
+    option,
 ):
     network.gas_price("0 gwei")
-    lock = False
-    option = fxs_swapper.swapOption()
+    fxs_swapper.updateOption(option, {"from": owner})
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
     vaults = [vault, cvx_vault, fxs_vault]
     distributors = [merkle_distributor_v2, cvx_distributor, fxs_distributor]
@@ -92,8 +95,9 @@ def test_swap_adjust_distribute(
     reports = []
     for i, output_token in enumerate(output_tokens):
         actual_weight = spot_amounts[i] / total_eth_value * 10000
-        # within 3%
-        assert approx(weights[i], actual_weight, 5e-2)
+        # within 3%, except for high slippage pool on Curve FXSETH
+        precision = 25e-2 if option == 0 else 3e-2
+        assert approx(weights[i], actual_weight, precision)
         reports.append(
             [
                 output_token[:8] + "...",
