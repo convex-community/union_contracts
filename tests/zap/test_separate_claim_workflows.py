@@ -2,7 +2,7 @@ import brownie
 from brownie import network, chain, interface
 from decimal import Decimal
 import time
-from ..utils import estimate_output_amount, approx
+from ..utils import estimate_output_amount, approx, estimate_amounts_after_swap
 from ..utils.constants import (
     CLAIM_AMOUNT,
     SUSHI_ROUTER,
@@ -22,8 +22,8 @@ def test_manual_claim_workflow(
     merkle_distributor_v2,
     vault,
 ):
+    weights = [10000, 0, 0]
     network.gas_price("0 gwei")
-    original_union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
         [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
@@ -36,10 +36,9 @@ def test_manual_claim_workflow(
         if token == ALCX
     ]
 
-    expected_output_amount, eth_crv_ratio = estimate_output_amount(
-        TOKENS, union_contract, 0
+    expected_eth_amount = estimate_amounts_after_swap(
+        TOKENS, union_contract, 0, weights
     )
-    union_contract.setApprovals({"from": owner})
 
     # Manually handle ALCX swapping
     union_contract.claim(single_claim_param, {"from": owner})
@@ -57,16 +56,8 @@ def test_manual_claim_workflow(
     eth_amount = single_swap_tx.return_value[-1]
     owner.transfer(union_contract, eth_amount)
     original_caller_balance = owner.balance()
-    tx = union_contract.distribute(params, 0, True, False, True, 0, {"from": owner})
-    distributor_balance = vault.balanceOfUnderlying(merkle_distributor_v2)
-    union_balance = interface.IERC20(CVXCRV).balanceOf(union_contract)
 
-    gas_used = tx.gas_price * tx.gas_used
-    gas_fees = original_caller_balance - owner.balance() + gas_used
-    gas_fees_in_crv = tx.events["Distributed"]["fees"]
-    assert distributor_balance > 0
-    assert union_balance == original_union_balance
-    assert merkle_distributor_v2.frozen() == True
-    assert gas_fees >= tx.gas_price
-    assert merkle_distributor_v2.frozen() == True
-    assert distributor_balance == expected_output_amount - gas_fees_in_crv
+    tx_swap = union_contract.swap(params, 0, False, 0, weights, {"from": owner})
+    gas_fees = owner.balance() - original_caller_balance
+
+    assert union_contract.balance() == expected_eth_amount + eth_amount - gas_fees
