@@ -58,7 +58,7 @@ contract GenericDistributor {
     }
 
     /// @notice Set approvals for the tokens used when swapping
-    function setApprovals() external onlyAdmin {
+    function setApprovals() external virtual onlyAdmin {
         IERC20(token).safeApprove(vault, 0);
         IERC20(token).safeApprove(vault, type(uint256).max);
     }
@@ -164,7 +164,7 @@ contract GenericDistributor {
     }
 
     /// @notice Stakes the contract's entire balance in the Vault
-    function stake() external onlyAdminOrDistributor {
+    function stake() external virtual onlyAdminOrDistributor {
         IGenericVault(vault).depositAll(address(this));
     }
 
