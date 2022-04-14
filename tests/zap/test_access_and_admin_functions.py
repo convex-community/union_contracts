@@ -12,6 +12,7 @@ from ..utils.constants import (
     DUMMY_PROOF,
     OUTPUT_TOKEN_LENGTH,
     FXS,
+    MAX_UINT256,
 )
 
 
@@ -69,8 +70,8 @@ def test_retrieve_tokens_address_zero(owner, union_contract):
 def test_set_approvals(owner, union_contract):
     union_contract.setApprovals({"from": owner})
     crv = interface.IERC20(CRV)
-    assert crv.allowance(union_contract, CVXCRV_DEPOSIT) == 2 ** 256 - 1
-    assert crv.allowance(union_contract, CURVE_CVXCRV_CRV_POOL) == 2 ** 256 - 1
+    assert crv.allowance(union_contract, CVXCRV_DEPOSIT) == MAX_UINT256
+    assert crv.allowance(union_contract, CURVE_CVXCRV_CRV_POOL) == MAX_UINT256
 
 
 def test_set_approvals_non_owner(alice, union_contract):
@@ -222,7 +223,7 @@ def test_add_curve_pool(fn_isolation, owner, union_contract):
     assert registry_value[1] == 0
     assert tx.events["CurvePoolUpdated"]["token"] == NSBT
     assert tx.events["CurvePoolUpdated"]["pool"] == NSBT
-    assert interface.ERC20(NSBT).allowance(union_contract, NSBT) == 2 ** 256 - 1
+    assert interface.ERC20(NSBT).allowance(union_contract, NSBT) == MAX_UINT256
 
     tx = union_contract.addCurvePool(NSBT, (VOTIUM_REGISTRY, 0), {"from": owner})
     registry_value = union_contract.curveRegistry(NSBT)
@@ -231,7 +232,7 @@ def test_add_curve_pool(fn_isolation, owner, union_contract):
     assert tx.events["CurvePoolUpdated"]["token"] == NSBT
     assert tx.events["CurvePoolUpdated"]["pool"] == VOTIUM_REGISTRY
     assert (
-        interface.ERC20(NSBT).allowance(union_contract, VOTIUM_REGISTRY) == 2 ** 256 - 1
+        interface.ERC20(NSBT).allowance(union_contract, VOTIUM_REGISTRY) == MAX_UINT256
     )
 
 

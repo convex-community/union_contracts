@@ -10,6 +10,7 @@ from ..utils.constants import (
     ALCX,
     WETH,
     CVXCRV,
+    MAX_UINT256,
 )
 
 
@@ -44,7 +45,7 @@ def test_manual_claim_workflow(
     union_contract.claim(single_claim_param, {"from": owner})
     union_contract.retrieveTokens([ALCX], owner, {"from": owner})
     assert interface.IERC20(ALCX).balanceOf(owner) == CLAIM_AMOUNT
-    interface.IERC20(ALCX).approve(SUSHI_ROUTER, 2 ** 256 - 1, {"from": owner})
+    interface.IERC20(ALCX).approve(SUSHI_ROUTER, MAX_UINT256, {"from": owner})
     single_swap_tx = interface.IUniV2Router(SUSHI_ROUTER).swapExactTokensForETH(
         CLAIM_AMOUNT,
         0,

@@ -6,6 +6,7 @@ from ...utils.constants import (
     CVXCRV_REWARDS,
     CURVE_CVXCRV_CRV_POOL,
     ADDRESS_ZERO,
+    MAX_UINT256,
 )
 from brownie import interface, chain
 
@@ -88,12 +89,10 @@ def test_set_approvals(owner, merkle_distributor_v2, vault):
     merkle_distributor_v2.setApprovals({"from": owner})
     crv = interface.IERC20(CRV)
     cvxcrv = interface.IERC20(CVXCRV)
-    assert crv.allowance(merkle_distributor_v2, CURVE_CRV_ETH_POOL) == 2 ** 256 - 1
-    assert cvxcrv.allowance(merkle_distributor_v2, CVXCRV_REWARDS) == 2 ** 256 - 1
-    assert (
-        cvxcrv.allowance(merkle_distributor_v2, CURVE_CVXCRV_CRV_POOL) == 2 ** 256 - 1
-    )
-    assert cvxcrv.allowance(merkle_distributor_v2, vault) == 2 ** 256 - 1
+    assert crv.allowance(merkle_distributor_v2, CURVE_CRV_ETH_POOL) == MAX_UINT256
+    assert cvxcrv.allowance(merkle_distributor_v2, CVXCRV_REWARDS) == MAX_UINT256
+    assert cvxcrv.allowance(merkle_distributor_v2, CURVE_CVXCRV_CRV_POOL) == MAX_UINT256
+    assert cvxcrv.allowance(merkle_distributor_v2, vault) == MAX_UINT256
 
 
 def test_set_approvals_non_owner(alice, merkle_distributor_v2):
