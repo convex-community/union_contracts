@@ -42,7 +42,6 @@ def test_third_party_claimed_single_workflow(
     # Claim everything else
     union_contract.claim(params, {"from": owner})
 
-    union_contract.setApprovals({"from": owner})
     expected_output_amount, eth_crv_ratio = estimate_output_amount(
         TOKENS, union_contract, 0
     )
