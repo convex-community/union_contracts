@@ -81,7 +81,7 @@ def test_swap_adjust_distribute(
         balance = interface.IERC20(output_token).balanceOf(union_contract)
         # account for the fact that we leave 1 token unit for gas saving when swapping
         balance = 0 if balance == 1 else balance
-        assert balance == output_amounts[i]
+        assert approx(balance, output_amounts[i], 1e-6)
         # calculate spoth ETH price and store
         price = get_spot_prices(output_token)
         spot_amounts.append(balance * price)
@@ -120,7 +120,7 @@ def test_swap_adjust_distribute(
         if weights[i] == 0:
             continue
         assert distributors[i].frozen() == True
-        assert vaults[i].balanceOfUnderlying(distributors[i]) == output_amounts[i]
+        assert approx(vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-6)
 
     # revert to test process incentives result
     chain.revert()
@@ -134,4 +134,4 @@ def test_swap_adjust_distribute(
             continue
         assert distributors[i].frozen() == True
         # approximate as gas fees will be different
-        assert approx(vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i])
+        assert approx(vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-6)
