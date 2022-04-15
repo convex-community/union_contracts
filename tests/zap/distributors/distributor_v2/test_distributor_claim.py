@@ -1,7 +1,7 @@
 import brownie
-from ...utils.merkle import OrderedMerkleTree
+from ....utils.merkle import OrderedMerkleTree
 from brownie import interface, chain
-from ...utils.constants import CLAIM_AMOUNT
+from ....utils.constants import CLAIM_AMOUNT
 
 
 def test_claim(alice, bob, owner, merkle_distributor_v2, vault):

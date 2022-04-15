@@ -1,8 +1,8 @@
 import brownie
-from ...utils.merkle import OrderedMerkleTree
+from ....utils.merkle import OrderedMerkleTree
 from brownie import interface, chain
 from decimal import Decimal
-from ...utils.constants import (
+from ....utils.constants import (
     CLAIM_AMOUNT,
     CVXCRV,
     CRV,
@@ -12,7 +12,7 @@ from ...utils.constants import (
     CURVE_CVXCRV_CRV_POOL,
     CURVE_CRV_ETH_POOL,
 )
-from ...utils import approx
+from ....utils import approx
 
 
 def test_distrib_zaps(
