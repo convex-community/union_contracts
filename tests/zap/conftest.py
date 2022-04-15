@@ -2,7 +2,7 @@ import pytest
 from brownie import (
     MerkleDistributor,
     MerkleDistributorV2,
-    FXSMerkleDistributorV2,
+    FXSMerkleDistributor,
     GenericUnionVault,
     CvxFxsStrategy,
     CvxFxsZaps,
@@ -153,8 +153,8 @@ def cvx_distributor(owner, cvx_vault, cvx_strategy, union_contract):
 
 
 @pytest.fixture(scope="module")
-def fxs_distributor(owner, vault, union_contract, fxs_zaps, fxs_vault):
-    fxs_distributor = FXSMerkleDistributorV2.deploy(
+def fxs_distributor(owner, union_contract, fxs_zaps, fxs_vault):
+    fxs_distributor = FXSMerkleDistributor.deploy(
         fxs_vault, union_contract, fxs_zaps, {"from": owner}
     )
     fxs_distributor.setApprovals({"from": owner})
