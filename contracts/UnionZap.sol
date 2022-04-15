@@ -305,6 +305,7 @@ contract UnionZap is Ownable, UnionBase {
     /// @param routerChoices - the router to use for the swap
     /// @param claimBeforeSwap - whether to claim on Votium or not
     /// @param minAmountOut - min output amount in ETH value
+    /// @param gasRefund - tx gas cost to refund to caller (ETH amount)
     /// @param weights - weight of output assets (cvxCRV, FXS, CVX...) in bips
     /// @dev routerChoices is a 3-bit bitmap such that
     /// 0b000 (0) - Sushi
@@ -316,18 +317,16 @@ contract UnionZap is Ownable, UnionBase {
     /// Passing 0 will execute all swaps on sushi
     /// @dev claimBeforeSwap is used in case 3rd party already claimed on Votium
     /// @dev weights must sum to 10000
+    /// @dev gasRefund is computed off-chain w/ tenderly
     function swap(
         IMultiMerkleStash.claimParam[] calldata claimParams,
         uint256 routerChoices,
         bool claimBeforeSwap,
         uint256 minAmountOut,
+        uint256 gasRefund,
         uint16[] calldata weights
     ) public onlyOwner validWeights(weights) {
-        // initialize gas counting
-        uint256 _startGas = gasleft();
-        bool _locked = false;
-
-        // claim
+        // claim if applicable
         if (claimBeforeSwap) {
             claim(claimParams);
         }
@@ -371,15 +370,7 @@ contract UnionZap is Ownable, UnionBase {
         // slippage check
         assert(address(this).balance > minAmountOut);
 
-        // estimate gas cost
-        uint256 _gasUsed = _startGas -
-            gasleft() +
-            BASE_TX_GAS +
-            16 *
-            msg.data.length +
-            FINAL_TRANSFER_GAS;
-
-        (bool success, ) = (msg.sender).call{value: _gasUsed}("");
+        (bool success, ) = (tx.origin).call{value: gasRefund}("");
         require(success, "ETH transfer failed");
     }
 
@@ -438,8 +429,8 @@ contract UnionZap is Ownable, UnionBase {
 
     /// @notice Splits contract balance into output tokens as per weights
     /// @param lock - whether to lock or swap crv to cvxcrv
-    /// @param minAmounts - min amount out of each output token (cvxCRV for CRV)
     /// @param weights - weight of output assets (cvxCRV, FXS, CVX) in bips
+    /// @param minAmounts - min amount out of each output token (cvxCRV for CRV)
     /// @dev weights must sum to 10000
     function adjust(
         bool lock,
@@ -532,11 +523,20 @@ contract UnionZap is Ownable, UnionBase {
         }
     }
 
+    /// @notice Swaps all bribes, adjust according to output token weights and distribute
+    /// @dev Wrapper over the swap, adjust & distribute function
+    /// @param claimParams - an array containing the info necessary to claim
+    /// @param routerChoices - the router to use for the swap
+    /// @param claimBeforeSwap - whether to claim on Votium or not
+    /// @param gasRefund - tx gas cost to refund to caller (ETH amount)
+    /// @param weights - weight of output assets (cvxCRV, FXS, CVX...) in bips
+    /// @param minAmounts - min amount out of each output token (cvxCRV for CRV)
     function processIncentives(
         IMultiMerkleStash.claimParam[] calldata claimParams,
         uint256 routerChoices,
         bool claimBeforeSwap,
         bool lock,
+        uint256 gasRefund,
         uint16[] calldata weights,
         uint256[] calldata minAmounts
     ) external onlyOwner validWeights(weights) {
@@ -544,7 +544,14 @@ contract UnionZap is Ownable, UnionBase {
             minAmounts.length == outputTokens.length,
             "Invalid min amounts"
         );
-        swap(claimParams, routerChoices, claimBeforeSwap, 0, weights);
+        swap(
+            claimParams,
+            routerChoices,
+            claimBeforeSwap,
+            0,
+            gasRefund,
+            weights
+        );
         adjust(lock, weights, minAmounts);
         distribute(weights);
     }

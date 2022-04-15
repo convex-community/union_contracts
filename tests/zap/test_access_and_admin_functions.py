@@ -129,17 +129,17 @@ def test_claim_no_claims(owner, union_contract):
 
 def test_swap_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.swap(DUMMY_PROOF, 0, False, 0, [10000, 0, 0], {"from": alice})
+        union_contract.swap(DUMMY_PROOF, 0, False, 0, 0, [10000, 0, 0], {"from": alice})
 
 
 def test_swap_invalid_weights(owner, union_contract):
     with brownie.reverts("Invalid weights"):
-        union_contract.swap(DUMMY_PROOF, 0, False, 0, [1, 2, 3], {"from": owner})
+        union_contract.swap(DUMMY_PROOF, 0, False, 0, 0, [1, 2, 3], {"from": owner})
 
 
 def test_swap_invalid_weight_length(owner, union_contract):
     with brownie.reverts("Invalid weight length"):
-        union_contract.swap(DUMMY_PROOF, 0, False, 0, [1, 2], {"from": owner})
+        union_contract.swap(DUMMY_PROOF, 0, False, 0, 0, [1, 2], {"from": owner})
 
 
 def test_adjust_non_owner(alice, union_contract):
@@ -180,28 +180,28 @@ def test_distribute_invalid_weight_length(owner, union_contract):
 def test_process_incentives_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
         union_contract.processIncentives(
-            DUMMY_PROOF, 0, True, False, [10000, 0, 0], [0, 0, 0], {"from": alice}
+            DUMMY_PROOF, 0, True, False, 0, [10000, 0, 0], [0, 0, 0], {"from": alice}
         )
 
 
 def test_process_incentives_invalid_weights(owner, union_contract):
     with brownie.reverts("Invalid weights"):
         union_contract.processIncentives(
-            DUMMY_PROOF, 0, True, False, [1, 2, 3], [0, 0, 0], {"from": owner}
+            DUMMY_PROOF, 0, True, False, 0, [1, 2, 3], [0, 0, 0], {"from": owner}
         )
 
 
 def test_process_incentives_invalid_weight_length(owner, union_contract):
     with brownie.reverts("Invalid weight length"):
         union_contract.processIncentives(
-            DUMMY_PROOF, 0, True, False, [1], [0, 0, 0], {"from": owner}
+            DUMMY_PROOF, 0, True, False, 0, [1], [0, 0, 0], {"from": owner}
         )
 
 
 def test_process_incentives_invalid_min_amounts(owner, union_contract):
     with brownie.reverts("Invalid min amounts"):
         union_contract.processIncentives(
-            DUMMY_PROOF, 0, True, False, [10000, 0, 0], [0, 0], {"from": owner}
+            DUMMY_PROOF, 0, True, False, 0, [10000, 0, 0], [0, 0], {"from": owner}
         )
 
 

@@ -43,7 +43,7 @@ def test_swap_adjust_distribute(
     lock,
     option,
 ):
-    network.gas_price("0 gwei")
+    gas_refund = 3e16
     fxs_swapper.updateOption(option, {"from": owner})
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
     vaults = [vault, cvx_vault, fxs_vault]
@@ -63,9 +63,11 @@ def test_swap_adjust_distribute(
     # take chain snapshot here
     chain.snapshot()
 
-    tx_swap = union_contract.swap(params, 0, True, 0, weights, {"from": owner})
+    tx_swap = union_contract.swap(
+        params, 0, True, 0, gas_refund, weights, {"from": owner}
+    )
     gas_fees = owner.balance() - original_caller_balance
-
+    assert gas_fees == gas_refund
     assert union_contract.balance() == expected_eth_amount - gas_fees
 
     output_amounts = simulate_adjust(
@@ -120,18 +122,21 @@ def test_swap_adjust_distribute(
         if weights[i] == 0:
             continue
         assert distributors[i].frozen() == True
-        assert approx(vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-6)
+        assert approx(
+            vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-6
+        )
 
     # revert to test process incentives result
     chain.revert()
 
     tx = union_contract.processIncentives(
-        params, 0, True, lock, weights, [0, 0, 0], {"from": owner}
+        params, 0, True, lock, gas_refund, weights, [0, 0, 0], {"from": owner}
     )
 
     for i, output_token in enumerate(output_tokens):
         if weights[i] == 0:
             continue
         assert distributors[i].frozen() == True
-        # approximate as gas fees will be different
-        assert approx(vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-6)
+        assert approx(
+            vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-6
+        )

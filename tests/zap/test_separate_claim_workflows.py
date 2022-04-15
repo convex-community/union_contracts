@@ -1,15 +1,13 @@
 import brownie
-from brownie import network, chain, interface
-from decimal import Decimal
+from brownie import network, interface
 import time
-from ..utils import estimate_output_amount, approx, estimate_amounts_after_swap
+from ..utils import estimate_amounts_after_swap
 from ..utils.constants import (
     CLAIM_AMOUNT,
     SUSHI_ROUTER,
     TOKENS,
     ALCX,
     WETH,
-    CVXCRV,
     MAX_UINT256,
 )
 
@@ -24,7 +22,7 @@ def test_manual_claim_workflow(
     vault,
 ):
     weights = [10000, 0, 0]
-    network.gas_price("0 gwei")
+    gas_refund = 3e16
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
         [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
@@ -58,7 +56,9 @@ def test_manual_claim_workflow(
     owner.transfer(union_contract, eth_amount)
     original_caller_balance = owner.balance()
 
-    tx_swap = union_contract.swap(params, 0, False, 0, weights, {"from": owner})
+    tx_swap = union_contract.swap(
+        params, 0, True, 0, gas_refund, weights, {"from": owner}
+    )
     gas_fees = owner.balance() - original_caller_balance
-
-    assert union_contract.balance() == expected_eth_amount + eth_amount - gas_fees
+    assert gas_fees == gas_refund
+    assert union_contract.balance() == expected_eth_amount - gas_fees

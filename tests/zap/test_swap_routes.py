@@ -59,9 +59,8 @@ def test_swap_routes(
     routers,
     mock_claims,
 ):
-    network.gas_price("0 gwei")
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
-
+    gas_refund = 3e16
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
         [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
@@ -86,10 +85,10 @@ def test_swap_routes(
         expected_output_token_balances.append(expected_balance)
 
     tx_swap = union_contract.swap(
-        params, router_choices, True, 0, weights, {"from": owner}
+        params, router_choices, True, 0, gas_refund, weights, {"from": owner}
     )
     gas_fees = owner.balance() - original_caller_balance
-
+    assert gas_fees == gas_refund
     assert union_contract.balance() == expected_eth_amount - gas_fees
 
     for i, expected_balance in enumerate(expected_output_token_balances):
@@ -110,8 +109,7 @@ def test_swap_mixed_routes(
 
     OTHER_TOKENS = [ALCX, FXS]
     weights = [10000, 0, 0]
-
-    network.gas_price("0 gwei")
+    gas_refund = 3e16
 
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
@@ -130,10 +128,10 @@ def test_swap_mixed_routes(
     original_caller_balance = owner.balance()
 
     tx_swap = union_contract.swap(
-        params, router_choices, True, 0, weights, {"from": owner}
+        params, router_choices, True, 0, gas_refund, weights, {"from": owner}
     )
     gas_fees = owner.balance() - original_caller_balance
-
+    assert gas_fees == gas_refund
     assert union_contract.balance() == expected_eth_amount - gas_fees
 
     index = 0
