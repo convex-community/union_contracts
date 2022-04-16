@@ -39,8 +39,6 @@ contract UnionZap is Ownable, UnionBase {
 
     address[] public outputTokens;
 
-    uint256 private constant BASE_TX_GAS = 21000;
-    uint256 private constant FINAL_TRANSFER_GAS = 50000;
     uint256 private constant DECIMALS = 10000;
 
     mapping(uint256 => address) private routers;
@@ -419,12 +417,10 @@ contract UnionZap is Ownable, UnionBase {
             return _swapCrvToCvxCrv(_crvBalance, address(this), _minAmountOut);
         }
         // otherwise deposit & lock
-        else {
-            // slippage check
-            assert(_crvBalance > _minAmountOut);
-            ICvxCrvDeposit(CVXCRV_DEPOSIT).deposit(_crvBalance, true);
-            return _crvBalance;
-        }
+        // slippage check
+        assert(_crvBalance > _minAmountOut);
+        ICvxCrvDeposit(CVXCRV_DEPOSIT).deposit(_crvBalance, true);
+        return _crvBalance;
     }
 
     /// @notice Splits contract balance into output tokens as per weights
