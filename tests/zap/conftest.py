@@ -71,7 +71,7 @@ def owner(accounts):
 
 @pytest.fixture(scope="module")
 def union_contract(owner):
-    union_contract = UnionZap.deploy(ADDRESS_ZERO, {"from": owner})
+    union_contract = UnionZap.deploy({"from": owner})
     union_contract.setApprovals({"from": owner})
     yield union_contract
 

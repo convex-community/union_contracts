@@ -77,7 +77,7 @@ contract UnionZap is Ownable, UnionBase {
         address distributor
     );
 
-    constructor(address distributor_) {
+    constructor() {
         routers[0] = SUSHI_ROUTER;
         routers[1] = UNISWAP_ROUTER;
         fees[0] = 3000;
