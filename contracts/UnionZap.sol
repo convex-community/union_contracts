@@ -44,13 +44,6 @@ contract UnionZap is Ownable, UnionBase {
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
 
-    struct claimParam {
-        address token;
-        uint256 index;
-        uint256 amount;
-        bytes32[] merkleProof;
-    }
-
     struct tokenContracts {
         address pool;
         address swapper;
