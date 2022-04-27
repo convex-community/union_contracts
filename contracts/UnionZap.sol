@@ -316,7 +316,11 @@ contract UnionZap is Ownable, UnionBase {
         uint256 minAmountOut,
         uint256 gasRefund,
         uint16[] calldata weights
-    ) public onlyOwner validWeights(weights) {
+    ) public onlyOwner {
+        require(
+            weights.length == outputTokens.length,
+            "Invalid weight length"
+        );
         // claim if applicable
         if (claimBeforeSwap) {
             claim(claimParams);
@@ -528,7 +532,7 @@ contract UnionZap is Ownable, UnionBase {
         uint256 gasRefund,
         uint16[] calldata weights,
         uint256[] calldata minAmounts
-    ) external onlyOwner validWeights(weights) {
+    ) external onlyOwner {
         require(
             minAmounts.length == outputTokens.length,
             "Invalid min amounts"
