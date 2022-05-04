@@ -10,17 +10,16 @@ CRV_TOKEN = "0xD533a949740bb3306d119CC777fa900bA034cd52"
 def main():
     deployer = accounts.load("mainnet-deploy")
     union_contract = Contract.from_explorer(ZAP_V2)
-    vault = UnionVault.deploy({"from": deployer})
+    vault = UnionVault.deploy({"from": deployer}, publish_source=True)
     vault.setApprovals({"from": deployer})
     vault.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
-    merkle = MerkleDistributorV2.deploy(vault, union_contract, {"from": deployer})
+    merkle = MerkleDistributorV2.deploy(vault, union_contract, {"from": deployer}, publish_source=True)
 
     merkle.setApprovals({"from": deployer})
     merkle.updateAdmin(AIRFORCE_SAFE, {"from": deployer})
-    union_contract.updateDistributor(merkle, {"from": AIRFORCE_SAFE})
 
 
-    assert union_contract.unionDistributor() == merkle
+
     assert merkle.admin() == AIRFORCE_SAFE
     assert vault.owner() == AIRFORCE_SAFE
     assert interface.IERC20(CRV_TOKEN).allowance(vault, CVXCRV_DEPOSIT) == 2 ** 256 - 1
