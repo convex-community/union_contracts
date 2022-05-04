@@ -34,11 +34,6 @@ def test_update_votium_distributor_address_zero(owner, union_contract):
         union_contract.updateVotiumDistributor(ADDRESS_ZERO, {"from": owner})
 
 
-def test_update_votium_distributor_address_zero(owner, union_contract):
-    with brownie.reverts():
-        union_contract.updateVotiumDistributor(ADDRESS_ZERO, {"from": owner})
-
-
 def test_retrieve_tokens(fn_isolation, owner, bob, charlie, union_contract):
     interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).exchange_underlying(
         0, 1, 1e18, 0, {"from": charlie, "value": 1e18}
