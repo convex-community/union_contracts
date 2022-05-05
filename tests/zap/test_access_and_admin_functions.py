@@ -13,6 +13,8 @@ from ..utils.constants import (
     OUTPUT_TOKEN_LENGTH,
     FXS,
     MAX_UINT256,
+    TOKENS,
+    CLAIM_AMOUNT,
 )
 
 
@@ -174,24 +176,45 @@ def test_process_incentives_non_owner(alice, union_contract):
         )
 
 
-def test_process_incentives_invalid_weights(owner, union_contract):
+def test_process_incentives_invalid_weights(
+    owner, set_mock_claims, claim_tree, union_contract
+):
+    proofs = claim_tree.get_proof(union_contract.address)
+    params = [
+        [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
+        for token in TOKENS
+    ]
     with brownie.reverts("Invalid weights"):
         union_contract.processIncentives(
-            DUMMY_PROOF, 0, True, False, 0, [1, 2, 3], [0, 0, 0], {"from": owner}
+            params, 0, True, False, 0, [1, 2, 3], [0, 0, 0], {"from": owner}
         )
 
 
-def test_process_incentives_invalid_weight_length(owner, union_contract):
+def test_process_incentives_invalid_weight_length(
+    owner, set_mock_claims, claim_tree, union_contract
+):
+    proofs = claim_tree.get_proof(union_contract.address)
+    params = [
+        [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
+        for token in TOKENS
+    ]
     with brownie.reverts("Invalid weight length"):
         union_contract.processIncentives(
-            DUMMY_PROOF, 0, True, False, 0, [1], [0, 0, 0], {"from": owner}
+            params, 0, True, False, 0, [1], [0, 0, 0], {"from": owner}
         )
 
 
-def test_process_incentives_invalid_min_amounts(owner, union_contract):
+def test_process_incentives_invalid_min_amounts(
+    owner, set_mock_claims, claim_tree, union_contract
+):
+    proofs = claim_tree.get_proof(union_contract.address)
+    params = [
+        [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
+        for token in TOKENS
+    ]
     with brownie.reverts("Invalid min amounts"):
         union_contract.processIncentives(
-            DUMMY_PROOF, 0, True, False, 0, [10000, 0, 0], [0, 0], {"from": owner}
+            params, 0, True, False, 0, [10000, 0, 0], [0, 0], {"from": owner}
         )
 
 
