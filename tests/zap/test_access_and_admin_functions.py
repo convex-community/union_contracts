@@ -127,11 +127,6 @@ def test_swap_non_owner(alice, union_contract):
         union_contract.swap(DUMMY_PROOF, 0, False, 0, 0, [10000, 0, 0], {"from": alice})
 
 
-def test_swap_invalid_weights(owner, union_contract):
-    with brownie.reverts("Invalid weights"):
-        union_contract.swap(DUMMY_PROOF, 0, False, 0, 0, [1, 2, 3], {"from": owner})
-
-
 def test_swap_invalid_weight_length(owner, union_contract):
     with brownie.reverts("Invalid weight length"):
         union_contract.swap(DUMMY_PROOF, 0, False, 0, 0, [1, 2], {"from": owner})
