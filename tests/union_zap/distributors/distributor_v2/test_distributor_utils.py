@@ -1,5 +1,5 @@
 import brownie
-from ....utils.constants import (
+from tests.utils.constants import (
     CVXCRV,
     CURVE_CRV_ETH_POOL,
     CRV,

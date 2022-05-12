@@ -2,19 +2,17 @@ import pytest
 import brownie
 from brownie import (
     GenericUnionVault,
+    DistributorZaps,
     CvxFxsStrategy,
     CvxFxsZaps,
     StakingRewards,
     FXSMerkleDistributor,
     interface,
 )
-from ....utils.constants import (
+from tests.utils.constants import (
     CURVE_CVXFXS_FXS_LP_TOKEN,
-    AIRFORCE_SAFE,
-    FXS,
+    AIRFORCE_SAFE, FXS, CURVE_CVXFXS_FXS_POOL,
 )
-
-from ....utils.constants import CVXCRV_REWARDS
 
 
 @pytest.fixture(scope="module")
@@ -46,3 +44,21 @@ def fxs_distributor(alice, owner, fxs_zaps, fxs_vault):
     )
     fxs_distributor.setApprovals({"from": owner})
     yield fxs_distributor
+
+
+@pytest.fixture(scope="module")
+def distributor_zaps(fxs_distributor, owner, fxs_zaps, fxs_vault):
+    distributor_zaps = DistributorZaps.deploy(
+        fxs_zaps, fxs_distributor, fxs_vault, {"from": owner}
+    )
+    fxs_distributor.setApprovals({"from": owner})
+    yield distributor_zaps
+
+
+@pytest.fixture(scope="module", autouse=True)
+def distribute_cvx_fxs(fxs_distributor, owner):
+    amount = 1e22
+    interface.IERC20(FXS).transfer(
+        fxs_distributor, amount, {"from": CURVE_CVXFXS_FXS_POOL}
+    )
+    fxs_distributor.stake({"from": owner})

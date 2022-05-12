@@ -3,7 +3,7 @@ import pytest
 from pytest_lazyfixture import lazy_fixture
 
 from brownie import interface
-from ....utils.constants import (
+from tests.utils.constants import (
     CURVE_CVXFXS_FXS_POOL,
     FXS,
 )

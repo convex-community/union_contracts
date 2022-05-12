@@ -1,11 +1,11 @@
 import pytest
 import brownie
 from brownie import interface
-from ....utils.constants import (
+from tests.utils.constants import (
     CVXCRV,
 )
 
-from ....utils.constants import CVXCRV_REWARDS
+from tests.utils.constants import CVXCRV_REWARDS
 
 
 @pytest.fixture(scope="module", autouse=True)
