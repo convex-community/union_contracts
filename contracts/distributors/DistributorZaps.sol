@@ -35,7 +35,7 @@ contract DistributorZaps {
     }
 
 
-    /// @notice Claim as either FXS or cvxFXS
+    /// @notice Claim from distributor as either FXS or cvxFXS
     /// @param index - claimer index
     /// @param account - claimer account
     /// @param amount - claim amount
@@ -44,7 +44,7 @@ contract DistributorZaps {
     /// @param minAmountOut - minimum amount of underlying tokens expected
     /// @param to - address to send withdrawn underlying to
     /// @return amount of underlying withdrawn
-    function claimAsUnderlying(
+    function claimFromDistributorAsUnderlying(
         uint256 index,
         address account,
         uint256 amount,
@@ -58,7 +58,7 @@ contract DistributorZaps {
     }
 
 
-    /// @notice Claim from the distributor, unstake and returns USDT.
+    /// @notice Claim from distributor as USDT.
     /// @param index - claimer index
     /// @param account - claimer account
     /// @param amount - claim amount
@@ -66,7 +66,7 @@ contract DistributorZaps {
     /// @param minAmountOut - the min expected amount of USDT to receive
     /// @param to - the adress that will receive the USDT
     /// @return amount of USDT obtained
-    function claimAsUsdt(
+    function claimFromDistributorAsUsdt(
         uint256 index,
         address account,
         uint256 amount,
@@ -85,7 +85,7 @@ contract DistributorZaps {
     /// @param router - address of the router to use. e.g. 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F for Sushi
     /// @param outputToken - address of the token to swap to
     /// @param to - address of the final recipient of the swapped tokens
-    function claimViaUniV2EthPair(
+    function claimFromDistributorViaUniV2EthPair(
         uint256 index,
         address account,
         uint256 amount,
@@ -105,7 +105,26 @@ contract DistributorZaps {
         );
     }
 
-    /// @notice Claim from the distributor, unstake to CVX and lock.
+    /// @notice Claim from distributor as ETH.
+    /// @param index - claimer index
+    /// @param account - claimer account
+    /// @param amount - claim amount
+    /// @param merkleProof - merkle proof for the claim
+    /// @param minAmountOut - min amount of CVX expected
+    /// @param to - address to lock on behalf of
+    function claimFromDistributorAsEth(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32[] calldata merkleProof,
+        uint256 minAmountOut,
+        address to
+    ) external {
+        _claim(index, account, amount, merkleProof);
+        IStrategyZaps(zaps).claimFromVaultAsEth(amount, minAmountOut, to);
+    }
+
+    /// @notice Claim from distributor as CVX and optionally lock.
     /// @param index - claimer index
     /// @param account - claimer account
     /// @param amount - claim amount
