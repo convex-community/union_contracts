@@ -51,7 +51,7 @@ def distributor_zaps(fxs_distributor, owner, fxs_zaps, fxs_vault):
     distributor_zaps = DistributorZaps.deploy(
         fxs_zaps, fxs_distributor, fxs_vault, {"from": owner}
     )
-    fxs_distributor.setApprovals({"from": owner})
+    distributor_zaps.setApprovals({"from": owner})
     yield distributor_zaps
 
 

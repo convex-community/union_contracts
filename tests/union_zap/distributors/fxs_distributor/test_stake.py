@@ -12,6 +12,7 @@ from tests.utils.constants import (
 @pytest.mark.parametrize("caller", [lazy_fixture("owner"), lazy_fixture("alice")])
 def test_stake(fn_isolation, fxs_distributor, fxs_vault, caller):
     amount = 1e22
+    vault_initial_balance = fxs_vault.balanceOf(fxs_distributor)
     interface.IERC20(FXS).transfer(
         fxs_distributor, amount, {"from": CURVE_CVXFXS_FXS_POOL}
     )
@@ -19,8 +20,8 @@ def test_stake(fn_isolation, fxs_distributor, fxs_vault, caller):
         [amount, 0]
     )
     fxs_distributor.stake({"from": caller})
-    assert fxs_vault.balanceOf(fxs_distributor) == lp_received
-    assert fxs_vault.balanceOfUnderlying(fxs_distributor) == lp_received
+    assert fxs_vault.balanceOf(fxs_distributor) == lp_received + vault_initial_balance
+    assert fxs_vault.balanceOfUnderlying(fxs_distributor) == lp_received + vault_initial_balance
 
 
 def test_stake_slippage(fn_isolation, fxs_distributor, fxs_vault, owner):
