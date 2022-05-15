@@ -21,7 +21,10 @@ def test_stake(fn_isolation, fxs_distributor, fxs_vault, caller):
     )
     fxs_distributor.stake({"from": caller})
     assert fxs_vault.balanceOf(fxs_distributor) == lp_received + vault_initial_balance
-    assert fxs_vault.balanceOfUnderlying(fxs_distributor) == lp_received + vault_initial_balance
+    assert (
+        fxs_vault.balanceOfUnderlying(fxs_distributor)
+        == lp_received + vault_initial_balance
+    )
 
 
 def test_stake_slippage(fn_isolation, fxs_distributor, fxs_vault, owner):

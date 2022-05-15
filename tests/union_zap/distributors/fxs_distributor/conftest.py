@@ -11,7 +11,9 @@ from brownie import (
 )
 from tests.utils.constants import (
     CURVE_CVXFXS_FXS_LP_TOKEN,
-    AIRFORCE_SAFE, FXS, CURVE_CVXFXS_FXS_POOL,
+    AIRFORCE_SAFE,
+    FXS,
+    CURVE_CVXFXS_FXS_POOL,
 )
 
 
