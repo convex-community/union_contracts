@@ -1,13 +1,13 @@
 import brownie
 import pytest
-from ..utils.constants import CLAIM_AMOUNT, TOKENS, MAX_UINT256
+from ..utils.constants import CLAIM_AMOUNT, TOKENS, MAX_UINT256, MAX_WEIGHT_1E9
 
 
 def test_swap_slippage(
     fn_isolation, owner, union_contract, set_mock_claims, claim_tree, vault
 ):
 
-    weights = [10000, 0, 0]
+    weights = [MAX_WEIGHT_1E9, 0, 0]
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
         [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
@@ -21,9 +21,9 @@ def test_swap_slippage(
 @pytest.mark.parametrize(
     "weights,min_amounts",
     [
-        [[10000, 0, 0], [MAX_UINT256, 0, 0]],
-        [[0, 10000, 0], [0, MAX_UINT256, 0]],
-        [[0, 0, 10000], [0, 0, MAX_UINT256]],
+        [[MAX_WEIGHT_1E9, 0, 0], [MAX_UINT256, 0, 0]],
+        [[0, MAX_WEIGHT_1E9, 0], [0, MAX_UINT256, 0]],
+        [[0, 0, MAX_WEIGHT_1E9], [0, 0, MAX_UINT256]],
     ],
 )
 @pytest.mark.parametrize("lock", [True, False])
@@ -54,9 +54,9 @@ def test_adjust_slippage(
 @pytest.mark.parametrize(
     "weights,min_amounts",
     [
-        [[10000, 0, 0], [MAX_UINT256, 0, 0]],
-        [[0, 10000, 0], [0, MAX_UINT256, 0]],
-        [[0, 0, 10000], [0, 0, MAX_UINT256]],
+        [[MAX_WEIGHT_1E9, 0, 0], [MAX_UINT256, 0, 0]],
+        [[0, MAX_WEIGHT_1E9, 0], [0, MAX_UINT256, 0]],
+        [[0, 0, MAX_WEIGHT_1E9], [0, 0, MAX_UINT256]],
     ],
 )
 @pytest.mark.parametrize("lock", [True, False])

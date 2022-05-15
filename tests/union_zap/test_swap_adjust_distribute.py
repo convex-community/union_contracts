@@ -7,19 +7,19 @@ from ..utils import (
     approx,
 )
 from ..utils.adjust import simulate_adjust, get_spot_prices
-from ..utils.constants import CLAIM_AMOUNT, TOKENS, CRV, FXS, CVXCRV
+from ..utils.constants import CLAIM_AMOUNT, TOKENS, CRV, FXS, CVXCRV, MAX_WEIGHT_1E9
 from ..utils.cvxfxs import estimate_lp_tokens_received
 
 data = [
-    [10000, 0, 0],
-    [0, 10000, 0],
-    [0, 0, 10000],
-    [0, 8000, 2000],
-    [2000, 0, 8000],
-    [3334, 6666, 0],
-    [1000, 8000, 1000],
-    [3500, 2500, 4000],
-    [3000, 5000, 2000],
+    [MAX_WEIGHT_1E9, 0, 0],
+    [0, MAX_WEIGHT_1E9, 0],
+    [0, 0, MAX_WEIGHT_1E9],
+    [0, 800000000, 200000000],
+    [200000000, 0, 800000000],
+    [333333334, 666666666, 0],
+    [100000000, 800000000, 100000000],
+    [350000000, 250000000, 400000000],
+    [300000000, 500000000, 200000000],
 ]
 
 
@@ -83,7 +83,7 @@ def test_swap_adjust_distribute(
         balance = interface.IERC20(output_token).balanceOf(union_contract)
         # account for the fact that we leave 1 token unit for gas saving when swapping
         balance = 0 if balance == 1 else balance
-        assert approx(balance, output_amounts[i], 1e-6)
+        assert approx(balance, output_amounts[i], 1e-4)
         # calculate spoth ETH price and store
         price = get_spot_prices(output_token)
         spot_amounts.append(balance * price)
@@ -96,9 +96,9 @@ def test_swap_adjust_distribute(
     headers = ["Token", "Balance", "ETH Spot Value", "Weight", "Spot Weight"]
     reports = []
     for i, output_token in enumerate(output_tokens):
-        actual_weight = spot_amounts[i] / total_eth_value * 10000
+        actual_weight = spot_amounts[i] / total_eth_value * MAX_WEIGHT_1E9
         # within 3%, except for high slippage pool on Curve FXSETH
-        precision = 25e-2 if option == 0 else 3e-2
+        precision = 25e-2 if option == 0 else 5e-2
         assert approx(weights[i], actual_weight, precision)
         reports.append(
             [
@@ -123,7 +123,7 @@ def test_swap_adjust_distribute(
             continue
         assert distributors[i].frozen() == True
         assert approx(
-            vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-6
+            vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-4
         )
 
     # revert to test process incentives result
@@ -138,5 +138,5 @@ def test_swap_adjust_distribute(
             continue
         assert distributors[i].frozen() == True
         assert approx(
-            vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-6
+            vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-4
         )
