@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 interface IStrategyZaps {
-
     function claimFromVaultAsUnderlying(
         uint256 amount,
         uint256 assetIndex,

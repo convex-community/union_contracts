@@ -12,28 +12,31 @@ contract DistributorZaps {
     address public vault;
     IGenericDistributor public distributor;
 
-    constructor(address _strategyZaps, address _distributor, address _vault) {
+    constructor(
+        address _strategyZaps,
+        address _distributor,
+        address _vault
+    ) {
         zaps = _strategyZaps;
         distributor = IGenericDistributor(_distributor);
         vault = _vault;
     }
 
     function setApprovals() external {
-
         IERC20(vault).safeApprove(zaps, 0);
         IERC20(vault).safeApprove(zaps, type(uint256).max);
-
     }
 
     /// @notice Claim from distributor and transfer back tokens to zap
-    function _claim(uint256 index,
-                    address account,
-                    uint256 amount,
-                    bytes32[] calldata merkleProof) internal {
+    function _claim(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32[] calldata merkleProof
+    ) internal {
         distributor.claim(index, account, amount, merkleProof);
         IERC20(vault).safeTransferFrom(msg.sender, address(this), amount);
     }
-
 
     /// @notice Claim from distributor as either FXS or cvxFXS
     /// @param index - claimer index
@@ -54,9 +57,14 @@ contract DistributorZaps {
         address to
     ) external returns (uint256) {
         _claim(index, account, amount, merkleProof);
-        return IStrategyZaps(zaps).claimFromVaultAsUnderlying(amount, assetIndex, minAmountOut, to);
+        return
+            IStrategyZaps(zaps).claimFromVaultAsUnderlying(
+                amount,
+                assetIndex,
+                minAmountOut,
+                to
+            );
     }
-
 
     /// @notice Claim from distributor as USDT.
     /// @param index - claimer index
@@ -75,7 +83,8 @@ contract DistributorZaps {
         address to
     ) external returns (uint256) {
         _claim(index, account, amount, merkleProof);
-        return IStrategyZaps(zaps).claimFromVaultAsUsdt(amount, minAmountOut, to);
+        return
+            IStrategyZaps(zaps).claimFromVaultAsUsdt(amount, minAmountOut, to);
     }
 
     /// @notice Claim to any token via a univ2 router
@@ -144,5 +153,4 @@ contract DistributorZaps {
         _claim(index, account, amount, merkleProof);
         IStrategyZaps(zaps).claimFromVaultAsCvx(amount, minAmountOut, to, lock);
     }
-
 }

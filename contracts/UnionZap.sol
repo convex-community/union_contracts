@@ -39,7 +39,7 @@ contract UnionZap is Ownable, UnionBase {
 
     address[] public outputTokens;
 
-    uint256 private constant DECIMALS = 10000;
+    uint256 private constant DECIMALS = 1e9;
 
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
@@ -263,7 +263,7 @@ contract UnionZap is Ownable, UnionBase {
         IWETH(WETH_TOKEN).withdraw(_wethReceived);
     }
 
-    function _isEffectiveOutputToken(address _token, uint16[] calldata _weights)
+    function _isEffectiveOutputToken(address _token, uint32[] calldata _weights)
         internal
         returns (bool)
     {
@@ -315,12 +315,9 @@ contract UnionZap is Ownable, UnionBase {
         bool claimBeforeSwap,
         uint256 minAmountOut,
         uint256 gasRefund,
-        uint16[] calldata weights
+        uint32[] calldata weights
     ) public onlyOwner {
-        require(
-            weights.length == outputTokens.length,
-            "Invalid weight length"
-        );
+        require(weights.length == outputTokens.length, "Invalid weight length");
         // claim if applicable
         if (claimBeforeSwap) {
             claim(claimParams);
@@ -427,7 +424,7 @@ contract UnionZap is Ownable, UnionBase {
     /// @dev weights must sum to 10000
     function adjust(
         bool lock,
-        uint16[] calldata weights,
+        uint32[] calldata weights,
         uint256[] calldata minAmounts
     ) public onlyOwner validWeights(weights) {
         require(
@@ -490,7 +487,7 @@ contract UnionZap is Ownable, UnionBase {
 
     /// @notice Deposits rewards to their respective merkle distributors
     /// @param weights - weights of output assets (cvxCRV, FXS, CVX...)
-    function distribute(uint16[] calldata weights)
+    function distribute(uint32[] calldata weights)
         public
         onlyOwner
         validWeights(weights)
@@ -530,7 +527,7 @@ contract UnionZap is Ownable, UnionBase {
         bool claimBeforeSwap,
         bool lock,
         uint256 gasRefund,
-        uint16[] calldata weights,
+        uint32[] calldata weights,
         uint256[] calldata minAmounts
     ) external onlyOwner {
         require(
@@ -553,7 +550,7 @@ contract UnionZap is Ownable, UnionBase {
         emit Received(msg.sender, msg.value);
     }
 
-    modifier validWeights(uint16[] calldata _weights) {
+    modifier validWeights(uint32[] calldata _weights) {
         require(
             _weights.length == outputTokens.length,
             "Invalid weight length"
