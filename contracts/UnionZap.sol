@@ -38,8 +38,10 @@ contract UnionZap is Ownable, UnionBase {
         0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     address[] public outputTokens;
+    address public platform = 0x9Bc7c6ad7E7Cf3A6fCB58fb21e27752AC1e53f99;
 
     uint256 private constant DECIMALS = 1e9;
+    uint256 public platformFee = 2e7;
 
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
@@ -69,6 +71,8 @@ contract UnionZap is Ownable, UnionBase {
         address swapper,
         address distributor
     );
+    event PlatformFeeUpdated(uint256 _fee);
+    event PlatformUpdated(address indexed _platform);
 
     constructor() {
         routers[0] = SUSHI_ROUTER;
@@ -131,12 +135,33 @@ contract UnionZap is Ownable, UnionBase {
         IVotiumRegistry(VOTIUM_REGISTRY).setRegistry(_to);
     }
 
+    /// @notice Updates the part of incentives redirected to the platform
+    /// @param _fee - the amount of the new platform fee (in BIPS)
+    function setPlatformFee(uint256 _fee) external onlyOwner {
+        platformFee = _fee;
+        emit PlatformFeeUpdated(_fee);
+    }
+
+    /// @notice Updates the address to which platform fees are paid out
+    /// @param _platform - the new platform wallet address
+    function setPlatform(address _platform)
+        external
+        onlyOwner
+        notToZeroAddress(_platform)
+    {
+        platform = _platform;
+        emit PlatformUpdated(_platform);
+    }
+
     /// @notice Update the votium contract address to claim for
-    /// @param distributor_ - Address of the new contract
-    function updateVotiumDistributor(address distributor_) external onlyOwner {
-        require(distributor_ != address(0));
-        votiumDistributor = distributor_;
-        emit VotiumDistributorUpdated(distributor_);
+    /// @param _distributor - Address of the new contract
+    function updateVotiumDistributor(address _distributor)
+        external
+        onlyOwner
+        notToZeroAddress(_distributor)
+    {
+        votiumDistributor = _distributor;
+        emit VotiumDistributorUpdated(_distributor);
     }
 
     /// @notice Withdraws specified ERC20 tokens to the multisig
@@ -147,8 +172,8 @@ contract UnionZap is Ownable, UnionBase {
     function retrieveTokens(address[] calldata tokens, address to)
         external
         onlyOwner
+        notToZeroAddress(to)
     {
-        require(to != address(0));
         for (uint256 i; i < tokens.length; ++i) {
             address token = tokens[i];
             uint256 tokenBalance = IERC20(token).balanceOf(address(this));
@@ -217,8 +242,7 @@ contract UnionZap is Ownable, UnionBase {
         address token,
         uint256 amount,
         address router
-    ) internal {
-        require(router != address(0));
+    ) internal notToZeroAddress(router) {
         address[] memory _path = new address[](2);
         _path[0] = token;
         _path[1] = WETH_TOKEN;
@@ -417,6 +441,20 @@ contract UnionZap is Ownable, UnionBase {
         return _crvBalance;
     }
 
+    /// @notice Compute and takes fees if possible
+    /// @dev If not enough ETH to take fees, can be applied on merkle distribution
+    /// @param _totalEthBalance - the total ETH value of assets in the contract
+    /// @return the ETH value of fees
+    function _levyFees(uint256 _totalEthBalance) internal returns (uint256) {
+        uint256 _feeAmount = (_totalEthBalance * platformFee) / DECIMALS;
+        if (address(this).balance >= _feeAmount) {
+            (bool success, ) = (platform).call{value: _feeAmount}("");
+            require(success, "ETH transfer failed");
+            return _feeAmount;
+        }
+        return 0;
+    }
+
     /// @notice Splits contract balance into output tokens as per weights
     /// @param lock - whether to lock or swap crv to cvxcrv
     /// @param weights - weight of output assets (cvxCRV, FXS, CVX) in bips
@@ -453,6 +491,9 @@ contract UnionZap is Ownable, UnionBase {
                 _totalEthBalance += amounts[i];
             }
         }
+
+        // deduce fees if applicable
+        _totalEthBalance -= _levyFees(_totalEthBalance);
 
         // second loop to balance the amounts with buys and sells before distribution
         for (uint256 i; i < weights.length; ++i) {
