@@ -1,4 +1,5 @@
 import brownie
+from brownie.network.account import PublicKeyAccount
 from tabulate import tabulate
 from brownie import interface, chain, network
 import pytest
@@ -44,6 +45,8 @@ def test_swap_adjust_distribute(
     option,
 ):
     gas_refund = 3e16
+    platform = PublicKeyAccount(union_contract.platform())
+    initial_platform_balance = platform.balance()
     fxs_swapper.updateOption(option, {"from": owner})
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
     vaults = [vault, cvx_vault, fxs_vault]
@@ -70,11 +73,14 @@ def test_swap_adjust_distribute(
     assert gas_fees == gas_refund
     assert union_contract.balance() == expected_eth_amount - gas_fees
 
-    output_amounts = simulate_adjust(
+    fee_amount, output_amounts = simulate_adjust(
         union_contract, lock, weights, option, output_tokens
     )
 
     tx_adjust = union_contract.adjust(lock, weights, [0, 0, 0], {"from": owner})
+
+    assert approx(platform.balance() - initial_platform_balance, fee_amount, 1e-4)
+
     spot_amounts = []
     for i, output_token in enumerate(output_tokens):
         # crv would have been swapped for CVXCRV already

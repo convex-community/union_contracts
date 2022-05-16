@@ -26,6 +26,8 @@ def get_spot_prices(token):
 
 def simulate_adjust(union_contract, lock, weights, option, output_tokens):
     total_eth = union_contract.balance()
+    fees = union_contract.platformFee()
+
     prices = [0] * len(weights)
     amounts = [0] * len(weights)
     output_amounts = [0] * len(weights)
@@ -41,6 +43,9 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens):
                 / DECIMAL_18
             )
             total_eth += amounts[i]
+
+    fee_amount = int(Decimal(total_eth * fees) / Decimal(MAX_WEIGHT_1E9))
+    total_eth = total_eth - fee_amount if (total_eth >= fee_amount) else total_eth
 
     for i, weight in enumerate(weights):
         if weight > 0:
@@ -76,4 +81,4 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens):
 
             output_amounts[i] = output_amount
 
-    return output_amounts
+    return fee_amount, output_amounts
