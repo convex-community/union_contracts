@@ -94,6 +94,33 @@ def test_set_forwarding_non_owner(alice, union_contract):
         union_contract.setForwarding(VOTIUM_DISTRIBUTOR, {"from": alice})
 
 
+def test_set_platform(fn_isolation, alice, owner, union_contract):
+    tx = union_contract.setPlatform(alice, {"from": owner})
+    assert union_contract.platform() == alice
+    assert tx.events["PlatformUpdated"]["_platform"] == alice
+
+
+def test_set_platform_address_zero(owner, union_contract):
+    with brownie.reverts():
+        union_contract.setPlatform(ADDRESS_ZERO, {"from": owner})
+
+
+def test_set_platform_non_owner(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.setPlatform(alice, {"from": alice})
+
+
+def test_set_platform_fee(fn_isolation, owner, union_contract):
+    tx = union_contract.setPlatformFee(1234, {"from": owner})
+    assert union_contract.platformFee() == 1234
+    assert tx.events["PlatformFeeUpdated"]["_fee"] == 1234
+
+
+def test_set_platform_fee_non_owner(alice, union_contract):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        union_contract.setPlatformFee(1234, {"from": alice})
+
+
 def test_execute(fn_isolation, owner, union_contract):
     nsbt_amount = 1e12
     nsbt = interface.IERC20(NSBT)
