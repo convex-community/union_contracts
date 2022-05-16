@@ -8,6 +8,7 @@ from . import eth_to_crv, eth_to_cvx, crv_to_cvxcrv
 from .constants import (
     CRV,
     CVX,
+    MAX_WEIGHT_1E9,
 )
 from .cvxfxs import eth_to_fxs
 
@@ -44,7 +45,7 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens):
     for i, weight in enumerate(weights):
         if weight > 0:
             output_token = union_contract.outputTokens(i)
-            desired = int(Decimal(total_eth) * Decimal(weights[i]) / 10000)
+            desired = int(Decimal(total_eth) * Decimal(weights[i]) / MAX_WEIGHT_1E9)
             sell = amounts[i] > desired
             token_balance = interface.IERC20(output_token).balanceOf(union_contract)
 
