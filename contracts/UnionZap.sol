@@ -11,6 +11,7 @@ import "../interfaces/ICvxCrvDeposit.sol";
 import "../interfaces/IVotiumRegistry.sol";
 import "../interfaces/IUniV3Router.sol";
 import "../interfaces/ICurveV2Pool.sol";
+import "../interfaces/ISwapper.sol";
 import "./UnionBase.sol";
 
 contract UnionZap is Ownable, UnionBase {
@@ -18,15 +19,9 @@ contract UnionZap is Ownable, UnionBase {
 
     address public votiumDistributor =
         0x378Ba9B73309bE80BF4C2c027aAD799766a7ED5A;
-    address public unionDistributor;
 
     address private constant SUSHI_ROUTER =
         0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
-    address private constant UNISWAP_ROUTER =
-        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address private constant UNIV3_ROUTER =
-        0xE592427A0AEce92De3Edee1F18E0157C05861564;
-    address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private constant CVXCRV_DEPOSIT =
         0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae;
     address public constant VOTIUM_REGISTRY =
@@ -35,18 +30,26 @@ contract UnionZap is Ownable, UnionBase {
         0xCdF7028ceAB81fA0C6971208e83fa7872994beE5;
     address private constant T_ETH_POOL =
         0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC;
+    address private constant UNISWAP_ROUTER =
+        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address private constant UNIV3_ROUTER =
+        0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address private constant WETH_TOKEN =
+        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
-    uint256 private constant BASE_TX_GAS = 21000;
-    uint256 private constant FINAL_TRANSFER_GAS = 50000;
+    address[] public outputTokens;
+    address public platform = 0x9Bc7c6ad7E7Cf3A6fCB58fb21e27752AC1e53f99;
+
+    uint256 private constant DECIMALS = 1e9;
+    uint256 public platformFee = 2e7;
 
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
 
-    struct claimParam {
-        address token;
-        uint256 index;
-        uint256 amount;
-        bytes32[] merkleProof;
+    struct tokenContracts {
+        address pool;
+        address swapper;
+        address distributor;
     }
 
     struct curveSwapParams {
@@ -54,17 +57,24 @@ contract UnionZap is Ownable, UnionBase {
         uint16 ethIndex;
     }
 
+    mapping(address => tokenContracts) public tokenInfo;
     mapping(address => curveSwapParams) public curveRegistry;
 
     event Received(address sender, uint256 amount);
-    event Distributed(uint256 amount, uint256 fees, bool locked);
-    event DistributorUpdated(address distributor);
+    event Distributed(uint256 amount, address token, address distributor);
     event VotiumDistributorUpdated(address distributor);
     event FundsRetrieved(address token, address to, uint256 amount);
     event CurvePoolUpdated(address token, address pool);
+    event OutputTokenUpdated(
+        address token,
+        address pool,
+        address swapper,
+        address distributor
+    );
+    event PlatformFeeUpdated(uint256 _fee);
+    event PlatformUpdated(address indexed _platform);
 
-    constructor(address distributor_) {
-        unionDistributor = distributor_;
+    constructor() {
         routers[0] = SUSHI_ROUTER;
         routers[1] = UNISWAP_ROUTER;
         fees[0] = 3000;
@@ -86,20 +96,35 @@ contract UnionZap is Ownable, UnionBase {
         emit CurvePoolUpdated(token, params.pool);
     }
 
+    /// @notice Add or update contracts used for distribution of output tokens
+    /// @param token - Address of the output token
+    /// @param params - The Curve pool and distributor associated w/ the token
+    /// @dev No removal options to avoid indexing errors with swaps, pass 0 weight for unused assets
+    /// @dev Pool needs to be Curve v2 pool with price oracle
+    function updateOutputToken(address token, tokenContracts calldata params)
+        external
+        onlyOwner
+    {
+        assert(params.pool != address(0));
+        // if we don't have any pool info, it's an addition
+        if (tokenInfo[token].pool == address(0)) {
+            outputTokens.push(token);
+        }
+        tokenInfo[token] = params;
+        emit OutputTokenUpdated(
+            token,
+            params.pool,
+            params.swapper,
+            params.distributor
+        );
+    }
+
     /// @notice Remove a pool from the registry
     /// @param token - Address of token associated with the pool
     function removeCurvePool(address token) external onlyOwner {
         IERC20(token).safeApprove(curveRegistry[token].pool, 0);
         delete curveRegistry[token];
         emit CurvePoolUpdated(token, address(0));
-    }
-
-    /// @notice Update the contract used to distribute funds
-    /// @param distributor_ - Address of the new contract
-    function updateDistributor(address distributor_) external onlyOwner {
-        require(distributor_ != address(0));
-        unionDistributor = distributor_;
-        emit DistributorUpdated(distributor_);
     }
 
     /// @notice Change forwarding address in Votium registry
@@ -110,12 +135,33 @@ contract UnionZap is Ownable, UnionBase {
         IVotiumRegistry(VOTIUM_REGISTRY).setRegistry(_to);
     }
 
+    /// @notice Updates the part of incentives redirected to the platform
+    /// @param _fee - the amount of the new platform fee (in BIPS)
+    function setPlatformFee(uint256 _fee) external onlyOwner {
+        platformFee = _fee;
+        emit PlatformFeeUpdated(_fee);
+    }
+
+    /// @notice Updates the address to which platform fees are paid out
+    /// @param _platform - the new platform wallet address
+    function setPlatform(address _platform)
+        external
+        onlyOwner
+        notToZeroAddress(_platform)
+    {
+        platform = _platform;
+        emit PlatformUpdated(_platform);
+    }
+
     /// @notice Update the votium contract address to claim for
-    /// @param distributor_ - Address of the new contract
-    function updateVotiumDistributor(address distributor_) external onlyOwner {
-        require(distributor_ != address(0));
-        votiumDistributor = distributor_;
-        emit VotiumDistributorUpdated(distributor_);
+    /// @param _distributor - Address of the new contract
+    function updateVotiumDistributor(address _distributor)
+        external
+        onlyOwner
+        notToZeroAddress(_distributor)
+    {
+        votiumDistributor = _distributor;
+        emit VotiumDistributorUpdated(_distributor);
     }
 
     /// @notice Withdraws specified ERC20 tokens to the multisig
@@ -126,8 +172,8 @@ contract UnionZap is Ownable, UnionBase {
     function retrieveTokens(address[] calldata tokens, address to)
         external
         onlyOwner
+        notToZeroAddress(to)
     {
-        require(to != address(0));
         for (uint256 i; i < tokens.length; ++i) {
             address token = tokens[i];
             uint256 tokenBalance = IERC20(token).balanceOf(address(this));
@@ -196,11 +242,10 @@ contract UnionZap is Ownable, UnionBase {
         address token,
         uint256 amount,
         address router
-    ) internal {
-        require(router != address(0));
+    ) internal notToZeroAddress(router) {
         address[] memory _path = new address[](2);
         _path[0] = token;
-        _path[1] = WETH;
+        _path[1] = WETH_TOKEN;
 
         IERC20(token).safeApprove(router, 0);
         IERC20(token).safeApprove(router, amount);
@@ -228,7 +273,7 @@ contract UnionZap is Ownable, UnionBase {
         IUniV3Router.ExactInputSingleParams memory _params = IUniV3Router
             .ExactInputSingleParams(
                 token,
-                WETH,
+                WETH_TOKEN,
                 fee,
                 address(this),
                 block.timestamp + 1,
@@ -239,7 +284,19 @@ contract UnionZap is Ownable, UnionBase {
         uint256 _wethReceived = IUniV3Router(UNIV3_ROUTER).exactInputSingle(
             _params
         );
-        IWETH(WETH).withdraw(_wethReceived);
+        IWETH(WETH_TOKEN).withdraw(_wethReceived);
+    }
+
+    function _isEffectiveOutputToken(address _token, uint32[] calldata _weights)
+        internal
+        returns (bool)
+    {
+        for (uint256 j; j < _weights.length; ++j) {
+            if (_token == outputTokens[j] && _weights[j] > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// @notice Claims all specified rewards from Votium
@@ -262,9 +319,9 @@ contract UnionZap is Ownable, UnionBase {
     /// @param claimParams - an array containing the info necessary to claim
     /// @param routerChoices - the router to use for the swap
     /// @param claimBeforeSwap - whether to claim on Votium or not
-    /// @param lock - whether to lock or swap crv to cvxcrv
-    /// @param stake - whether to stake cvxcrv (if distributor is vault)
-    /// @param minAmountOut - min output amount of cvxCRV or CRV (if locking)
+    /// @param minAmountOut - min output amount in ETH value
+    /// @param gasRefund - tx gas cost to refund to caller (ETH amount)
+    /// @param weights - weight of output assets (cvxCRV, FXS, CVX...) in bips
     /// @dev routerChoices is a 3-bit bitmap such that
     /// 0b000 (0) - Sushi
     /// 0b001 (1) - UniV2
@@ -274,19 +331,18 @@ contract UnionZap is Ownable, UnionBase {
     /// Ex: 136 = 010 001 000 will swap token 1 on UniV3, 2 on UniV3, last on Sushi
     /// Passing 0 will execute all swaps on sushi
     /// @dev claimBeforeSwap is used in case 3rd party already claimed on Votium
-    function distribute(
+    /// @dev weights must sum to 10000
+    /// @dev gasRefund is computed off-chain w/ tenderly
+    function swap(
         IMultiMerkleStash.claimParam[] calldata claimParams,
         uint256 routerChoices,
         bool claimBeforeSwap,
-        bool lock,
-        bool stake,
-        uint256 minAmountOut
-    ) external onlyOwner {
-        // initialize gas counting
-        uint256 _startGas = gasleft();
-        bool _locked = false;
-
-        // claim
+        uint256 minAmountOut,
+        uint256 gasRefund,
+        uint32[] calldata weights
+    ) public onlyOwner {
+        require(weights.length == outputTokens.length, "Invalid weight length");
+        // claim if applicable
         if (claimBeforeSwap) {
             claim(claimParams);
         }
@@ -304,13 +360,17 @@ contract UnionZap is Ownable, UnionBase {
                 _balance -= 1;
             }
             // unwrap WETH
-            if (_token == WETH) {
-                IWETH(WETH).withdraw(_balance);
+            if (_token == WETH_TOKEN) {
+                IWETH(WETH_TOKEN).withdraw(_balance);
             }
-            // no need to swap bribes paid out in cvxCRV or CRV
-            else if ((_token == CRV_TOKEN) || (_token == CVXCRV_TOKEN)) {
-                continue;
-            } else {
+            // we handle swaps for output tokens later when distributing
+            // so any non-zero output token will be skipped here
+            else {
+                // skip if output token
+                if (_isEffectiveOutputToken(_token, weights)) {
+                    continue;
+                }
+                // otherwise execute the swaps
                 uint256 _choice = routerChoices & 7;
                 if (_choice >= 4) {
                     _swapToETHCurve(_token, _balance);
@@ -319,64 +379,228 @@ contract UnionZap is Ownable, UnionBase {
                 } else {
                     _swapToETH(_token, _balance, routers[_choice]);
                 }
+                routerChoices = routerChoices >> 3;
             }
-            routerChoices = routerChoices >> 3;
         }
 
-        uint256 _ethBalance = address(this).balance;
+        // slippage check
+        assert(address(this).balance > minAmountOut);
 
-        // if locking, we apply minAmount to CRV - otherwise will do on cvxCRV
-        uint256 minCrvOut = lock ? minAmountOut : 0;
-        // swap from ETH to CRV
-        uint256 _swappedCrv = _swapEthToCrv(_ethBalance, minCrvOut);
+        (bool success, ) = (tx.origin).call{value: gasRefund}("");
+        require(success, "ETH transfer failed");
+    }
 
+    /// @notice Internal function used to sell output tokens for ETH
+    /// @param _token - the token to sell
+    /// @param _amount - how much of that token to sell
+    function _sell(address _token, uint256 _amount) internal {
+        if (_token == CRV_TOKEN) {
+            _crvToEth(_amount, 0);
+        } else if (_token == CVX_TOKEN) {
+            _swapToETHCurve(_token, _amount);
+        } else {
+            IERC20(_token).safeTransfer(tokenInfo[_token].swapper, _amount);
+            ISwapper(tokenInfo[_token].swapper).sell(_amount);
+        }
+    }
+
+    /// @notice Internal function used to buy output tokens from ETH
+    /// @param _token - the token to sell
+    /// @param _amount - how much of that token to sell
+    function _buy(address _token, uint256 _amount) internal {
+        if (_token == CRV_TOKEN) {
+            _ethToCrv(_amount, 0);
+        } else if (_token == CVX_TOKEN) {
+            _ethToCvx(_amount, 0);
+        } else {
+            (bool success, ) = tokenInfo[_token].swapper.call{value: _amount}(
+                ""
+            );
+            require(success, "ETH transfer failed");
+            ISwapper(tokenInfo[_token].swapper).buy(_amount);
+        }
+    }
+
+    /// @notice Swap or lock all CRV for cvxCRV
+    /// @param _minAmountOut - the min amount of cvxCRV expected
+    /// @param _lock - whether to lock or swap
+    /// @return the amount of cvxCrv obtained
+    function _toCvxCrv(uint256 _minAmountOut, bool _lock)
+        internal
+        returns (uint256)
+    {
         uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
-
         // swap on Curve if there is a premium for doing so
-        if (!lock) {
-            _swapCrvToCvxCrv(_crvBalance, address(this), minAmountOut);
+        if (!_lock) {
+            return _swapCrvToCvxCrv(_crvBalance, address(this), _minAmountOut);
         }
         // otherwise deposit & lock
-        else {
-            ICvxCrvDeposit(CVXCRV_DEPOSIT).deposit(_crvBalance, true);
-            _locked = true;
-        }
+        // slippage check
+        assert(_crvBalance > _minAmountOut);
+        ICvxCrvDeposit(CVXCRV_DEPOSIT).deposit(_crvBalance, true);
+        return _crvBalance;
+    }
 
-        uint256 _cvxCrvBalance = IERC20(CVXCRV_TOKEN).balanceOf(address(this));
-
-        // freeze distributor before transferring funds
-        IMerkleDistributorV2(unionDistributor).freeze();
-
-        // estimate gas cost
-        uint256 _gasUsed = _startGas -
-            gasleft() +
-            BASE_TX_GAS +
-            16 *
-            msg.data.length +
-            FINAL_TRANSFER_GAS;
-        // compute the ETH/CRV exchange rate based on previous curve swap
-        uint256 _gasCostInCrv = (_gasUsed * tx.gasprice * _swappedCrv) /
-            _ethBalance;
-
-        uint256 _netDeposit = _cvxCrvBalance - _gasCostInCrv;
-
-        // transfer funds
-        IERC20(CVXCRV_TOKEN).safeTransfer(unionDistributor, _netDeposit);
-        if (stake) {
-            IMerkleDistributorV2(unionDistributor).stake();
-        }
-
-        if (_gasCostInCrv > 0) {
-            uint256 _gasEth = _swapCrvToEth(
-                _swapCvxCrvToCrv(_gasCostInCrv, address(this))
-            );
-            (bool success, ) = (msg.sender).call{value: _gasEth}("");
+    /// @notice Compute and takes fees if possible
+    /// @dev If not enough ETH to take fees, can be applied on merkle distribution
+    /// @param _totalEthBalance - the total ETH value of assets in the contract
+    /// @return the ETH value of fees
+    function _levyFees(uint256 _totalEthBalance) internal returns (uint256) {
+        uint256 _feeAmount = (_totalEthBalance * platformFee) / DECIMALS;
+        if (address(this).balance >= _feeAmount) {
+            (bool success, ) = (platform).call{value: _feeAmount}("");
             require(success, "ETH transfer failed");
+            return _feeAmount;
         }
-        emit Distributed(_netDeposit, _gasCostInCrv, _locked);
+        return 0;
+    }
+
+    /// @notice Splits contract balance into output tokens as per weights
+    /// @param lock - whether to lock or swap crv to cvxcrv
+    /// @param weights - weight of output assets (cvxCRV, FXS, CVX) in bips
+    /// @param minAmounts - min amount out of each output token (cvxCRV for CRV)
+    /// @dev weights must sum to 10000
+    function adjust(
+        bool lock,
+        uint32[] calldata weights,
+        uint256[] calldata minAmounts
+    ) public onlyOwner validWeights(weights) {
+        require(
+            minAmounts.length == outputTokens.length,
+            "Invalid min amounts"
+        );
+        // start calculating the allocations of output tokens
+        uint256 _totalEthBalance = address(this).balance;
+
+        uint256[] memory prices = new uint256[](outputTokens.length);
+        uint256[] memory amounts = new uint256[](outputTokens.length);
+        address _outputToken;
+
+        // first loop to calculate total ETH amounts and store oracle prices
+        for (uint256 i; i < weights.length; ++i) {
+            if (weights[i] > 0) {
+                _outputToken = outputTokens[i];
+                prices[i] = ICurveV2Pool(tokenInfo[_outputToken].pool)
+                    .price_oracle();
+                // compute ETH value of current token balance
+                amounts[i] =
+                    (IERC20(_outputToken).balanceOf(address(this)) *
+                        prices[i]) /
+                    1e18;
+                // add the ETH value of token to current ETH value in contract
+                _totalEthBalance += amounts[i];
+            }
+        }
+
+        // deduce fees if applicable
+        _totalEthBalance -= _levyFees(_totalEthBalance);
+
+        // second loop to balance the amounts with buys and sells before distribution
+        for (uint256 i; i < weights.length; ++i) {
+            // if weight == 0, the token would have been swapped already so no balance
+            if (weights[i] > 0) {
+                _outputToken = outputTokens[i];
+                // amount adjustments
+                uint256 _desired = (_totalEthBalance * weights[i]) / DECIMALS;
+                if (amounts[i] > _desired) {
+                    _sell(
+                        _outputToken,
+                        (((amounts[i] - _desired) * 1e18) / prices[i])
+                    );
+                } else {
+                    _buy(_outputToken, _desired - amounts[i]);
+                }
+                // we need an edge case here since it's too late
+                // to update the cvxCRV distributor's stake function
+                if (_outputToken == CRV_TOKEN) {
+                    // convert all CRV to cvxCRV
+                    _toCvxCrv(minAmounts[i], lock);
+                } else {
+                    // slippage check
+                    assert(
+                        IERC20(_outputToken).balanceOf(address(this)) >
+                            minAmounts[i]
+                    );
+                }
+            }
+        }
+    }
+
+    /// @notice Deposits rewards to their respective merkle distributors
+    /// @param weights - weights of output assets (cvxCRV, FXS, CVX...)
+    function distribute(uint32[] calldata weights)
+        public
+        onlyOwner
+        validWeights(weights)
+    {
+        for (uint256 i; i < weights.length; ++i) {
+            if (weights[i] > 0) {
+                address _outputToken = outputTokens[i];
+                address _distributor = tokenInfo[_outputToken].distributor;
+                IMerkleDistributorV2(_distributor).freeze();
+                // edge case for CRV as we gotta keep using existing distributor
+                if (_outputToken == CRV_TOKEN) {
+                    _outputToken = CVXCRV_TOKEN;
+                }
+                uint256 _balance = IERC20(_outputToken).balanceOf(
+                    address(this)
+                );
+                // transfer to distributor
+                IERC20(_outputToken).safeTransfer(_distributor, _balance);
+                // stake
+                IMerkleDistributorV2(_distributor).stake();
+                emit Distributed(_balance, _outputToken, _distributor);
+            }
+        }
+    }
+
+    /// @notice Swaps all bribes, adjust according to output token weights and distribute
+    /// @dev Wrapper over the swap, adjust & distribute function
+    /// @param claimParams - an array containing the info necessary to claim
+    /// @param routerChoices - the router to use for the swap
+    /// @param claimBeforeSwap - whether to claim on Votium or not
+    /// @param gasRefund - tx gas cost to refund to caller (ETH amount)
+    /// @param weights - weight of output assets (cvxCRV, FXS, CVX...) in bips
+    /// @param minAmounts - min amount out of each output token (cvxCRV for CRV)
+    function processIncentives(
+        IMultiMerkleStash.claimParam[] calldata claimParams,
+        uint256 routerChoices,
+        bool claimBeforeSwap,
+        bool lock,
+        uint256 gasRefund,
+        uint32[] calldata weights,
+        uint256[] calldata minAmounts
+    ) external onlyOwner {
+        require(
+            minAmounts.length == outputTokens.length,
+            "Invalid min amounts"
+        );
+        swap(
+            claimParams,
+            routerChoices,
+            claimBeforeSwap,
+            0,
+            gasRefund,
+            weights
+        );
+        adjust(lock, weights, minAmounts);
+        distribute(weights);
     }
 
     receive() external payable {
         emit Received(msg.sender, msg.value);
+    }
+
+    modifier validWeights(uint32[] calldata _weights) {
+        require(
+            _weights.length == outputTokens.length,
+            "Invalid weight length"
+        );
+        uint256 _totalWeights;
+        for (uint256 i; i < _weights.length; ++i) {
+            _totalWeights += _weights[i];
+        }
+        require(_totalWeights == DECIMALS, "Invalid weights");
+        _;
     }
 }

@@ -8,6 +8,11 @@ interface ICurveV2Pool {
         uint256 dx
     ) external view returns (uint256);
 
+    function calc_token_amount(uint256[2] calldata amounts)
+        external
+        view
+        returns (uint256);
+
     function exchange_underlying(
         uint256 i,
         uint256 j,

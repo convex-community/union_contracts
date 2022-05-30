@@ -72,15 +72,21 @@ def approx(a, b, precision=1e-10):
     return 2 * abs(a - b) / (a + b) <= precision
 
 
-def estimate_output_amount(tokens, union_contract, router_choices):
+def estimate_amounts_after_swap(tokens, union_contract, router_choices, weights):
+    def is_effective_output_token(token, weights):
+        for i in range(len(weights)):
+            if union_contract.outputTokens(i) == token and weights[i] > 0:
+                return True
+        return False
+
     eth_amount = 0
-    crv_amount = 0
-    for token in tokens:
-        if token == CRV:
-            crv_amount += CLAIM_AMOUNT
-        elif token == WETH:
+    for i, token in enumerate(tokens):
+        if token == WETH:
             eth_amount += CLAIM_AMOUNT - 1
         else:
+            if is_effective_output_token(token, weights):
+                continue
+
             choice = router_choices & 7
             if choice >= 4:
                 pool, index = CURVE_CONTRACT_REGISTRY[token.lower()]
@@ -106,25 +112,24 @@ def estimate_output_amount(tokens, union_contract, router_choices):
         router_choices = router_choices // 8
 
     print("ETH Amount: ", eth_amount)
+    return eth_amount
 
-    swap_crv_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(
-        0, 1, eth_amount, {"from": union_contract}
-    )
-    crv_amount += swap_crv_amount
-    eth_crv_ratio = swap_crv_amount / eth_amount
-    print("CRV Amount: ", crv_amount)
 
-    quote = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(0, 1, crv_amount)
-    cvxcrv_amount = crv_amount
-    if quote > crv_amount:
-        cvxcrv_amount = quote
-    if CVXCRV in tokens:
-        cvxcrv_amount += CLAIM_AMOUNT
-    return cvxcrv_amount, eth_crv_ratio
+def crv_to_cvxcrv(amount):
+    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(0, 1, amount)
 
 
 def eth_to_cvxcrv(amount):
+    return crv_to_cvxcrv(eth_to_crv(amount))
+
+
+def eth_to_crv(amount):
     if amount <= 0:
         return 0
-    crv_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, amount)
-    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(1, 0, crv_amount)
+    return interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, amount)
+
+
+def eth_to_cvx(amount):
+    if amount <= 0:
+        return 0
+    return interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, amount)

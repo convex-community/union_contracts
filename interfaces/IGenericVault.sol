@@ -27,6 +27,10 @@ interface IGenericVault {
 
     function underlying() external view returns (address);
 
+    function strategy() external view returns (address);
+
+    function platform() external view returns (address);
+
     function setPlatform(address _platform) external;
 
     function setPlatformFee(uint256 _fee) external;
@@ -40,6 +44,4 @@ interface IGenericVault {
     function callIncentive() external view returns (uint256);
 
     function platformFee() external view returns (uint256);
-
-    function platform() external view returns (address);
 }

@@ -1,3 +1,5 @@
+.idea
+venv/
 __pycache__
 .history
 .hypothesis/
@@ -5,3 +7,4 @@ build/
 reports/
 node_modules/
 migrations/
+*.sqlite
