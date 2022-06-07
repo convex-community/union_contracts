@@ -362,4 +362,6 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
             true
         );
     }
+    
+    receive() external payable {}
 }
