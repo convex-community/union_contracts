@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -12,7 +11,7 @@ import "../../../interfaces/ICurveTriCrypto.sol";
 import "../../../interfaces/IERC4626.sol";
 import "../../../interfaces/IPirexCVX.sol";
 
-contract PCvxZaps is UnionBase, Ownable, ReentrancyGuard {
+contract PCvxZaps is UnionBase, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     address private constant PIREX_CVX =
@@ -102,6 +101,18 @@ contract PCvxZaps is UnionBase, Ownable, ReentrancyGuard {
         _depositFromEth(_ethBalance, minAmountOut, to);
     }
 
+    /// @notice Deposit into the pounder from CVX
+    /// @param minAmountOut - min amount of pCVX tokens expected
+    /// @param to - address to stake on behalf of
+    function depositFromCvx(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) external notToZeroAddress(to) {
+        IERC20(CVX_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
+        _deposit(amount, minAmountOut, to);
+    }
+
     /// @notice Deposit into the pounder from cvxCRV
     /// @param minAmountOut - min amount of pCVX tokens expected
     /// @param to - address to stake on behalf of
@@ -122,7 +133,7 @@ contract PCvxZaps is UnionBase, Ownable, ReentrancyGuard {
 
     /// @notice Internal function to deposit ETH to the pounder
     /// @param _amount - amount of ETH
-    /// @param _minAmountOut - min amount of lp tokens expected
+    /// @param _minAmountOut - min amount of tokens expected
     /// @param _to - address to stake on behalf of
     function _depositFromEth(
         uint256 _amount,
