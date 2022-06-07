@@ -75,9 +75,9 @@ def cvx_zaps(owner):
 
 
 @pytest.fixture(scope="module")
-def distributor_zaps(fxs_distributor, owner, alice, cvx_zaps, cvx_vault):
+def distributor_zaps(fxs_distributor, owner, cvx_distributor, cvx_zaps, cvx_vault):
     distributor_zaps = PirexDistributorZaps.deploy(
-        cvx_zaps, alice, cvx_vault, {"from": owner}
+        cvx_zaps, cvx_distributor, cvx_vault, {"from": owner}
     )
     distributor_zaps.setApprovals({"from": owner})
     yield distributor_zaps
