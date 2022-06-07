@@ -140,9 +140,9 @@ def pirex_cvx(owner):
 
 
 @pytest.fixture(scope="module")
-def cvx_distributor(owner, pirex_cvx, union_contract):
+def cvx_distributor(owner, cvx_vault, pirex_cvx, union_contract):
     merkle = CVXMerkleDistributor.deploy(
-        pirex_cvx, union_contract, CVX, {"from": owner}
+        cvx_vault, union_contract, CVX, {"from": owner}
     )
     merkle.setApprovals({"from": owner})
     yield merkle

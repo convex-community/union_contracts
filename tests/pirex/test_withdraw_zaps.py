@@ -31,7 +31,7 @@ def test_withdraw_as_cvx(fn_isolation, alice, cvx_zaps, cvx_vault):
     before_redeem_balance = interface.IERC20(CVX).balanceOf(alice)
     interface.IERC20(cvx_vault).approve(cvx_zaps, 2**256 - 1, {"from": alice})
 
-    cvx_zaps.claimFromVaultAsCVX(cvx_vault.balanceOf(alice), 0, alice, {"from": alice})
+    cvx_zaps.claimFromVaultAsCvx(cvx_vault.balanceOf(alice), 0, alice, {"from": alice})
     assert cvx_vault.balanceOf(alice) == 0
     assert cvx_vault.balanceOf(cvx_zaps) == 0
     assert approx(
