@@ -217,7 +217,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
     /// @param minAmountOut - minimum amount of underlying tokens expected
     /// @param to - address to send withdrawn underlying to
     /// @return amount of underlying withdrawn
-    function claimFromVaultAsCVX(
+    function claimFromVaultAsCvx(
         uint256 amount,
         uint256 minAmountOut,
         address to

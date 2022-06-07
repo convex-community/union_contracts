@@ -105,25 +105,23 @@ contract PirexDistributorZaps {
         IStrategyZaps(zaps).claimFromVaultAsEth(amount, minAmountOut, to);
     }
 
-    /// @notice Claim from distributor as CVX and optionally lock.
+    /// @notice Claim from distributor as CVX
     /// @param index - claimer index
     /// @param account - claimer account
     /// @param amount - claim amount
     /// @param merkleProof - merkle proof for the claim
     /// @param minAmountOut - min amount of CVX expected
-    /// @param to - address to lock on behalf of
-    /// @param lock - whether to lock the Cvx or not
+    /// @param to - receiver
     function claimFromDistributorAsCvx(
         uint256 index,
         address account,
         uint256 amount,
         bytes32[] calldata merkleProof,
         uint256 minAmountOut,
-        address to,
-        bool lock
+        address to
     ) external {
         _claim(index, account, amount, merkleProof);
-        IStrategyZaps(zaps).claimFromVaultAsCvx(amount, minAmountOut, to, lock);
+        IStrategyZaps(zaps).claimFromVaultAsCvx(amount, minAmountOut, to);
     }
 
     /// @notice Claim from distributor as CRV
@@ -139,19 +137,18 @@ contract PirexDistributorZaps {
         uint256 amount,
         bytes32[] calldata merkleProof,
         uint256 minAmountOut,
-        address to,
-        bool lock
+        address to
     ) external {
         _claim(index, account, amount, merkleProof);
-        IStrategyZaps(zaps).claimFromVaultAsCrv(amount, minAmountOut, to, lock);
+        IStrategyZaps(zaps).claimFromVaultAsCrv(amount, minAmountOut, to);
     }
 
-    /// @notice Claim from distributor as CRV
+    /// @notice Claim from distributor as cvxCRV
     /// @param index - claimer index
     /// @param account - claimer account
     /// @param amount - claim amount
     /// @param merkleProof - merkle proof for the claim
-    /// @param minAmountOut - min amount of CRV expected
+    /// @param minAmountOut - min amount of cvxCRV expected
     /// @param to - address to lock on behalf of
     function claimFromDistributorAsCvxCrv(
         uint256 index,
@@ -159,15 +156,9 @@ contract PirexDistributorZaps {
         uint256 amount,
         bytes32[] calldata merkleProof,
         uint256 minAmountOut,
-        address to,
-        bool lock
+        address to
     ) external {
         _claim(index, account, amount, merkleProof);
-        IStrategyZaps(zaps).claimFromVaultAsCvxCrv(
-            amount,
-            minAmountOut,
-            to,
-            lock
-        );
+        IStrategyZaps(zaps).claimFromVaultAsCvxCrv(amount, minAmountOut, to);
     }
 }
