@@ -119,6 +119,10 @@ def crv_to_cvxcrv(amount):
     return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(0, 1, amount)
 
 
+def cvxcrv_to_crv(amount):
+    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(1, 0, amount)
+
+
 def eth_to_cvxcrv(amount):
     return crv_to_cvxcrv(eth_to_crv(amount))
 
