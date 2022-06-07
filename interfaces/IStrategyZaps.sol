@@ -35,4 +35,18 @@ interface IStrategyZaps {
         address to,
         bool lock
     ) external returns (uint256);
+
+    function claimFromVaultAsCrv(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to,
+        bool lock
+    ) external returns (uint256);
+
+    function claimFromVaultAsCvxCrv(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to,
+        bool lock
+    ) external returns (uint256);
 }
