@@ -9,8 +9,20 @@ from ..utils.constants import (
     CVXCRV,
     PIREX_CVX_STRATEGY,
     PXCVX_TOKEN,
+    WETH,
+    VOTIUM_DISTRIBUTOR,
 )
 from ..utils.pirex import estimate_output_cvx_amount
+
+
+def mock_distribute(union_contract, token_list):
+    interface.IERC20(WETH).transfer(
+        VOTIUM_DISTRIBUTOR, 1e20, {"from": "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0"}
+    )
+    for token in token_list:
+        interface.IERC20(token).transfer(
+            union_contract, CLAIM_AMOUNT, {"from": VOTIUM_DISTRIBUTOR}
+        )
 
 
 @pytest.mark.parametrize("lock", [True, False])
@@ -18,8 +30,6 @@ def test_claim_sushi(
     fn_isolation,
     owner,
     union_contract,
-    set_mock_claims,
-    claim_tree,
     pirex_strategy,
     lock,
 ):
@@ -28,18 +38,24 @@ def test_claim_sushi(
     initial_strat_balance = interface.IERC20(PXCVX_TOKEN).balanceOf(pirex_strategy)
     owner_original_balance = owner.balance()
     gas_refund = 1e10
-    proofs = claim_tree.get_proof(union_contract.address)
-    params = [
-        [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
-        for token in TOKENS
-    ]
+
+    mock_distribute(union_contract, TOKENS)
 
     expected_output_amount = estimate_output_cvx_amount(
         TOKENS, union_contract, 0, gas_refund, lock
     )
 
     tx = union_contract.distribute(
-        params, 0, True, lock, True, 0, gas_refund, {"from": owner}
+        1,
+        [0] * len(TOKENS),
+        TOKENS,
+        0,
+        False,
+        lock,
+        True,
+        0,
+        gas_refund,
+        {"from": owner},
     )
     strat_balance_after_deposit = interface.IERC20(PXCVX_TOKEN).balanceOf(
         pirex_strategy
