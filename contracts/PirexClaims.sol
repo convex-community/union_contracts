@@ -261,7 +261,6 @@ contract PirexClaims is Ownable, UnionBase {
 
     function deposit(
         bool lock,
-        bool stake,
         uint256 minAmountOut
     ) public onlyOwner {
         uint256 _ethBalance = address(this).balance;
@@ -326,7 +325,9 @@ contract PirexClaims is Ownable, UnionBase {
         swap(tokens, routerChoices, gasRefund);
 
         // deposit to strategy
-        deposit(lock, stake, minAmountOut);
+        if (stake) {
+            deposit(lock, minAmountOut);
+        }
     }
 
     receive() external payable {}
