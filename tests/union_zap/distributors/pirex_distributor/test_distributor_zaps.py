@@ -255,12 +255,14 @@ def test_claim_as_spell(
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = spell.balanceOf(alice)
     cvx_vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
-    tx = distributor_zaps.claimFromDistributorAsUsdt(
+    tx = distributor_zaps.claimFromDistributorViaUniV2EthPair(
         proofs["claim"]["index"],
         alice.address,
         CLAIM_AMOUNT,
         proofs["proofs"],
         0,
+        SUSHI_ROUTER,
+        SPELL,
         alice,
         {"from": alice},
     )
