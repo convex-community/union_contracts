@@ -128,9 +128,12 @@ def test_swap_adjust_distribute(
         if weights[i] == 0:
             continue
         assert distributors[i].frozen() == True
-        assert approx(
-            vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-4
+        underlying = (
+            vaults[i].balanceOfUnderlying(distributors[i])
+            if vaults[i] != cvx_vault
+            else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
+        assert approx(underlying, output_amounts[i], 1e-4)
 
     # revert to test process incentives result
     chain.revert()
@@ -143,6 +146,9 @@ def test_swap_adjust_distribute(
         if weights[i] == 0:
             continue
         assert distributors[i].frozen() == True
-        assert approx(
-            vaults[i].balanceOfUnderlying(distributors[i]), output_amounts[i], 1e-4
+        underlying = (
+            vaults[i].balanceOfUnderlying(distributors[i])
+            if vaults[i] != cvx_vault
+            else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
+        assert approx(underlying, output_amounts[i], 1e-4)

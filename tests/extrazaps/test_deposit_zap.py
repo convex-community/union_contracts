@@ -46,7 +46,7 @@ def test_deposit_from_crv(alice, owner, vault, zaps):
         alice.address, 2e22, {"from": CURVE_CVXCRV_CRV_POOL}
     )
 
-    interface.IERC20(CRV_TOKEN).approve(zaps, 2 ** 256 - 1, {"from": alice})
+    interface.IERC20(CRV_TOKEN).approve(zaps, 2**256 - 1, {"from": alice})
 
     with brownie.reverts():
         zaps.depositFromCrv(amount, cvxcrv_amount * 2, alice, {"from": alice})
@@ -77,7 +77,7 @@ def test_deposit_from_spell(alice, owner, vault, zaps):
     )
     ucrv_amount = (cvxcrv_amount * vault.totalSupply()) / vault.totalUnderlying()
 
-    interface.IERC20(SPELL).approve(zaps, 2 ** 256 - 1, {"from": alice})
+    interface.IERC20(SPELL).approve(zaps, 2**256 - 1, {"from": alice})
     with brownie.reverts():
         zaps.depositFromCrv(amount, cvxcrv_amount * 2, alice, {"from": alice})
     with brownie.reverts():

@@ -37,7 +37,7 @@ def test_claim_vault_as_spell(alice, bob, vault, zaps):
     spell_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
         eth_amount, [WETH, SPELL]
     )[-1]
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
     with brownie.reverts():
         zaps.claimFromVaultViaUniV2EthPair(
             amount,
@@ -79,7 +79,7 @@ def test_claim_distributor_as_spell(
     spell_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
         eth_amount, [WETH, SPELL]
     )[-1]
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
     with brownie.reverts():
         zaps.claimFromDistributorViaUniV2EthPair(
             proofs["claim"]["index"],

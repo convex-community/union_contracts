@@ -47,4 +47,4 @@ def distribute_cvx_crv(accounts, vault):
             account.address, 2e22, {"from": CURVE_CVXCRV_CRV_POOL}
         )
 
-        interface.IERC20(CVXCRV).approve(vault, 2 ** 256 - 1, {"from": account})
+        interface.IERC20(CVXCRV).approve(vault, 2**256 - 1, {"from": account})

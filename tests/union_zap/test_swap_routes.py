@@ -119,7 +119,7 @@ def test_swap_mixed_routes(
     ]
 
     routers = [4 for _ in CURVE_TOKENS] + [random.randint(0, 2) for _ in OTHER_TOKENS]
-    router_choices = sum([8 ** i * router for i, router in enumerate(routers)])
+    router_choices = sum([8**i * router for i, router in enumerate(routers)])
     print(f"ROUTER CHOICES: {router_choices} ({routers})")
 
     expected_eth_amount = estimate_amounts_after_swap(

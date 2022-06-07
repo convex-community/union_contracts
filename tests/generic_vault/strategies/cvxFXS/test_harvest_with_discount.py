@@ -24,7 +24,7 @@ def test_harvest_multiple_stakers(
     initial_balances = {}
 
     fxs = interface.IERC20(FXS)
-    fxs.approve(CURVE_CVXFXS_FXS_POOL, 2 ** 256 - 1, {"from": FXS_VOTING_ESCROW})
+    fxs.approve(CURVE_CVXFXS_FXS_POOL, 2**256 - 1, {"from": FXS_VOTING_ESCROW})
     cvxfxs_swap = interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL)
     print(f"Price oracle before {cvxfxs_swap.price_oracle()}")
     total_liq = fxs.balanceOf(FXS_VOTING_ESCROW)
