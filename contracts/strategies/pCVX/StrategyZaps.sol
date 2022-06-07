@@ -56,6 +56,9 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
 
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
+
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
     }
 
     function _deposit(
@@ -206,7 +209,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
             vault.transferFrom(msg.sender, address(this), _amount),
             "error"
         );
-        vault.redeem(_amount, address(this), msg.sender);
+        vault.redeem(_amount, address(this), address(this));
     }
 
     /// @notice Claim as CVX
@@ -362,6 +365,6 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
             true
         );
     }
-    
+
     receive() external payable {}
 }
