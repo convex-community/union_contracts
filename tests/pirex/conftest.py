@@ -1,6 +1,7 @@
 import pytest
 from brownie import (
     PCvxZaps,
+    PirexClaims,
     interface,
 )
 from ..utils.constants import (
@@ -8,6 +9,12 @@ from ..utils.constants import (
     PIREX_CVX,
     CVX,
     CVX_STAKING_CONTRACT,
+    CLAIM_AMOUNT,
+    VOTIUM_DISTRIBUTOR,
+    VOTIUM_OWNER,
+    TOKENS,
+    WETH,
+    PIREX_CVX_STRATEGY,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -67,3 +74,41 @@ def distribute_cvx(accounts):
         interface.IERC20(CVX).transfer(
             account.address, 1e24, {"from": CVX_STAKING_CONTRACT}
         )
+
+
+@pytest.fixture(scope="module")
+def union_contract(owner):
+    claims = PirexClaims.deploy({"from": owner})
+    claims.setApprovals({"from": owner})
+    yield claims
+
+
+@pytest.fixture(scope="module")
+def pirex_strategy(owner, union_contract):
+    strategy = interface.IPirexStrategy(PIREX_CVX_STRATEGY)
+    strategy.setDistributor(union_contract.address, {"from": strategy.owner()})
+    yield strategy
+
+
+@pytest.fixture(scope="module")
+def claim_tree(accounts, union_contract):
+    claimers = [acc.address for acc in accounts[4:9]] + [union_contract.address]
+    data = [{"user": claimer, "amount": CLAIM_AMOUNT} for claimer in claimers]
+    tree = OrderedMerkleTree(data)
+    return tree
+
+
+def mock_claims(claim_tree, token_list):
+    votium_multi_merkle = interface.IMultiMerkleStash(VOTIUM_DISTRIBUTOR)
+    interface.IERC20(WETH).transfer(
+        VOTIUM_DISTRIBUTOR, 1e20, {"from": "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0"}
+    )
+    for token in token_list:
+        votium_multi_merkle.updateMerkleRoot(
+            token, claim_tree.get_root(), {"from": VOTIUM_OWNER}
+        )
+
+
+@pytest.fixture(scope="module")
+def set_mock_claims(claim_tree):
+    mock_claims(claim_tree, TOKENS)

@@ -19,7 +19,10 @@ from .constants import (
     CURVE_CVXFXS_FXS_LP_TOKEN,
     FXS,
     CURVE_CONTRACT_REGISTRY,
+    CVX,
+    CURVE_CVX_PCVX_POOL,
 )
+from .cvxfxs import get_crv_to_eth_amount
 
 
 def calc_harvest_amount_in_cvxcrv(vault):
