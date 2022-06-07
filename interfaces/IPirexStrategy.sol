@@ -35,4 +35,7 @@ interface IPirexStrategy {
     function rewardRate() external view returns (uint256);
 
     function owner() external view returns (address);
+
+    function redeemRewards(uint256 epoch, uint256[] calldata rewardIndexes)
+        external;
 }

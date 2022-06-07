@@ -18,9 +18,6 @@ import "./UnionBase.sol";
 contract PirexClaims is Ownable, UnionBase {
     using SafeERC20 for IERC20;
 
-    address public votiumDistributor =
-        0x378Ba9B73309bE80BF4C2c027aAD799766a7ED5A;
-
     address private constant SUSHI_ROUTER =
         0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
     address private constant UNISWAP_ROUTER =
@@ -45,13 +42,6 @@ contract PirexClaims is Ownable, UnionBase {
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
 
-    struct claimParam {
-        address token;
-        uint256 index;
-        uint256 amount;
-        bytes32[] merkleProof;
-    }
-
     struct curveSwapParams {
         address pool;
         uint16 ethIndex;
@@ -59,7 +49,6 @@ contract PirexClaims is Ownable, UnionBase {
 
     mapping(address => curveSwapParams) public curveRegistry;
 
-    event VotiumDistributorUpdated(address distributor);
     event FundsRetrieved(address token, address to, uint256 amount);
     event CurvePoolUpdated(address token, address pool);
 
@@ -89,22 +78,6 @@ contract PirexClaims is Ownable, UnionBase {
         IERC20(token).safeApprove(curveRegistry[token].pool, 0);
         delete curveRegistry[token];
         emit CurvePoolUpdated(token, address(0));
-    }
-
-    /// @notice Change forwarding address in Votium registry
-    /// @param _to - address that will be forwarded to
-    /// @dev To be used in case of migration, rewards can be forwarded to
-    /// new contracts
-    function setForwarding(address _to) external onlyOwner {
-        IVotiumRegistry(VOTIUM_REGISTRY).setRegistry(_to);
-    }
-
-    /// @notice Update the votium contract address to claim for
-    /// @param distributor_ - Address of the new contract
-    function updateVotiumDistributor(address distributor_) external onlyOwner {
-        require(distributor_ != address(0));
-        votiumDistributor = distributor_;
-        emit VotiumDistributorUpdated(distributor_);
     }
 
     /// @notice Withdraws specified ERC20 tokens to the multisig
@@ -228,30 +201,27 @@ contract PirexClaims is Ownable, UnionBase {
         IWETH(WETH).withdraw(_wethReceived);
     }
 
-    /// @notice Claims all specified rewards from Votium
-    /// @param claimParams - an array containing the info necessary to claim for
+    /// @notice Claims all specified rewards from the strategy contract
+    /// @param epoch - epoch to claim for
+    /// @param rewardIndexes - an array containing the info necessary to claim for
     /// each available token
     /// @dev Used to retrieve tokens that need to be transferred
-    function claim(IMultiMerkleStash.claimParam[] calldata claimParams)
+    function claim(uint256 epoch, uint256[] calldata rewardIndexes)
         public
         onlyOwner
     {
-        require(claimParams.length > 0, "No claims");
-        // claim all from votium
-        IMultiMerkleStash(votiumDistributor).claimMulti(
-            address(this),
-            claimParams
-        );
+        // claim all from strat
+        IPirexStrategy(PCVX_STRATEGY).redeemRewards(epoch, rewardIndexes);
     }
 
     function swap(
-        IMultiMerkleStash.claimParam[] calldata claimParams,
+        address[] calldata tokens,
         uint256 routerChoices,
         uint256 gasRefund
     ) public onlyOwner {
         // swap all claims to ETH
-        for (uint256 i; i < claimParams.length; ++i) {
-            address _token = claimParams[i].token;
+        for (uint256 i; i < tokens.length; ++i) {
+            address _token = tokens[i];
             uint256 _balance = IERC20(_token).balanceOf(address(this));
             // avoid wasting gas / reverting if no balance
             if (_balance <= 1) {
@@ -319,7 +289,9 @@ contract PirexClaims is Ownable, UnionBase {
     }
 
     /// @notice Claims all specified rewards and swaps them to ETH
-    /// @param claimParams - an array containing the info necessary to claim
+    /// @param epoch - epoch to claim for
+    /// @param rewardIndexes - an array containing the info necessary to claim from strat
+    /// @param tokens - addresses of all reward tokens
     /// @param routerChoices - the router to use for the swap
     /// @param claimBeforeSwap - whether to claim on Votium or not
     /// @param lock - whether to deposit or swap cvx to pxcvx
@@ -335,7 +307,9 @@ contract PirexClaims is Ownable, UnionBase {
     /// Passing 0 will execute all swaps on sushi
     /// @dev claimBeforeSwap is used in case 3rd party already claimed on Votium
     function distribute(
-        IMultiMerkleStash.claimParam[] calldata claimParams,
+        uint256 epoch,
+        uint256[] calldata rewardIndexes,
+        address[] calldata tokens,
         uint256 routerChoices,
         bool claimBeforeSwap,
         bool lock,
@@ -345,11 +319,11 @@ contract PirexClaims is Ownable, UnionBase {
     ) external onlyOwner {
         // claim
         if (claimBeforeSwap) {
-            claim(claimParams);
+            claim(epoch, rewardIndexes);
         }
 
         // swap
-        swap(claimParams, routerChoices, gasRefund);
+        swap(tokens, routerChoices, gasRefund);
 
         // deposit to strategy
         deposit(lock, stake, minAmountOut);
