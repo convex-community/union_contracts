@@ -10,8 +10,10 @@ CRV_TOKEN = "0xD533a949740bb3306d119CC777fa900bA034cd52"
 
 def main():
     deployer = accounts.load("mainnet-deploy")
-    zap = UnionZap.deploy(MERKLE_DISTRIBUTOR_V2, {"from": deployer}, publish_source=True)
+    zap = UnionZap.deploy(
+        MERKLE_DISTRIBUTOR_V2, {"from": deployer}, publish_source=True
+    )
     zap.setApprovals({"from": deployer})
     zap.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
     assert zap.owner() == AIRFORCE_SAFE
-    assert interface.IERC20(CRV_TOKEN).allowance(zap, CVXCRV_DEPOSIT) == 2 ** 256 - 1
+    assert interface.IERC20(CRV_TOKEN).allowance(zap, CVXCRV_DEPOSIT) == 2**256 - 1

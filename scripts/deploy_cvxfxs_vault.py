@@ -30,7 +30,7 @@ def main():
     assert vault.strategy() == strategy
     assert strategy.swapOption() == 2
     assert zaps.swapOption() == 2
-    assert interface.IERC20(CRV).allowance(zaps, CURVE_CRV_ETH_POOL) == 2 ** 256 - 1
+    assert interface.IERC20(CRV).allowance(zaps, CURVE_CRV_ETH_POOL) == 2**256 - 1
 
     GenericUnionVault.publish_source(vault)
     CvxFxsStrategy.publish_source(strategy)

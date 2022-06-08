@@ -7,14 +7,14 @@ DISTRIBUTOR_V1 = "0xba5602730824340d714c92a153460db958fd8562"
 CVXCRV_DEPOSIT = "0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae"
 CRV_TOKEN = "0xD533a949740bb3306d119CC777fa900bA034cd52"
 
+
 def main():
     deployer = accounts.load("mainnet-deploy")
-    zap = UnionZap.deploy(ADDRESS_ZERO, {"from": deployer})#, publish_source=True)
+    zap = UnionZap.deploy(ADDRESS_ZERO, {"from": deployer})  # , publish_source=True)
     zap.setApprovals({"from": deployer})
     zap.updateDistributor(DISTRIBUTOR_V1, {"from": deployer})
     zap.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
 
     assert zap.unionDistributor() == DISTRIBUTOR_V1
     assert zap.owner() == AIRFORCE_SAFE
-    assert interface.IERC20(CRV_TOKEN).allowance(zap, CVXCRV_DEPOSIT) == 2 ** 256 - 1
-
+    assert interface.IERC20(CRV_TOKEN).allowance(zap, CVXCRV_DEPOSIT) == 2**256 - 1

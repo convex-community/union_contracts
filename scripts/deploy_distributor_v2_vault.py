@@ -1,4 +1,11 @@
-from brownie import accounts, Contract, interface, UnionVault, MerkleDistributorV2, UnionZap
+from brownie import (
+    accounts,
+    Contract,
+    interface,
+    UnionVault,
+    MerkleDistributorV2,
+    UnionZap,
+)
 
 CVXCRV = "0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7"
 AIRFORCE_SAFE = "0x9Bc7c6ad7E7Cf3A6fCB58fb21e27752AC1e53f99"
@@ -13,15 +20,14 @@ def main():
     vault = UnionVault.deploy({"from": deployer}, publish_source=True)
     vault.setApprovals({"from": deployer})
     vault.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
-    merkle = MerkleDistributorV2.deploy(vault, union_contract, {"from": deployer}, publish_source=True)
+    merkle = MerkleDistributorV2.deploy(
+        vault, union_contract, {"from": deployer}, publish_source=True
+    )
 
     merkle.setApprovals({"from": deployer})
     merkle.updateAdmin(AIRFORCE_SAFE, {"from": deployer})
 
-
-
     assert merkle.admin() == AIRFORCE_SAFE
     assert vault.owner() == AIRFORCE_SAFE
-    assert interface.IERC20(CRV_TOKEN).allowance(vault, CVXCRV_DEPOSIT) == 2 ** 256 - 1
-    assert interface.IERC20(CVXCRV).allowance(merkle, vault) == 2 ** 256 - 1
-
+    assert interface.IERC20(CRV_TOKEN).allowance(vault, CVXCRV_DEPOSIT) == 2**256 - 1
+    assert interface.IERC20(CVXCRV).allowance(merkle, vault) == 2**256 - 1
