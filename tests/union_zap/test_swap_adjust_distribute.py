@@ -77,7 +77,9 @@ def test_swap_adjust_distribute(
         union_contract, lock, weights, option, output_tokens
     )
 
-    tx_adjust = union_contract.adjust(lock, weights, [0, 0, 0], {"from": owner})
+    tx_adjust = union_contract.adjust(
+        lock, weights, [0, 1, 2], [0, 0, 0], {"from": owner}
+    )
 
     assert approx(platform.balance() - initial_platform_balance, fee_amount, 1e-4)
 
@@ -139,7 +141,15 @@ def test_swap_adjust_distribute(
     chain.revert()
 
     tx = union_contract.processIncentives(
-        params, 0, True, lock, gas_refund, weights, [0, 0, 0], {"from": owner}
+        params,
+        0,
+        True,
+        lock,
+        gas_refund,
+        weights,
+        [0, 1, 2],
+        [0, 0, 0],
+        {"from": owner},
     )
 
     for i, output_token in enumerate(output_tokens):
