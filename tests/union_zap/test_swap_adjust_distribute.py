@@ -26,7 +26,7 @@ data = [
 
 @pytest.mark.parametrize("weights", data)
 @pytest.mark.parametrize("lock", [True, False])
-@pytest.mark.parametrize("option", [0, 2]) # disable option 1 b/c too much slippage
+@pytest.mark.parametrize("option", [0, 2])  # disable option 1 b/c too much slippage
 def test_swap_adjust_distribute(
     fn_isolation,
     owner,

@@ -19,12 +19,15 @@ from ..utils.constants import (
 )
 from ..utils.cvxfxs import estimate_lp_tokens_received
 
-data = [
-    [837299477, 27058091, 135642432],
-]
 
-
-@pytest.mark.parametrize("weights", data)
+@pytest.mark.parametrize(
+    "weights,adjust_order",
+    [
+        [[837299477, 27058091, 135642432], [1, 2, 0]],
+        [[300000000, 650000000, 50000000], [2, 1, 0]],
+        [[50000000, 50000000, 900000000], [0, 1, 2]],
+    ],
+)
 @pytest.mark.parametrize("option", [0])
 def test_swap_adjust_distribute(
     fn_isolation,
@@ -40,11 +43,11 @@ def test_swap_adjust_distribute(
     cvx_distributor,
     fxs_distributor,
     weights,
+    adjust_order,
     option,
 ):
     gas_refund = 3e16
     lock = True
-    adjust_order = [1, 2, 0]
     platform = PublicKeyAccount(union_contract.platform())
     initial_platform_balance = platform.balance()
     fxs_swapper.updateOption(option, {"from": owner})
@@ -78,7 +81,9 @@ def test_swap_adjust_distribute(
     )
 
     with brownie.reverts():
-        union_contract.adjust(lock, weights, [0, 1, 2], [0, 0, 0], {"from": owner})
+        union_contract.adjust(
+            lock, weights, adjust_order[::-1], [0, 0, 0], {"from": owner}
+        )
 
     tx_adjust = union_contract.adjust(
         lock, weights, adjust_order, [0, 0, 0], {"from": owner}
