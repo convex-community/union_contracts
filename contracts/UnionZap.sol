@@ -71,6 +71,7 @@ contract UnionZap is Ownable, UnionBase {
         address swapper,
         address distributor
     );
+    event Debug(uint256 balance, uint256 desired, uint256 amount);
     event PlatformFeeUpdated(uint256 _fee);
     event PlatformUpdated(address indexed _platform);
 
@@ -482,7 +483,11 @@ contract UnionZap is Ownable, UnionBase {
                             prices[_orderIndex])
                     );
                 } else {
-                    _buy(_outputToken, _desired - amounts[_orderIndex]);
+                    uint256 _swapAmount = _desired - amounts[_orderIndex];
+                    if (i == adjustOrder.length - 1) {
+                        _swapAmount = address(this).balance;
+                    }
+                    _buy(_outputToken, _swapAmount);
                 }
                 // we need an edge case here since it's too late
                 // to update the cvxCRV distributor's stake function
