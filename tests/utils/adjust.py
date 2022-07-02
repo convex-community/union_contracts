@@ -24,42 +24,45 @@ def get_spot_prices(token):
     return data[token.lower()]["eth"]
 
 
-def simulate_adjust(union_contract, lock, weights, option, output_tokens):
+def simulate_adjust(union_contract, lock, weights, option, output_tokens, adjust_order):
     total_eth = union_contract.balance()
     fees = union_contract.platformFee()
 
     prices = [0] * len(weights)
     amounts = [0] * len(weights)
     output_amounts = [0] * len(weights)
-    for i, weight in enumerate(weights):
+    for order, weight in enumerate(weights):
         if weight > 0:
-            output_token = output_tokens[i]
-            prices[i] = interface.ICurveV2Pool(
+            output_token = output_tokens[order]
+            prices[order] = interface.ICurveV2Pool(
                 union_contract.tokenInfo(output_token)[0]
             ).price_oracle()
-            amounts[i] = int(
+            amounts[order] = int(
                 Decimal(interface.IERC20(output_token).balanceOf(union_contract))
-                * Decimal(prices[i])
+                * Decimal(prices[order])
                 / DECIMAL_18
             )
-            total_eth += amounts[i]
+            total_eth += amounts[order]
 
     fee_amount = int(Decimal(total_eth * fees) / Decimal(MAX_WEIGHT_1E9))
     total_eth = total_eth - fee_amount if (total_eth >= fee_amount) else total_eth
 
-    for i, weight in enumerate(weights):
+    for order in adjust_order:
+        weight = weights[order]
         if weight > 0:
-            output_token = union_contract.outputTokens(i)
-            desired = int(Decimal(total_eth) * Decimal(weights[i]) / MAX_WEIGHT_1E9)
-            sell = amounts[i] > desired
+            output_token = union_contract.outputTokens(order)
+            desired = int(Decimal(total_eth) * Decimal(weights[order]) / MAX_WEIGHT_1E9)
+            sell = amounts[order] > desired
             token_balance = interface.IERC20(output_token).balanceOf(union_contract)
 
             if sell:
                 swappable = (
-                    Decimal(amounts[i] - desired) * DECIMAL_18 / Decimal(prices[i])
+                    Decimal(amounts[order] - desired)
+                    * DECIMAL_18
+                    / Decimal(prices[order])
                 )
             else:
-                swappable = desired - amounts[i]
+                swappable = desired - amounts[order]
 
             if output_token == CRV:
                 if sell:
@@ -79,6 +82,6 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens):
                 else:
                     output_amount = token_balance + eth_to_fxs(swappable, option)
 
-            output_amounts[i] = output_amount
+            output_amounts[order] = output_amount
 
     return fee_amount, output_amounts
