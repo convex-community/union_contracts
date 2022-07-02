@@ -259,10 +259,7 @@ contract PirexClaims is Ownable, UnionBase {
         require(success, "ETH transfer failed");
     }
 
-    function deposit(
-        bool lock,
-        uint256 minAmountOut
-    ) public onlyOwner {
+    function deposit(bool lock, uint256 minAmountOut) public onlyOwner {
         uint256 _ethBalance = address(this).balance;
 
         // swap from ETH to CVX
