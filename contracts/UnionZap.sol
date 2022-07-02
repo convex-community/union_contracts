@@ -475,7 +475,7 @@ contract UnionZap is Ownable, UnionBase {
                 // amount adjustments
                 uint256 _desired = (_totalEthBalance * weights[_orderIndex]) /
                     DECIMALS;
-                if (amounts[i] > _desired) {
+                if (amounts[_orderIndex] > _desired) {
                     _sell(
                         _outputToken,
                         (((amounts[_orderIndex] - _desired) * 1e18) /
