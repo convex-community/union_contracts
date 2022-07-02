@@ -25,7 +25,7 @@ random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
 
 def estimate_underlying_received(amount, token):
     interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(
-        CURVE_CVXFXS_FXS_POOL, 2 ** 256 - 1, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
+        CURVE_CVXFXS_FXS_POOL, 2**256 - 1, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
     )
     tx = interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).remove_liquidity_one_coin(
         amount, token, 0, False, random_wallet, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
@@ -42,7 +42,7 @@ def estimate_lp_tokens_received(amount, amount_cvxfxs=0):
         return 0
 
     if amount > 0:
-        fxs.approve(CURVE_CVXFXS_FXS_POOL, 2 ** 256 - 1, {"from": random_wallet})
+        fxs.approve(CURVE_CVXFXS_FXS_POOL, 2**256 - 1, {"from": random_wallet})
         fxs.transfer(random_wallet, amount, {"from": FXS_COMMUNITY})
 
     if amount_cvxfxs > 0:
@@ -50,7 +50,7 @@ def estimate_lp_tokens_received(amount, amount_cvxfxs=0):
             random_wallet, amount_cvxfxs, {"from": CURVE_CVXFXS_FXS_POOL}
         )
         interface.IERC20(CVXFXS).approve(
-            CURVE_CVXFXS_FXS_POOL, 2 ** 256 - 1, {"from": random_wallet}
+            CURVE_CVXFXS_FXS_POOL, 2**256 - 1, {"from": random_wallet}
         )
 
     interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).add_liquidity(

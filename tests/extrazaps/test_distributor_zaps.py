@@ -40,7 +40,7 @@ def test_all_claims(
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     usdt_amount = interface.ICurveV2Pool(TRICRYPTO).get_dy(2, 0, eth_amount)
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
     """
     # causes tracing to crash
     with brownie.reverts():
@@ -75,7 +75,7 @@ def test_all_claims(
     tricrv_amount = (
         usdt_amount * 1e12 // interface.ITriPool(TRIPOOL).get_virtual_price()
     )
-    vault.approve(zaps, 2 ** 256 - 1, {"from": bob})
+    vault.approve(zaps, 2**256 - 1, {"from": bob})
     """
     # causes debug traces to fail
     with brownie.reverts():
@@ -111,7 +111,7 @@ def test_all_claims(
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
-    vault.approve(zaps, 2 ** 256 - 1, {"from": charlie})
+    vault.approve(zaps, 2**256 - 1, {"from": charlie})
     """
     # causes tracing to crash
     with brownie.reverts():

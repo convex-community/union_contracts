@@ -28,7 +28,7 @@ def test_claim_as_usdt(alice, bob, charlie, vault, zaps):
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     usdt_amount = interface.ICurveV2Pool(TRICRYPTO).get_dy(2, 0, eth_amount)
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
     """
     # causes tracing to fail
     with brownie.reverts():
@@ -56,7 +56,7 @@ def test_claim_as_usdt_and_stake(alice, bob, charlie, vault, zaps):
     tricrv_amount = (
         usdt_amount * 1e12 // interface.ITriPool(TRIPOOL).get_virtual_price()
     )
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
     """
     # causes tracing to fail
     with brownie.reverts():
@@ -90,7 +90,7 @@ def test_claim_as_cvx_and_lock(alice, bob, charlie, vault, zaps):
     )
     eth_amount = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(1, 0, crv_amount)
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
     """
     causes tracing to crash
     with brownie.reverts():

@@ -50,7 +50,7 @@ def test_harvest_no_discount(alice, bob, owner, vault):
     chain.snapshot()
 
     crv = interface.IERC20(CRV)
-    crv.approve(CURVE_CVXCRV_CRV_POOL, 2 ** 256 - 1, {"from": CURVE_VOTING_ESCROW})
+    crv.approve(CURVE_CVXCRV_CRV_POOL, 2**256 - 1, {"from": CURVE_VOTING_ESCROW})
     cvxcrv_swap = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL)
     cvxcrv_swap.add_liquidity(
         [crv.balanceOf(CURVE_VOTING_ESCROW), 0],

@@ -1,4 +1,11 @@
-from brownie import accounts, interface, FXSMerkleDistributor, FXSSwapper, MerkleDistributor, UnionZap
+from brownie import (
+    accounts,
+    interface,
+    FXSMerkleDistributor,
+    FXSSwapper,
+    MerkleDistributor,
+    UnionZap,
+)
 
 from tests.utils import CRV, CURVE_CRV_ETH_POOL
 from tests.utils.constants import CVX, FXS, CURVE_CVX_ETH_POOL, CURVE_FXS_ETH_POOL
@@ -12,11 +19,12 @@ CRV_TOKEN = "0xD533a949740bb3306d119CC777fa900bA034cd52"
 FXS_VAULT = "0xF964b0E3FfdeA659c44a5a52bc0B82A24b89CE0E"
 FXS_ZAPS = "0x63f0797015489D407FC2AC7E3891467e1eD0166c"
 
+
 def main():
     deployer = accounts.load("mainnet-deploy")
     zap = UnionZap.deploy({"from": deployer}, publish_source=True)
     zap.setApprovals({"from": deployer})
-    assert interface.IERC20(CRV).allowance(zap, CVXCRV_DEPOSIT) == 2 ** 256 - 1
+    assert interface.IERC20(CRV).allowance(zap, CVXCRV_DEPOSIT) == 2**256 - 1
 
     swaps = FXSSwapper.deploy(zap, {"from": deployer}, publish_source=True)
     swaps.setApprovals({"from": deployer})

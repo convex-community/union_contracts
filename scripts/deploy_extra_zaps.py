@@ -15,5 +15,8 @@ def main():
     zaps.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
 
     assert zaps.owner() == AIRFORCE_SAFE
-    assert interface.IERC20(CRV_TOKEN).allowance(zaps, CURVE_CVXCRV_CRV_POOL) == 2 ** 256 - 1
+    assert (
+        interface.IERC20(CRV_TOKEN).allowance(zaps, CURVE_CVXCRV_CRV_POOL)
+        == 2**256 - 1
+    )
     ExtraZaps.publish_source(zaps)

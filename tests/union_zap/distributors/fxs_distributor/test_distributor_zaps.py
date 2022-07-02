@@ -51,7 +51,7 @@ def test_claim_as_underlying(
     # test claim as underlying fxs
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = fxs.balanceOf(alice)
-    fxs_vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    fxs_vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsUnderlying(
         proofs["claim"]["index"],
         alice.address,
@@ -71,7 +71,7 @@ def test_claim_as_underlying(
     # test claim as underlying cvxfxs
     proofs = tree.get_proof(bob.address)
     bob_initial_balance = cvxfxs.balanceOf(bob)
-    fxs_vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": bob})
+    fxs_vault.approve(distributor_zaps, 2**256 - 1, {"from": bob})
     tx = distributor_zaps.claimFromDistributorAsUnderlying(
         proofs["claim"]["index"],
         bob.address,
@@ -116,7 +116,7 @@ def test_claim_as_eth(
     # test claim as eth
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = alice.balance()
-    fxs_vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    fxs_vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsEth(
         proofs["claim"]["index"],
         alice.address,
@@ -162,7 +162,7 @@ def test_claim_as_usdt(
     # test claim as usdt
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = usdt.balanceOf(alice)
-    fxs_vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    fxs_vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsUsdt(
         proofs["claim"]["index"],
         alice.address,
@@ -209,7 +209,7 @@ def test_claim_as_spell(
     # test claim as spell
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = spell.balanceOf(alice)
-    fxs_vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    fxs_vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorViaUniV2EthPair(
         proofs["claim"]["index"],
         alice.address,
@@ -257,7 +257,7 @@ def test_claim_as_cvx_and_lock(
     # test claim as cvx
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = cvx.balanceOf(alice)
-    fxs_vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    fxs_vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsCvx(
         proofs["claim"]["index"],
         alice.address,
@@ -277,7 +277,7 @@ def test_claim_as_cvx_and_lock(
     # test claim as cvx and lock
     proofs = tree.get_proof(bob.address)
     bob_initial_balance = cvx.balanceOf(bob)
-    fxs_vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": bob})
+    fxs_vault.approve(distributor_zaps, 2**256 - 1, {"from": bob})
     tx = distributor_zaps.claimFromDistributorAsCvx(
         proofs["claim"]["index"],
         bob.address,

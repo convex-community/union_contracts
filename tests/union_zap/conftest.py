@@ -8,6 +8,7 @@ from brownie import (
     CvxFxsZaps,
     StakingRewards,
     GenericDistributor,
+    CVXMerkleDistributor,
     PCvxStrategy,
     FXSSwapper,
     UnionVault,
@@ -29,12 +30,13 @@ from ..utils.constants import (
     V3_1_TOKENS,
     CURVE_TOKENS,
     CVX,
-    CURVE_CVXCRV_CRV_POOL,
     CURVE_CRV_ETH_POOL,
     CURVE_CVX_ETH_POOL,
     CRV,
     FXS,
     CURVE_FXS_ETH_POOL,
+    PIREX_CVX_VAULT,
+    PIREX_CVX,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -127,27 +129,21 @@ def fxs_swapper(owner, union_contract):
 
 @pytest.fixture(scope="module")
 def cvx_vault(owner):
-    vault = GenericUnionVault.deploy(CVX, {"from": owner})
-    vault.setPlatform(AIRFORCE_SAFE, {"from": owner})
+    vault = interface.IERC4626(PIREX_CVX_VAULT)
     yield vault
 
 
 @pytest.fixture(scope="module")
-def cvx_staking_rewards(owner):
-    yield StakingRewards.deploy(CVX, CVX, owner, {"from": owner})
+def pirex_cvx(owner):
+    pcvx = interface.IPirexCVX(PIREX_CVX)
+    yield pcvx
 
 
 @pytest.fixture(scope="module")
-def cvx_strategy(owner, cvx_vault, cvx_staking_rewards):
-    strategy = PCvxStrategy.deploy(cvx_vault, cvx_staking_rewards, CVX, {"from": owner})
-    strategy.setApprovals({"from": owner})
-    cvx_vault.setStrategy(strategy, {"from": owner})
-    yield strategy
-
-
-@pytest.fixture(scope="module")
-def cvx_distributor(owner, cvx_vault, cvx_strategy, union_contract):
-    merkle = GenericDistributor.deploy(cvx_vault, union_contract, CVX, {"from": owner})
+def cvx_distributor(owner, cvx_vault, pirex_cvx, union_contract):
+    merkle = CVXMerkleDistributor.deploy(
+        cvx_vault, union_contract, CVX, {"from": owner}
+    )
     merkle.setApprovals({"from": owner})
     yield merkle
 

@@ -19,7 +19,10 @@ from .constants import (
     CURVE_CVXFXS_FXS_LP_TOKEN,
     FXS,
     CURVE_CONTRACT_REGISTRY,
+    CVX,
+    CURVE_CVX_PCVX_POOL,
 )
+from .cvxfxs import get_crv_to_eth_amount
 
 
 def calc_harvest_amount_in_cvxcrv(vault):
@@ -117,6 +120,10 @@ def estimate_amounts_after_swap(tokens, union_contract, router_choices, weights)
 
 def crv_to_cvxcrv(amount):
     return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(0, 1, amount)
+
+
+def cvxcrv_to_crv(amount):
+    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(1, 0, amount)
 
 
 def eth_to_cvxcrv(amount):

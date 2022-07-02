@@ -22,7 +22,7 @@ def vault(owner, pcvx, accounts):
     vault.setPlatform(AIRFORCE_SAFE, {"from": owner})
     for account in accounts[:10]:
         pcvx.mint(account, 1e25)
-        pcvx.approve(vault, 2 ** 256 - 1, {"from": account})
+        pcvx.approve(vault, 2**256 - 1, {"from": account})
     yield vault
 
 

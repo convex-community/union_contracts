@@ -35,8 +35,8 @@ def test_deposit_from_underlying(fn_isolation, alice, zaps, vault, strategy):
     interface.IERC20(CVXFXS).transfer(alice, 2e23, {"from": CURVE_CVXFXS_FXS_POOL})
     interface.IERC20(FXS).transfer(alice, 2e23, {"from": FXS_COMMUNITY})
 
-    interface.IERC20(CVXFXS).approve(zaps, 2 ** 256 - 1, {"from": alice})
-    interface.IERC20(FXS).approve(zaps, 2 ** 256 - 1, {"from": alice})
+    interface.IERC20(CVXFXS).approve(zaps, 2**256 - 1, {"from": alice})
+    interface.IERC20(FXS).approve(zaps, 2**256 - 1, {"from": alice})
     amount = 1e23
 
     with brownie.reverts():
@@ -97,10 +97,10 @@ def test_deposit_with_rewards(
     interface.IERC20(CVX).transfer(alice, amount, {"from": CURVE_CVX_ETH_POOL})
     interface.IERC20(CRV).transfer(alice, amount, {"from": CURVE_CRV_ETH_POOL})
 
-    interface.IERC20(CVX).approve(zaps, 2 ** 256 - 1, {"from": alice})
-    interface.IERC20(CRV).approve(zaps, 2 ** 256 - 1, {"from": alice})
+    interface.IERC20(CVX).approve(zaps, 2**256 - 1, {"from": alice})
+    interface.IERC20(CRV).approve(zaps, 2**256 - 1, {"from": alice})
     interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(
-        zaps, 2 ** 256 - 1, {"from": alice}
+        zaps, 2**256 - 1, {"from": alice}
     )
 
     """
@@ -156,7 +156,7 @@ def test_deposit_from_sushi(fn_isolation, alice, zaps, owner, vault, strategy):
 
     amount = 1e18
     interface.IERC20(SPELL).transfer(alice.address, 2e22, {"from": SPELL})
-    interface.IERC20(SPELL).approve(zaps, 2 ** 256 - 1, {"from": alice})
+    interface.IERC20(SPELL).approve(zaps, 2**256 - 1, {"from": alice})
 
     with brownie.reverts():
         zaps.depositViaUniV2EthPair(

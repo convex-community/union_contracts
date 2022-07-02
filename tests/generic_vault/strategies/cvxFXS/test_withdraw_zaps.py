@@ -47,7 +47,7 @@ def test_claim_as_usdt(
         print(f"Harvested UniStable: {eth_amount} ETH")
 
     usdt_amount = interface.ICurveV2Pool(TRICRYPTO).get_dy(2, 0, eth_amount)
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
 
     zaps.claimFromVaultAsUsdt(vault.balanceOf(alice), 0, alice.address, {"from": alice})
     assert interface.IERC20(USDT_TOKEN).balanceOf(alice) == usdt_amount
@@ -76,7 +76,7 @@ def test_claim_as_cvx(
         print(f"Harvested UniStable: {eth_amount} ETH")
 
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
 
     zaps.claimFromVaultAsCvx(
         vault.balanceOf(alice), 0, alice.address, False, {"from": alice}
@@ -104,7 +104,7 @@ def test_claim_as_cvx_and_lock(
         eth_amount = fxs_eth_unistable(fxs_amount)
 
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
 
     zaps.claimFromVaultAsCvx(
         vault.balanceOf(alice), 0, alice.address, True, {"from": alice}
@@ -135,7 +135,7 @@ def test_claim_as_eth(
         eth_amount = fxs_eth_unistable(fxs_amount)
         print(f"Harvested UniStable: {eth_amount} ETH")
 
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
 
     zaps.claimFromVaultAsEth(vault.balanceOf(alice), 0, alice.address, {"from": alice})
     assert alice.balance() == eth_amount + alice_original_balance
@@ -158,7 +158,7 @@ def test_claim_as_underlying(
     asset = [FXS, CVXFXS]
     initial_balance = interface.IERC20(asset[asset_index]).balanceOf(alice)
 
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
 
     zaps.claimFromVaultAsUnderlying(
         vault.balanceOf(alice), asset_index, 0, alice.address, {"from": alice}
@@ -194,7 +194,7 @@ def test_claim_as_spell(
     spell_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
         eth_amount, [WETH, SPELL]
     )[-1]
-    vault.approve(zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(zaps, 2**256 - 1, {"from": alice})
 
     zaps.claimFromVaultViaUniV2EthPair(
         amount, 0, SUSHI_ROUTER, SPELL, alice.address, {"from": alice}
