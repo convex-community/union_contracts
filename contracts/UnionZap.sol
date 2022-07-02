@@ -71,7 +71,6 @@ contract UnionZap is Ownable, UnionBase {
         address swapper,
         address distributor
     );
-    event Debug(uint256 balance, uint256 desired, uint256 amount);
     event PlatformFeeUpdated(uint256 _fee);
     event PlatformUpdated(address indexed _platform);
 
