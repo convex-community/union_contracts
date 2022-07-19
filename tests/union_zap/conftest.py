@@ -37,6 +37,7 @@ from ..utils.constants import (
     CURVE_FXS_ETH_POOL,
     PIREX_CVX_VAULT,
     PIREX_CVX,
+    UNBALANCED_TOKENS,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -225,3 +226,8 @@ def set_mock_claims_v3_1(claim_tree):
 @pytest.fixture(scope="module")
 def set_mock_claims_curve(claim_tree):
     mock_claims(claim_tree, CURVE_TOKENS + V3_1_TOKENS)
+
+
+@pytest.fixture(scope="module")
+def set_mock_claims_unbalanced(claim_tree):
+    mock_claims(claim_tree, UNBALANCED_TOKENS)

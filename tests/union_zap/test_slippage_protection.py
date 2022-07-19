@@ -48,7 +48,7 @@ def test_adjust_slippage(
     union_contract.swap(params, 0, True, 0, 0, weights, {"from": owner})
 
     with brownie.reverts():
-        union_contract.adjust(lock, weights, min_amounts, {"from": owner})
+        union_contract.adjust(lock, weights, [0, 1, 2], min_amounts, {"from": owner})
 
 
 @pytest.mark.parametrize(
@@ -80,5 +80,5 @@ def test_process_incentives_slippage(
 
     with brownie.reverts():
         union_contract.processIncentives(
-            params, 0, True, lock, 0, weights, min_amounts, {"from": owner}
+            params, 0, True, lock, 0, weights, [0, 1, 2], min_amounts, {"from": owner}
         )

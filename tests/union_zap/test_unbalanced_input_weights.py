@@ -8,30 +8,33 @@ from ..utils import (
     approx,
 )
 from ..utils.adjust import simulate_adjust, get_spot_prices
-from ..utils.constants import CLAIM_AMOUNT, TOKENS, CRV, FXS, CVXCRV, MAX_WEIGHT_1E9
+from ..utils.constants import (
+    CLAIM_AMOUNT,
+    TOKENS,
+    CRV,
+    FXS,
+    CVXCRV,
+    MAX_WEIGHT_1E9,
+    UNBALANCED_TOKENS,
+)
 from ..utils.cvxfxs import estimate_lp_tokens_received
 
-data = [
-    [MAX_WEIGHT_1E9, 0, 0],
-    [0, MAX_WEIGHT_1E9, 0],
-    [0, 0, MAX_WEIGHT_1E9],
-    [0, 800000000, 200000000],
-    [200000000, 0, 800000000],
-    [333333334, 666666666, 0],
-    [100000000, 800000000, 100000000],
-    [350000000, 250000000, 400000000],
-    [300000000, 500000000, 200000000],
-]
 
-
-@pytest.mark.parametrize("weights", data)
-@pytest.mark.parametrize("lock", [True, False])
-@pytest.mark.parametrize("option", [0, 2])  # disable option 1 b/c too much slippage
+@pytest.mark.parametrize(
+    "weights,adjust_order",
+    [
+        [[837299477, 27058091, 135642432], [1, 2, 0]],
+        [[300000000, 650000000, 50000000], [2, 1, 0]],
+        [[50000000, 50000000, 900000000], [0, 1, 2]],
+        [[950000000, 0, 50000000], [2, 1, 0]],
+    ],
+)
+@pytest.mark.parametrize("option", [0])
 def test_swap_adjust_distribute(
     fn_isolation,
     owner,
     union_contract,
-    set_mock_claims,
+    set_mock_claims_unbalanced,
     vault,
     cvx_vault,
     fxs_vault,
@@ -41,10 +44,11 @@ def test_swap_adjust_distribute(
     cvx_distributor,
     fxs_distributor,
     weights,
-    lock,
+    adjust_order,
     option,
 ):
     gas_refund = 3e16
+    lock = True
     platform = PublicKeyAccount(union_contract.platform())
     initial_platform_balance = platform.balance()
     fxs_swapper.updateOption(option, {"from": owner})
@@ -55,11 +59,11 @@ def test_swap_adjust_distribute(
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
         [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
-        for token in TOKENS
+        for token in UNBALANCED_TOKENS
     ]
 
     expected_eth_amount = estimate_amounts_after_swap(
-        TOKENS, union_contract, 0, weights
+        UNBALANCED_TOKENS, union_contract, 0, weights
     )
     original_caller_balance = owner.balance()
 
@@ -74,14 +78,19 @@ def test_swap_adjust_distribute(
     assert union_contract.balance() == expected_eth_amount - gas_fees
 
     fee_amount, output_amounts = simulate_adjust(
-        union_contract, lock, weights, option, output_tokens, [0, 1, 2]
+        union_contract, lock, weights, option, output_tokens, adjust_order
     )
+
+    with brownie.reverts():
+        union_contract.adjust(
+            lock, weights, adjust_order[::-1], [0, 0, 0], {"from": owner}
+        )
 
     tx_adjust = union_contract.adjust(
-        lock, weights, [0, 1, 2], [0, 0, 0], {"from": owner}
+        lock, weights, adjust_order, [0, 0, 0], {"from": owner}
     )
 
-    assert approx(platform.balance() - initial_platform_balance, fee_amount, 1e-3)
+    assert approx(platform.balance() - initial_platform_balance, fee_amount, 1e-2)
 
     spot_amounts = []
     for i, output_token in enumerate(output_tokens):
@@ -91,7 +100,7 @@ def test_swap_adjust_distribute(
         balance = interface.IERC20(output_token).balanceOf(union_contract)
         # account for the fact that we leave 1 token unit for gas saving when swapping
         balance = 0 if balance == 1 else balance
-        assert approx(balance, output_amounts[i], 1e-3)
+        assert approx(balance, output_amounts[i], 1e-2)
         # calculate spoth ETH price and store
         price = get_spot_prices(output_token)
         spot_amounts.append(balance * price)
@@ -135,7 +144,7 @@ def test_swap_adjust_distribute(
             if vaults[i] != cvx_vault
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
-        assert approx(underlying, output_amounts[i], 1e-3)
+        assert approx(underlying, output_amounts[i], 1e-2)
 
     # revert to test process incentives result
     chain.revert()
@@ -147,7 +156,7 @@ def test_swap_adjust_distribute(
         lock,
         gas_refund,
         weights,
-        [0, 1, 2],
+        adjust_order,
         [0, 0, 0],
         {"from": owner},
     )
@@ -161,4 +170,4 @@ def test_swap_adjust_distribute(
             if vaults[i] != cvx_vault
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
-        assert approx(underlying, output_amounts[i], 1e-3)
+        assert approx(underlying, output_amounts[i], 1e-2)

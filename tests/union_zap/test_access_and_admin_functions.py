@@ -166,22 +166,26 @@ def test_swap_invalid_weight_length(owner, union_contract):
 
 def test_adjust_non_owner(alice, union_contract):
     with brownie.reverts("Ownable: caller is not the owner"):
-        union_contract.adjust(False, [MAX_WEIGHT_1E9, 0, 0], [0, 0, 0], {"from": alice})
+        union_contract.adjust(
+            False, [MAX_WEIGHT_1E9, 0, 0], [0, 1, 2], [0, 0, 0], {"from": alice}
+        )
 
 
 def test_adjust_invalid_weights(owner, union_contract):
     with brownie.reverts("Invalid weights"):
-        union_contract.adjust(False, [1, 2, 3], [0, 0, 0], {"from": owner})
+        union_contract.adjust(False, [1, 2, 3], [0, 1, 2], [0, 0, 0], {"from": owner})
 
 
 def test_adjust_invalid_weight_length(owner, union_contract):
     with brownie.reverts("Invalid weight length"):
-        union_contract.adjust(False, [1], [0, 0, 0], {"from": owner})
+        union_contract.adjust(False, [1], [0, 1, 2], [0, 0, 0], {"from": owner})
 
 
 def test_adjust_invalid_min_amounts(owner, union_contract):
     with brownie.reverts("Invalid min amounts"):
-        union_contract.adjust(False, [MAX_WEIGHT_1E9, 0, 0], [0, 0], {"from": owner})
+        union_contract.adjust(
+            False, [MAX_WEIGHT_1E9, 0, 0], [0, 1, 2], [0, 0], {"from": owner}
+        )
 
 
 def test_distribute_non_owner(alice, union_contract):
@@ -208,6 +212,7 @@ def test_process_incentives_non_owner(alice, union_contract):
             False,
             0,
             [MAX_WEIGHT_1E9, 0, 0],
+            [0, 1, 2],
             [0, 0, 0],
             {"from": alice},
         )
@@ -223,7 +228,7 @@ def test_process_incentives_invalid_weights(
     ]
     with brownie.reverts("Invalid weights"):
         union_contract.processIncentives(
-            params, 0, True, False, 0, [1, 2, 3], [0, 0, 0], {"from": owner}
+            params, 0, True, False, 0, [1, 2, 3], [0, 1, 2], [0, 0, 0], {"from": owner}
         )
 
 
@@ -237,7 +242,29 @@ def test_process_incentives_invalid_weight_length(
     ]
     with brownie.reverts("Invalid weight length"):
         union_contract.processIncentives(
-            params, 0, True, False, 0, [1], [0, 0, 0], {"from": owner}
+            params, 0, True, False, 0, [1], [0, 1, 2], [0, 0, 0], {"from": owner}
+        )
+
+
+def test_process_incentives_invalid_order_length(
+    owner, set_mock_claims, claim_tree, union_contract
+):
+    proofs = claim_tree.get_proof(union_contract.address)
+    params = [
+        [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
+        for token in TOKENS
+    ]
+    with brownie.reverts("Invalid order length"):
+        union_contract.processIncentives(
+            params,
+            0,
+            True,
+            False,
+            0,
+            [MAX_WEIGHT_1E9, 0, 0],
+            [0],
+            [0, 0, 0],
+            {"from": owner},
         )
 
 
@@ -251,7 +278,15 @@ def test_process_incentives_invalid_min_amounts(
     ]
     with brownie.reverts("Invalid min amounts"):
         union_contract.processIncentives(
-            params, 0, True, False, 0, [MAX_WEIGHT_1E9, 0, 0], [0, 0], {"from": owner}
+            params,
+            0,
+            True,
+            False,
+            0,
+            [MAX_WEIGHT_1E9, 0, 0],
+            [0, 1, 2],
+            [0, 0],
+            {"from": owner},
         )
 
 
