@@ -21,6 +21,7 @@ from .constants import (
     CURVE_CONTRACT_REGISTRY,
     CVX,
     CURVE_CVX_PCVX_POOL,
+    AURA_BAL_TOKEN,
 )
 from .cvxfxs import get_crv_to_eth_amount
 
@@ -55,6 +56,10 @@ def calc_harvest_amount_in_cvxcrv(vault):
         if quote > crv_balance:
             cvxcrv_amount = quote
     return cvxcrv_amount
+
+
+def aurabal_balance(address):
+    return interface.IERC20(AURA_BAL_TOKEN).balanceOf(address)
 
 
 def cvxcrv_balance(address):
