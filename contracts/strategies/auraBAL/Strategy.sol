@@ -25,8 +25,6 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         IERC20(AURABAL_TOKEN).safeApprove(AURABAL_STAKING, type(uint256).max);
         IERC20(AURA_TOKEN).safeApprove(BAL_VAULT, 0);
         IERC20(AURA_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
-        IERC20(BBUSD_TOKEN).safeApprove(BAL_VAULT, 0);
-        IERC20(BBUSD_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, 0);
         IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
     }
