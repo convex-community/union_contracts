@@ -64,17 +64,11 @@ contract AuraBalStrategyBase {
                 amount: _amount,
                 userData: new bytes(0)
             });
-        IBalancerVault.FundManagement memory _funds = IBalancerVault
-            .FundManagement({
-                sender: address(this),
-                fromInternalBalance: false,
-                recipient: payable(address(this)),
-                toInternalBalance: false
-            });
+
         return
             balVault.swap(
                 _auraSwapParams,
-                _funds,
+                _createSwapFunds(),
                 _minAmountOut,
                 block.timestamp + 1
             );
@@ -99,13 +93,7 @@ contract AuraBalStrategyBase {
             amount: 0,
             userData: new bytes(0)
         });
-        IBalancerVault.FundManagement memory _funds = IBalancerVault
-            .FundManagement({
-                sender: address(this),
-                fromInternalBalance: false,
-                recipient: payable(address(this)),
-                toInternalBalance: false
-            });
+
         IAsset[] memory _zapAssets = new IAsset[](3);
         int256[] memory _limits = new int256[](3);
 
@@ -121,7 +109,7 @@ contract AuraBalStrategyBase {
             IBalancerVault.SwapKind.GIVEN_IN,
             _swaps,
             _zapAssets,
-            _funds,
+            _createSwapFunds(),
             _limits,
             block.timestamp + 1
         );
@@ -159,6 +147,19 @@ contract AuraBalStrategyBase {
                 false
             )
         );
+    }
+
+    function _createSwapFunds()
+        internal
+        returns (IBalancerVault.FundManagement memory)
+    {
+        return
+            IBalancerVault.FundManagement({
+                sender: address(this),
+                fromInternalBalance: false,
+                recipient: payable(address(this)),
+                toInternalBalance: false
+            });
     }
 
     receive() external payable {}
