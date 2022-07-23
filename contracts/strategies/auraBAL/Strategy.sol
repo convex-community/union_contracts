@@ -4,27 +4,16 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/IStrategy.sol";
+import "./StrategyBase.sol";
 
-contract AuraBalStrategy is Ownable, IStrategy {
+contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
 
     uint256 public constant FEE_DENOMINATOR = 10000;
-
-    address private constant AURABAL_PT_DEPOSIT =
-    0xeAd792B55340Aa20181A80d6a16db6A0ECd1b827;
-    address private constant AURABAL_STAKING =
-    0x5e5ea2048475854a5702F5B8468A51Ba1296EFcC;
-    address private constant AURABAL_TOKEN =
-    0x616e8BfA43F920657B3497DBf40D6b1A02D4608d;
-    address private constant AURA_TOKEN =
-    0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF;
-    address private constant USBB_TOKEN =
-    0x7B50775383d3D6f0215A8F290f2C9e2eEBBEceb2;
-    IBasicRewards private auraBalStaking = IBasicRewards(AURABAL_STAKING);
-
 
     constructor(address _vault) {
         vault = _vault;
@@ -34,6 +23,12 @@ contract AuraBalStrategy is Ownable, IStrategy {
     function setApprovals() external {
         IERC20(AURABAL_TOKEN).safeApprove(AURABAL_STAKING, 0);
         IERC20(AURABAL_TOKEN).safeApprove(AURABAL_STAKING, type(uint256).max);
+        IERC20(AURA_TOKEN).safeApprove(BAL_VAULT, 0);
+        IERC20(AURA_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
+        IERC20(BBUSD_TOKEN).safeApprove(BAL_VAULT, 0);
+        IERC20(BBUSD_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
+        IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, 0);
+        IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
     }
 
     /// @notice Query the amount currently staked
@@ -67,63 +62,59 @@ contract AuraBalStrategy is Ownable, IStrategy {
         // claim rewards
         auraBalStaking.getReward();
 
-        // sell AURA rewards for ETH
+        // sell AURA rewards for WETH
         uint256 _auraBalance = IERC20(AURA_TOKEN).balanceOf(address(this));
         if (_auraBalance > 0) {
-            _swapAuraToEth(_auraBalance);
+            _swapAuraToWEth(_auraBalance, 0);
         }
 
-        // sell usd-BB rewards for ETH
-        uint256 _usbbBalance = IERC20(USBB_TOKEN).balanceOf(address(this));
-        if (_usbbBalance > 0) {
-            _swapUsbbToEth(_usbbBalance);
+        // sell bb-usd rewards for WETH
+        uint256 _bbusdBalance = IERC20(BBUSD_TOKEN).balanceOf(address(this));
+        if (_bbusdBalance > 0) {
+            _swapBbUsdToWEth(_bbusdBalance);
         }
-        uint256 _ethBalance = address(this).balance;
 
-        if (_ethBalance > 0) {
-            _swapEthForFxs(_ethBalance, swapOption);
-        }
-        uint256 _fxsBalance = IERC20(FXS_TOKEN).balanceOf(address(this));
+        uint256 _wethBalance = IERC20(WETH_TOKEN).balanceOf(address(this));
+        uint256 _balBalance = IERC20(BAL_TOKEN).balanceOf(address(this));
 
-        uint256 _stakingAmount = _fxsBalance;
-        uint256 _staked;
+        // Deposit to BLP
+        _depositToBalEthPool(_balBalance, _wethBalance, 0);
 
-        if (_fxsBalance > 0) {
+        uint256 _bptBalance = IERC20(BAL_ETH_POOL_TOKEN).balanceOf(
+            address(this)
+        );
+
+        uint256 _stakingAmount = _bptBalance;
+
+        if (_bptBalance > 0) {
             // if this is the last call, no fees
             if (IGenericVault(vault).totalSupply() != 0) {
                 // Deduce and pay out incentive to caller (not needed for final exit)
                 if (IGenericVault(vault).callIncentive() > 0) {
-                    uint256 incentiveAmount = (_fxsBalance *
+                    uint256 incentiveAmount = (_bptBalance *
                         IGenericVault(vault).callIncentive()) / FEE_DENOMINATOR;
-                    IERC20(FXS_TOKEN).safeTransfer(_caller, incentiveAmount);
+                    IERC20(BAL_ETH_POOL_TOKEN).safeTransfer(
+                        _caller,
+                        incentiveAmount
+                    );
                     _stakingAmount = _stakingAmount - incentiveAmount;
                 }
                 // Deduce and pay platform fee
                 if (IGenericVault(vault).platformFee() > 0) {
-                    uint256 feeAmount = (_fxsBalance *
+                    uint256 feeAmount = (_bptBalance *
                         IGenericVault(vault).platformFee()) / FEE_DENOMINATOR;
-                    IERC20(FXS_TOKEN).safeTransfer(
+                    IERC20(BAL_ETH_POOL_TOKEN).safeTransfer(
                         IGenericVault(vault).platform(),
                         feeAmount
                     );
                     _stakingAmount = _stakingAmount - feeAmount;
                 }
             }
-            // check if there is a premium on cvxFXS
-            if (cvxFxsFxsSwap.price_oracle() > 1 ether) {
-                // lock and deposit as cvxFxs
-                ICvxFxsDeposit(FXS_DEPOSIT).deposit(_stakingAmount, true);
-                _staked = cvxFxsFxsSwap.add_liquidity([0, _stakingAmount], 0);
-            }
-            // If not add liquidity on Curve
-            else {
-                _staked = cvxFxsFxsSwap.add_liquidity([_stakingAmount, 0], 0);
-            }
-            // Stake on Convex
-            require(booster.depositAll(PID, true));
+            // stake and lock
+            bptDepositor.deposit(_stakingAmount, true);
         }
 
-        return _staked;
+        return _stakingAmount;
     }
 
     modifier onlyVault() {
