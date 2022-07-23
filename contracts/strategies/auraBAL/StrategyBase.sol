@@ -99,8 +99,8 @@ contract AuraBalStrategyBase {
         });
         _swaps[2] = IBalancerVault.BatchSwapStep({
             poolId: ETH_USDC_POOL_ID,
-            assetInIndex: 1,
-            assetOutIndex: 0,
+            assetInIndex: 2,
+            assetOutIndex: 3,
             amount: 0,
             userData: new bytes(0)
         });
