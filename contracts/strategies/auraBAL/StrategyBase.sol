@@ -104,9 +104,8 @@ contract AuraBalStrategyBase {
             amount: 0,
             userData: new bytes(0)
         });
-
-        IAsset[] memory _zapAssets = new IAsset[](3);
-        int256[] memory _limits = new int256[](3);
+        IAsset[] memory _zapAssets = new IAsset[](4);
+        int256[] memory _limits = new int256[](4);
 
         _zapAssets[0] = IAsset(BBUSD_TOKEN);
         _zapAssets[1] = IAsset(BBUSDC_TOKEN);

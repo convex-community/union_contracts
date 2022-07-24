@@ -27,6 +27,10 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         IERC20(AURA_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, 0);
         IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
+        IERC20(WETH_TOKEN).safeApprove(BAL_VAULT, 0);
+        IERC20(WETH_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(AURABAL_PT_DEPOSIT, 0);
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(AURABAL_PT_DEPOSIT, type(uint256).max);
     }
 
     /// @notice Query the amount currently staked
@@ -109,7 +113,7 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
                 }
             }
             // stake and lock
-            bptDepositor.deposit(_stakingAmount, true);
+            bptDepositor.deposit(_stakingAmount, true, AURABAL_STAKING);
         }
 
         return _stakingAmount;
