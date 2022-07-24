@@ -1,4 +1,4 @@
-from brownie import chain, interface, convert
+from brownie import chain, interface, convert, accounts
 import eth_abi
 from tests.utils.constants import (
     AURA_BAL_STAKING,
@@ -7,13 +7,12 @@ from tests.utils.constants import (
     AURA_ETH_POOL_ID,
     AURA_TOKEN,
     WETH,
-    WSTETH_BBUSD_POOL_ID,
-    WSTETH_WETH_POOL_ID,
     BBUSD_TOKEN,
-    WSTETH_TOKEN,
     BAL_ETH_POOL_ID,
     BAL_TOKEN,
-    BAL_ETH_POOL_TOKEN,
+    BAL_ETH_POOL_TOKEN, ETH_USDC_POOL_ID, BBUSDC_USDC_POOL_ID, BBUSD_AAVE_POOL_ID, BBUSDC_TOKEN, USDC_TOKEN,
+    BALANCER_HELPER,
+
 )
 
 
@@ -33,32 +32,43 @@ def get_aura_to_eth_amount(amount):
     )
     assets = [AURA_TOKEN, WETH]
     funds = (WETH, False, WETH, False)
-    query = vault.queryBatchSwap(0, [swap_step], assets, funds)
-    return query[-1] * -1
+    query = vault.queryBatchSwap(0, [swap_step], assets, funds, {'from': accounts[0]})
+    return query.return_value[-1] * -1
 
 
 def get_bbusd_to_eth_amount(amount):
     vault = interface.IBalancerVault(BAL_VAULT)
+    assets = [BBUSD_TOKEN, BBUSDC_TOKEN, USDC_TOKEN, WETH]
+    indices = {assets[idx]: idx for idx in range(len(assets))}
+
     swap_steps = [
         (
-            WSTETH_BBUSD_POOL_ID,
-            2,  # BBUSD Index
-            1,  # WSTETH Index
+            BBUSD_AAVE_POOL_ID,
+            indices[BBUSD_TOKEN],
+            indices[BBUSDC_TOKEN],
             amount,
             eth_abi.encode_abi(["uint256"], [0]),
         ),
         (
-            WSTETH_WETH_POOL_ID,
-            0,  # WSTETH Index
-            1,  # WETH Index
-            amount,
+            BBUSDC_USDC_POOL_ID,
+            indices[BBUSDC_TOKEN],
+            indices[USDC_TOKEN],
+            0,
+            eth_abi.encode_abi(["uint256"], [0]),
+        ),
+        (
+            ETH_USDC_POOL_ID,
+            indices[USDC_TOKEN],
+            indices[WETH],
+            0,
             eth_abi.encode_abi(["uint256"], [0]),
         ),
     ]
-    assets = [BBUSD_TOKEN, WSTETH_TOKEN, WETH]
+
+
     funds = (WETH, False, WETH, False)
-    query = vault.queryBatchSwap(0, swap_steps, assets, funds)
-    return query[-1] * -1
+    query = vault.queryBatchSwap(0, swap_steps, assets, funds, {'from': accounts[0]})
+    return query.return_value[-1] * -1
 
 
 def calc_rewards(strategy):
@@ -77,17 +87,21 @@ def calc_rewards(strategy):
 
 def calc_harvest_amount_aura(strategy):
     bal_balance, eth_balance = calc_rewards(strategy)
-    blp = interface.IBalancerPool(BAL_ETH_POOL_TOKEN)
+    blp = interface.IBalancerHelper(BALANCER_HELPER)
+    tokens = [BAL_TOKEN, WETH]
+    amounts = [bal_balance, eth_balance]
+
+    join_request = (
+            tokens,
+            amounts,
+            eth_abi.encode_abi(['uint256', 'uint256[]'], [1, [bal_balance, eth_balance]]).hex(),
+            False,
+        )
+
     bp_out, _ = blp.queryJoin(
         BAL_ETH_POOL_ID,
         strategy.address,
         strategy.address,
-        [bal_balance, eth_balance],
-        (
-            [BAL_TOKEN, WETH],
-            [bal_balance, eth_balance],
-            convert(1, [bal_balance, eth_balance]),
-            False,
-        ),
+        join_request,
     )
     return bp_out
