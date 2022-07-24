@@ -10,9 +10,13 @@ from tests.utils.constants import (
     BBUSD_TOKEN,
     BAL_ETH_POOL_ID,
     BAL_TOKEN,
-    BAL_ETH_POOL_TOKEN, ETH_USDC_POOL_ID, BBUSDC_USDC_POOL_ID, BBUSD_AAVE_POOL_ID, BBUSDC_TOKEN, USDC_TOKEN,
+    BAL_ETH_POOL_TOKEN,
+    ETH_USDC_POOL_ID,
+    BBUSDC_USDC_POOL_ID,
+    BBUSD_AAVE_POOL_ID,
+    BBUSDC_TOKEN,
+    USDC_TOKEN,
     BALANCER_HELPER,
-
 )
 
 
@@ -32,7 +36,7 @@ def get_aura_to_eth_amount(amount):
     )
     assets = [AURA_TOKEN, WETH]
     funds = (WETH, False, WETH, False)
-    query = vault.queryBatchSwap(0, [swap_step], assets, funds, {'from': accounts[0]})
+    query = vault.queryBatchSwap(0, [swap_step], assets, funds, {"from": accounts[0]})
     return query.return_value[-1] * -1
 
 
@@ -65,9 +69,8 @@ def get_bbusd_to_eth_amount(amount):
         ),
     ]
 
-
     funds = (WETH, False, WETH, False)
-    query = vault.queryBatchSwap(0, swap_steps, assets, funds, {'from': accounts[0]})
+    query = vault.queryBatchSwap(0, swap_steps, assets, funds, {"from": accounts[0]})
     return query.return_value[-1] * -1
 
 
@@ -92,11 +95,13 @@ def calc_harvest_amount_aura(strategy):
     amounts = [bal_balance, eth_balance]
 
     join_request = (
-            tokens,
-            amounts,
-            eth_abi.encode_abi(['uint256', 'uint256[]'], [1, [bal_balance, eth_balance]]).hex(),
-            False,
-        )
+        tokens,
+        amounts,
+        eth_abi.encode_abi(
+            ["uint256", "uint256[]"], [1, [bal_balance, eth_balance]]
+        ).hex(),
+        False,
+    )
 
     bp_out, _ = blp.queryJoin(
         BAL_ETH_POOL_ID,

@@ -22,6 +22,7 @@ from .constants import (
     CVX,
     CURVE_CVX_PCVX_POOL,
     AURA_BAL_TOKEN,
+    BAL_ETH_POOL_TOKEN,
 )
 from .cvxfxs import get_crv_to_eth_amount
 
@@ -68,6 +69,10 @@ def cvxcrv_balance(address):
 
 def cvxfxs_lp_balance(address):
     return interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).balanceOf(address)
+
+
+def baleth_lp_balance(address):
+    return interface.IERC20(BAL_ETH_POOL_TOKEN).balanceOf(address)
 
 
 def fxs_balance(address):
