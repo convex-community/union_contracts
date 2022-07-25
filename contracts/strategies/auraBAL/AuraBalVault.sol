@@ -35,7 +35,8 @@ contract AuraBalVault is GenericUnionVault {
         require(
             !isHarvestPermissioned ||
                 authorizedHarvesters[msg.sender] ||
-                totalSupply() == 0
+                totalSupply() == 0,
+            "permissioned harvest"
         );
         uint256 _harvested = IStrategy(strategy).harvest(
             msg.sender,
