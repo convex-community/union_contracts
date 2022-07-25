@@ -1,10 +1,20 @@
 import pytest
 import brownie
-from brownie import GenericUnionVault, AuraBalStrategy, interface
+from brownie import (
+    GenericUnionVault,
+    AuraBalStrategy,
+    interface,
+    BBUSDHandler,
+    AuraHandler,
+)
 from ....utils.constants import (
     AIRFORCE_SAFE,
     AURA_BAL_TOKEN,
     AURA_BAL_STAKING,
+    AURA_TOKEN,
+    BBUSD_TOKEN,
+    BAL_TOKEN,
+    ADDRESS_ZERO,
 )
 
 
@@ -23,6 +33,19 @@ def strategy(owner, vault):
     yield strategy
 
 
+@pytest.fixture(scope="module")
+def aura_handler(owner, vault, strategy):
+    handler = AuraHandler.deploy(AURA_TOKEN, strategy, {"from": owner})
+    handler.setApprovals({"from": owner})
+    yield handler
+
+
+@pytest.fixture(scope="module")
+def bbusd_handler(owner, vault, strategy):
+    handler = BBUSDHandler.deploy(BBUSD_TOKEN, strategy, {"from": owner})
+    yield handler
+
+
 """
 @pytest.fixture(scope="module")
 def zaps(owner, vault):
@@ -30,6 +53,13 @@ def zaps(owner, vault):
     zaps.setApprovals({"from": owner})
     yield zaps
 """
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_handlers(owner, strategy, aura_handler, bbusd_handler):
+    strategy.addRewardToken(BAL_TOKEN, ADDRESS_ZERO, {"from": owner})
+    strategy.addRewardToken(AURA_TOKEN, aura_handler, {"from": owner})
+    strategy.addRewardToken(BBUSD_TOKEN, bbusd_handler, {"from": owner})
 
 
 @pytest.fixture(scope="module", autouse=True)
