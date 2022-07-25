@@ -69,6 +69,7 @@ contract AuraBalStrategyBase {
         );
     }
 
+    /// @notice Returns a FundManagement struct used for BAL swaps
     function _createSwapFunds()
         internal
         returns (IBalancerVault.FundManagement memory)
