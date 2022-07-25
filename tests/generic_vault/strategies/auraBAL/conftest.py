@@ -1,7 +1,7 @@
 import pytest
 import brownie
 from brownie import (
-    GenericUnionVault,
+    AuraBalVault,
     AuraBalStrategy,
     interface,
     BBUSDHandler,
@@ -20,7 +20,7 @@ from ....utils.constants import (
 
 @pytest.fixture(scope="module")
 def vault(owner):
-    vault = GenericUnionVault.deploy(AURA_BAL_TOKEN, {"from": owner})
+    vault = AuraBalVault.deploy(AURA_BAL_TOKEN, {"from": owner})
     vault.setPlatform(AIRFORCE_SAFE, {"from": owner})
     yield vault
 
