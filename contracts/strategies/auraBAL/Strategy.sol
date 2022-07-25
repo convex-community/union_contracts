@@ -6,12 +6,15 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/IStrategy.sol";
+import "../../../interfaces/balancer/IRewardHandler.sol";
 import "./StrategyBase.sol";
 
 contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
+    address[] public rewardTokens;
+    mapping(address => address) private rewardHandlers;
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
@@ -23,14 +26,44 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
     function setApprovals() external {
         IERC20(AURABAL_TOKEN).safeApprove(AURABAL_STAKING, 0);
         IERC20(AURABAL_TOKEN).safeApprove(AURABAL_STAKING, type(uint256).max);
-        IERC20(AURA_TOKEN).safeApprove(BAL_VAULT, 0);
-        IERC20(AURA_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, 0);
         IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(WETH_TOKEN).safeApprove(BAL_VAULT, 0);
         IERC20(WETH_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(BAL_ETH_POOL_TOKEN).safeApprove(AURABAL_PT_DEPOSIT, 0);
-        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(AURABAL_PT_DEPOSIT, type(uint256).max);
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(
+            AURABAL_PT_DEPOSIT,
+            type(uint256).max
+        );
+    }
+
+    /// @notice update the token to handler mapping
+    function _updateRewardToken(address _token, address _handler) internal {
+        rewardHandlers[_token] = _handler;
+    }
+
+    /// @notice Add a reward token and its handler
+    /// @dev For tokens that should not be swapped (i.e. BAL rewards)
+    ///      use address as zero handler
+    /// @param _token the reward token to add
+    /// @param _handler address of the contract that will sell for BAL or ETH
+    function addRewardToken(address _token, address _handler)
+        external
+        onlyOwner
+    {
+        rewardTokens.push(_token);
+        _updateRewardToken(_token, _handler);
+    }
+
+    /// @notice Update the handler of a reward token
+    /// @dev Used to update a handler or retire a token (set handler to address 0)
+    /// @param _token the reward token to add
+    /// @param _handler address of the contract that will sell for BAL or ETH
+    function updateRewardToken(address _token, address _handler)
+        external
+        onlyOwner
+    {
+        _updateRewardToken(_token, _handler);
     }
 
     /// @notice Query the amount currently staked
@@ -64,16 +97,22 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         // claim rewards
         auraBalStaking.getReward();
 
-        // sell AURA rewards for WETH
-        uint256 _auraBalance = IERC20(AURA_TOKEN).balanceOf(address(this));
-        if (_auraBalance > 0) {
-            _swapAuraToWEth(_auraBalance, 0);
-        }
-
-        // sell bb-usd rewards for WETH
-        uint256 _bbusdBalance = IERC20(BBUSD_TOKEN).balanceOf(address(this));
-        if (_bbusdBalance > 0) {
-            _swapBbUsdToWEth(_bbusdBalance);
+        // process rewards
+        for (uint256 i; i < rewardTokens.length; ++i) {
+            address _tokenHandler = rewardHandlers[rewardTokens[i]];
+            if (_tokenHandler == address(0)) {
+                continue;
+            }
+            uint256 _tokenBalance = IERC20(rewardTokens[i]).balanceOf(
+                address(this)
+            );
+            if (_tokenBalance > 0) {
+                IERC20(rewardTokens[i]).safeTransfer(
+                    _tokenHandler,
+                    _tokenBalance
+                );
+                IRewardHandler(_tokenHandler).sell();
+            }
         }
 
         uint256 _wethBalance = IERC20(WETH_TOKEN).balanceOf(address(this));
