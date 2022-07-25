@@ -2,7 +2,11 @@
 pragma solidity 0.8.9;
 
 interface IStrategy {
-    function harvest(address caller) external returns (uint256 harvested);
+    function harvest(address _caller) external returns (uint256 harvested);
+
+    function harvest(address _caller, uint256 _minAmountOut)
+        external
+        returns (uint256 harvested);
 
     function totalUnderlying() external view returns (uint256 total);
 

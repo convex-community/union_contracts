@@ -205,7 +205,7 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @notice Claim rewards and swaps them to FXS for restaking
     /// @dev Can be called by anyone against an incentive in FXS
     /// @dev Harvest logic in the strategy contract
-    function harvest() virtual public {
+    function harvest() public virtual {
         uint256 _harvested = IStrategy(strategy).harvest(msg.sender);
         emit Harvest(msg.sender, _harvested);
     }

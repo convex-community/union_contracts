@@ -88,9 +88,10 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
     /// @notice Claim rewards and swaps them to FXS for restaking
     /// @dev Can be called by the vault only
     /// @param _caller - the address calling the harvest on the vault
+    /// @param _minAmountOut -  min amount of LP tokens to receive w/o revert
     /// @return harvested - the amount harvested
-    function harvest(address _caller)
-        external
+    function harvest(address _caller, uint256 _minAmountOut)
+        public
         onlyVault
         returns (uint256 harvested)
     {
@@ -125,6 +126,11 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
             address(this)
         );
 
+        // if we lost to much too slippage, revert
+        if (_bptBalance <= _minAmountOut) {
+            revert("slippage");
+        }
+
         uint256 _stakingAmount = _bptBalance;
 
         if (_bptBalance > 0) {
@@ -156,6 +162,19 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         }
 
         return _stakingAmount;
+    }
+
+    /// @notice Claim rewards and swaps them to FXS for restaking
+    /// @dev Can be called by the vault only
+    /// @dev Same as harvest with minAmountOut to 0
+    /// @param _caller - the address calling the harvest on the vault
+    /// @return harvested - the amount harvested
+    function harvest(address _caller)
+        external
+        onlyVault
+        returns (uint256 harvested)
+    {
+        return harvest(_caller, 0);
     }
 
     modifier onlyVault() {
