@@ -14,7 +14,7 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
 
     address public immutable vault;
     address[] public rewardTokens;
-    mapping(address => address) private rewardHandlers;
+    mapping(address => address) public rewardHandlers;
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
@@ -64,6 +64,12 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         onlyOwner
     {
         _updateRewardToken(_token, _handler);
+    }
+
+    /// @notice returns the number of reward tokens
+    /// @return the number of reward tokens
+    function totalRewardTokens() external view returns (uint256) {
+        return rewardTokens.length;
     }
 
     /// @notice Query the amount currently staked
