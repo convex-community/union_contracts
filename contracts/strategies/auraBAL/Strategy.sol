@@ -127,7 +127,7 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         );
 
         // if we lost to much too slippage, revert
-        if (_bptBalance <= _minAmountOut) {
+        if (_bptBalance < _minAmountOut) {
             revert("slippage");
         }
 
