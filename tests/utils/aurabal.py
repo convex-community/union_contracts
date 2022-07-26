@@ -10,7 +10,6 @@ from tests.utils.constants import (
     BBUSD_TOKEN,
     BAL_ETH_POOL_ID,
     BAL_TOKEN,
-    BAL_ETH_POOL_TOKEN,
     ETH_USDC_POOL_ID,
     BBUSDC_USDC_POOL_ID,
     BBUSD_AAVE_POOL_ID,
@@ -88,8 +87,7 @@ def calc_rewards(strategy):
     return bal_rewards, eth_balance
 
 
-def calc_harvest_amount_aura(strategy):
-    bal_balance, eth_balance = calc_rewards(strategy)
+def estimate_wethbal_lp_tokens_received(strategy, bal_balance, eth_balance):
     blp = interface.IBalancerHelper(BALANCER_HELPER)
     tokens = [BAL_TOKEN, WETH]
     amounts = [bal_balance, eth_balance]
@@ -110,3 +108,8 @@ def calc_harvest_amount_aura(strategy):
         join_request,
     )
     return bp_out
+
+
+def calc_harvest_amount_aura(strategy):
+    bal_balance, eth_balance = calc_rewards(strategy)
+    return estimate_wethbal_lp_tokens_received(strategy, bal_balance, eth_balance)

@@ -3,6 +3,7 @@ import brownie
 from brownie import (
     AuraBalVault,
     AuraBalStrategy,
+    AuraBalZaps,
     interface,
     BBUSDHandler,
     AuraHandler,
@@ -46,13 +47,11 @@ def bbusd_handler(owner, vault, strategy):
     yield handler
 
 
-"""
 @pytest.fixture(scope="module")
 def zaps(owner, vault):
-    zaps = CvxFxsZaps.deploy(vault, {"from": owner})
+    zaps = AuraBalZaps.deploy(vault, {"from": owner})
     zaps.setApprovals({"from": owner})
     yield zaps
-"""
 
 
 @pytest.fixture(scope="module", autouse=True)

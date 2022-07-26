@@ -27,8 +27,13 @@ contract AuraBalZaps is Ownable, AuraBalStrategyBase, ReentrancyGuard {
         IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(WETH_TOKEN).safeApprove(BAL_VAULT, 0);
         IERC20(WETH_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
-        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(vault, 0);
-        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(vault, type(uint256).max);
+        IERC20(AURABAL_TOKEN).safeApprove(vault, 0);
+        IERC20(AURABAL_TOKEN).safeApprove(vault, type(uint256).max);
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(AURABAL_PT_DEPOSIT, 0);
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(
+            AURABAL_PT_DEPOSIT,
+            type(uint256).max
+        );
     }
 
     /// @notice Deposit from BAL and/or WETH
@@ -63,6 +68,11 @@ contract AuraBalZaps is Ownable, AuraBalStrategyBase, ReentrancyGuard {
         address _to
     ) internal {
         _depositToBalEthPool(_amounts[0], _amounts[1], _minAmountOut);
+        bptDepositor.deposit(
+            IERC20(BAL_ETH_POOL_TOKEN).balanceOf(address(this)),
+            true,
+            address(0)
+        );
         IGenericVault(vault).depositAll(_to);
     }
 
@@ -88,7 +98,7 @@ contract AuraBalZaps is Ownable, AuraBalStrategyBase, ReentrancyGuard {
         address _to
     ) internal {
         IWETH(WETH_TOKEN).deposit{value: _amount}();
-        _addAndDeposit([_amount, 0], _minAmountOut, _to);
+        _addAndDeposit([0, _amount], _minAmountOut, _to);
     }
 
     /// @notice Deposit into the pounder from any token via Uni interface
