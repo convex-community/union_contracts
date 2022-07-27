@@ -3,14 +3,13 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./StrategyBase.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/IUniV2Router.sol";
 import "../../../interfaces/IWETH.sol";
 
-contract AuraBalZaps is Ownable, AuraBalStrategyBase, ReentrancyGuard {
+contract AuraBalZaps is Ownable, AuraBalStrategyBase {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
