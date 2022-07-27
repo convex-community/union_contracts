@@ -10,4 +10,11 @@ interface IBalancerHelper {
         address recipient,
         IBalancerVault.JoinPoolRequest memory request
     ) external view returns (uint256 bptOut, uint256[] memory amountsIn);
+
+    function queryExit(
+        bytes32 poolId,
+        address sender,
+        address recipient,
+        IBalancerVault.ExitPoolRequest memory request
+    ) external view returns (uint256 bptIn, uint256[] memory amountsOut);
 }

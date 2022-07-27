@@ -16,6 +16,8 @@ contract AuraBalZaps is Ownable, AuraBalStrategyBase, ReentrancyGuard {
     address public immutable vault;
     bytes32 private constant BAL_ETH_POOL_ID =
         0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014;
+    bytes32 private constant AURABAL_BAL_ETH_BPT_POOL_ID =
+        0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd000200000000000000000249;
 
     constructor(address _vault) {
         vault = _vault;
@@ -27,6 +29,8 @@ contract AuraBalZaps is Ownable, AuraBalStrategyBase, ReentrancyGuard {
         IERC20(BAL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(WETH_TOKEN).safeApprove(BAL_VAULT, 0);
         IERC20(WETH_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
+        IERC20(AURABAL_TOKEN).safeApprove(BAL_VAULT, 0);
+        IERC20(AURABAL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(AURABAL_TOKEN).safeApprove(vault, 0);
         IERC20(AURABAL_TOKEN).safeApprove(vault, type(uint256).max);
         IERC20(BAL_ETH_POOL_TOKEN).safeApprove(AURABAL_PT_DEPOSIT, 0);
@@ -141,10 +145,30 @@ contract AuraBalZaps is Ownable, AuraBalStrategyBase, ReentrancyGuard {
     }
 
     /// @notice Retrieves a user's vault shares and withdraw all
+    ///         then converts auraBal back to LP token
     /// @param _amount - amount of shares to retrieve
-    function _claimAndWithdraw(uint256 _amount) internal {
+    /// @return amount of 80ETH-20BAL BPT obtained after the swap
+    function _claimAndWithdraw(uint256 _amount) internal returns (uint256) {
         IERC20(vault).safeTransferFrom(msg.sender, address(this), _amount);
         IGenericVault(vault).withdrawAll(address(this));
+
+        IBalancerVault.SingleSwap memory _auraBalSwapParams = IBalancerVault
+            .SingleSwap({
+                poolId: AURABAL_BAL_ETH_BPT_POOL_ID,
+                kind: IBalancerVault.SwapKind.GIVEN_IN,
+                assetIn: IAsset(AURABAL_TOKEN),
+                assetOut: IAsset(BAL_ETH_POOL_TOKEN),
+                amount: IERC20(AURABAL_TOKEN).balanceOf(address(this)),
+                userData: new bytes(0)
+            });
+
+        return
+            balVault.swap(
+                _auraBalSwapParams,
+                _createSwapFunds(),
+                0,
+                block.timestamp + 1
+            );
     }
 
     /// @notice Claim as either BAL or WETH/ETH
@@ -202,7 +226,7 @@ contract AuraBalZaps is Ownable, AuraBalStrategyBase, ReentrancyGuard {
         address _to
     ) public notToZeroAddress(_to) {
         require(_router != address(0));
-        claimFromVaultAsUnderlying(_amount, 1, 0, address(this), true);
+        claimFromVaultAsUnderlying(_amount, 1, 0, address(this), false);
         address[] memory _path = new address[](2);
         _path[0] = WETH_TOKEN;
         _path[1] = _outputToken;
