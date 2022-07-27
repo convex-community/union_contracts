@@ -16,12 +16,31 @@ from tests.utils.constants import (
     BBUSDC_TOKEN,
     USDC_TOKEN,
     BALANCER_HELPER,
+    BAL_ETH_POOL_TOKEN,
+    AURA_BAL_TOKEN,
+    AURABAL_BAL_ETH_BPT_POOL_ID,
 )
 
 
 # currently not needed but might change
 def get_minter_minted():
     return 0
+
+
+def get_aurabal_to_lptoken_amount(amount):
+    vault = interface.IBalancerVault(BAL_VAULT)
+    swap_step = (
+        AURABAL_BAL_ETH_BPT_POOL_ID,
+        0,
+        1,
+        amount,
+        eth_abi.encode_abi(["uint256"], [0]),
+    )
+    assets = [AURA_BAL_TOKEN, BAL_ETH_POOL_TOKEN]
+    funds = (WETH, False, WETH, False)
+    query = vault.queryBatchSwap(0, [swap_step], assets, funds, {"from": accounts[0]})
+    # assert False == True
+    return query.return_value[-1] * -1
 
 
 def get_aura_to_eth_amount(amount):
@@ -108,6 +127,30 @@ def estimate_wethbal_lp_tokens_received(strategy, bal_balance, eth_balance):
         join_request,
     )
     return bp_out
+
+
+def estimate_underlying_received_baleth(strategy, lp_amount, asset_index):
+    blp = interface.IBalancerHelper(BALANCER_HELPER)
+    tokens = [BAL_TOKEN, WETH]
+    amounts = [0, 0]
+
+    exit_request = (
+        tokens,
+        amounts,
+        eth_abi.encode_abi(
+            ["uint256", "uint256", "uint256"], [0, lp_amount, asset_index]
+        ).hex(),
+        False,
+    )
+
+    _, query = blp.queryExit(
+        BAL_ETH_POOL_ID,
+        strategy.address,
+        strategy.address,
+        exit_request,
+    )
+    token_out = query[asset_index]
+    return token_out
 
 
 def calc_harvest_amount_aura(strategy):
