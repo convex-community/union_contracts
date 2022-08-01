@@ -9,8 +9,8 @@ contract HandlerBase {
     using SafeERC20 for IERC20;
     address public owner;
     address public pendingOwner;
-    address public token;
-    address public strategy;
+    address public immutable token;
+    address public immutable strategy;
 
     address public constant WETH_TOKEN =
         0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;

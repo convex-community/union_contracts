@@ -105,16 +105,17 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         auraBalStaking.getReward();
 
         // process rewards
-        for (uint256 i; i < rewardTokens.length; ++i) {
-            address _tokenHandler = rewardHandlers[rewardTokens[i]];
+        address[] memory _rewardTokens = rewardTokens;
+        for (uint256 i; i < _rewardTokens.length; ++i) {
+            address _tokenHandler = rewardHandlers[_rewardTokens[i]];
             if (_tokenHandler == address(0)) {
                 continue;
             }
-            uint256 _tokenBalance = IERC20(rewardTokens[i]).balanceOf(
+            uint256 _tokenBalance = IERC20(_rewardTokens[i]).balanceOf(
                 address(this)
             );
             if (_tokenBalance > 0) {
-                IERC20(rewardTokens[i]).safeTransfer(
+                IERC20(_rewardTokens[i]).safeTransfer(
                     _tokenHandler,
                     _tokenBalance
                 );
