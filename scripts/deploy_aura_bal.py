@@ -22,28 +22,28 @@ def main():
     deployer = accounts.load("mainnet-deploy")
     vault = AuraBalVault.deploy(
         AURA_BAL_TOKEN, {"from": deployer}
-    )  # , publish_source=True)
+    , publish_source=True)
     vault.setPlatform(AIRFORCE_SAFE, {"from": deployer})
 
     strategy = AuraBalStrategy.deploy(
         vault, {"from": deployer}
-    )  # , publish_source=True)
+    , publish_source=True)
     strategy.setApprovals({"from": deployer})
     vault.setStrategy(strategy, {"from": deployer})
 
     aura_handler = AuraHandler.deploy(
         AURA_TOKEN, strategy, {"from": deployer}
-    )  # , publish_source=True)
+    , publish_source=True)
     aura_handler.setApprovals({"from": deployer})
     bbusd_handler = BBUSDHandler.deploy(
         BBUSD_TOKEN, strategy, {"from": deployer}
-    )  # , publish_source=True)
+    , publish_source=True)
 
     strategy.addRewardToken(BAL_TOKEN, ADDRESS_ZERO, {"from": deployer})
     strategy.addRewardToken(AURA_TOKEN, aura_handler, {"from": deployer})
     strategy.addRewardToken(BBUSD_TOKEN, bbusd_handler, {"from": deployer})
 
-    zaps = AuraBalZaps.deploy(vault, {"from": deployer})
+    zaps = AuraBalZaps.deploy(vault, {"from": deployer}, publish_source=True)
     zaps.setApprovals({"from": deployer})
 
     vault.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
