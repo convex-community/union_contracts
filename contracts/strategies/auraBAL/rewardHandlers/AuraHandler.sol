@@ -24,12 +24,7 @@ contract AuraHandler is HandlerBase {
 
     /// @notice Swap Aura for WETH on Balancer
     /// @param _amount - amount to swap
-    /// @param _minAmountOut - minimum acceptable output amount of tokens
-    /// @return amount of WETH obtained after the swap
-    function _swapAuraToWEth(uint256 _amount, uint256 _minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _swapAuraToWEth(uint256 _amount) internal {
         IBalancerVault.SingleSwap memory _auraSwapParams = IBalancerVault
             .SingleSwap({
                 poolId: AURA_ETH_POOL_ID,
@@ -40,17 +35,16 @@ contract AuraHandler is HandlerBase {
                 userData: new bytes(0)
             });
 
-        return
-            balVault.swap(
-                _auraSwapParams,
-                _createSwapFunds(),
-                _minAmountOut,
-                block.timestamp + 1
-            );
+        balVault.swap(
+            _auraSwapParams,
+            _createSwapFunds(),
+            0,
+            block.timestamp + 1
+        );
     }
 
     function sell() external onlyStrategy {
-        _swapAuraToWEth(IERC20(AURA_TOKEN).balanceOf(address(this)), 0);
+        _swapAuraToWEth(IERC20(AURA_TOKEN).balanceOf(address(this)));
         IERC20(WETH_TOKEN).safeTransfer(
             strategy,
             IERC20(WETH_TOKEN).balanceOf(address(this))

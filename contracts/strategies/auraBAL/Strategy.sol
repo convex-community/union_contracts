@@ -6,10 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/IStrategy.sol";
+import "../../../interfaces/IRewards.sol";
 import "../../../interfaces/balancer/IRewardHandler.sol";
 import "./StrategyBase.sol";
 
-contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
+contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
@@ -35,6 +36,8 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
             AURABAL_PT_DEPOSIT,
             type(uint256).max
         );
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(BAL_VAULT, 0);
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
     }
 
     /// @notice update the token to handler mapping
@@ -91,16 +94,43 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         IERC20(AURABAL_TOKEN).safeTransfer(vault, _amount);
     }
 
+    /// @notice Lock or swap 20WETH-80BAL LP tokens for auraBal
+    /// @param _lock - whether to lock or swap
+    /// @param _minAmountOut - minimum expected amount of auraBal
+    /// @return the amount of auraBal obtained from lock or swap
+    function _lockOrSwap(bool _lock, uint256 _minAmountOut)
+        internal
+        returns (uint256)
+    {
+        uint256 _bptBalance = IERC20(BAL_ETH_POOL_TOKEN).balanceOf(
+            address(this)
+        );
+        if (_lock) {
+            // if we lost to much too slippage, revert
+            if (_bptBalance < _minAmountOut) {
+                revert("slippage");
+            }
+            // lock without staking to receive auraBAL
+            bptDepositor.deposit(_bptBalance, true, address(0));
+            // the mint is 1:1
+            return _bptBalance;
+        } else {
+            // if not locking we'll swap on the pool
+            return _swapBptToAuraBal(_bptBalance, _minAmountOut);
+        }
+    }
+
     /// @notice Claim rewards and swaps them to FXS for restaking
     /// @dev Can be called by the vault only
     /// @param _caller - the address calling the harvest on the vault
     /// @param _minAmountOut -  min amount of LP tokens to receive w/o revert
+    /// @param _lock - whether to lock or swap
     /// @return harvested - the amount harvested
-    function harvest(address _caller, uint256 _minAmountOut)
-        public
-        onlyVault
-        returns (uint256 harvested)
-    {
+    function harvest(
+        address _caller,
+        uint256 _minAmountOut,
+        bool _lock
+    ) public onlyVault returns (uint256 harvested) {
         // claim rewards
         auraBalStaking.getReward();
 
@@ -129,25 +159,19 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
         // Deposit to BLP
         _depositToBalEthPool(_balBalance, _wethBalance, 0);
 
-        uint256 _bptBalance = IERC20(BAL_ETH_POOL_TOKEN).balanceOf(
-            address(this)
-        );
+        // lock or swap the LP tokens for aura BAL
+        uint256 _auraBalBalance = _lockOrSwap(_lock, _minAmountOut);
 
-        // if we lost to much too slippage, revert
-        if (_bptBalance < _minAmountOut) {
-            revert("slippage");
-        }
+        uint256 _stakingAmount = _auraBalBalance;
 
-        uint256 _stakingAmount = _bptBalance;
-
-        if (_bptBalance > 0) {
+        if (_auraBalBalance > 0) {
             // if this is the last call, no fees
             if (IGenericVault(vault).totalSupply() != 0) {
                 // Deduce and pay out incentive to caller (not needed for final exit)
                 if (IGenericVault(vault).callIncentive() > 0) {
-                    uint256 incentiveAmount = (_bptBalance *
+                    uint256 incentiveAmount = (_auraBalBalance *
                         IGenericVault(vault).callIncentive()) / FEE_DENOMINATOR;
-                    IERC20(BAL_ETH_POOL_TOKEN).safeTransfer(
+                    IERC20(AURABAL_TOKEN).safeTransfer(
                         _caller,
                         incentiveAmount
                     );
@@ -155,33 +179,20 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase, IStrategy {
                 }
                 // Deduce and pay platform fee
                 if (IGenericVault(vault).platformFee() > 0) {
-                    uint256 feeAmount = (_bptBalance *
+                    uint256 feeAmount = (_auraBalBalance *
                         IGenericVault(vault).platformFee()) / FEE_DENOMINATOR;
-                    IERC20(BAL_ETH_POOL_TOKEN).safeTransfer(
+                    IERC20(AURABAL_TOKEN).safeTransfer(
                         IGenericVault(vault).platform(),
                         feeAmount
                     );
                     _stakingAmount = _stakingAmount - feeAmount;
                 }
             }
-            // stake and lock
-            bptDepositor.deposit(_stakingAmount, true, AURABAL_STAKING);
+            // stake what is left after fees
+            auraBalStaking.stake(_stakingAmount);
         }
 
         return _stakingAmount;
-    }
-
-    /// @notice Claim rewards and swaps them to FXS for restaking
-    /// @dev Can be called by the vault only
-    /// @dev Same as harvest with minAmountOut to 0
-    /// @param _caller - the address calling the harvest on the vault
-    /// @return harvested - the amount harvested
-    function harvest(address _caller)
-        external
-        onlyVault
-        returns (uint256 harvested)
-    {
-        return harvest(_caller, 0);
     }
 
     modifier onlyVault() {

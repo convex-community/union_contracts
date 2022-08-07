@@ -28,6 +28,8 @@ contract AuraBalStrategyBase {
     address public constant BAL_ETH_POOL_TOKEN =
         0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56;
 
+    bytes32 private constant AURABAL_BAL_ETH_BPT_POOL_ID =
+        0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd000200000000000000000249;
     bytes32 private constant BAL_ETH_POOL_ID =
         0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014;
 
@@ -67,6 +69,29 @@ contract AuraBalStrategyBase {
                 false
             )
         );
+    }
+
+    function _swapBptToAuraBal(uint256 _amount, uint256 _minAmountOut)
+        internal
+        returns (uint256)
+    {
+        IBalancerVault.SingleSwap memory _auraSwapParams = IBalancerVault
+            .SingleSwap({
+                poolId: AURABAL_BAL_ETH_BPT_POOL_ID,
+                kind: IBalancerVault.SwapKind.GIVEN_IN,
+                assetIn: IAsset(BAL_ETH_POOL_TOKEN),
+                assetOut: IAsset(AURABAL_TOKEN),
+                amount: _amount,
+                userData: new bytes(0)
+            });
+
+        return
+            balVault.swap(
+                _auraSwapParams,
+                _createSwapFunds(),
+                _minAmountOut,
+                block.timestamp + 1
+            );
     }
 
     /// @notice Returns a FundManagement struct used for BAL swaps
