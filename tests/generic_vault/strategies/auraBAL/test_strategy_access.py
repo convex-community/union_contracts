@@ -6,9 +6,9 @@ from ....utils.constants import AIRFORCE_SAFE, ADDRESS_ZERO
 
 def test_harvest_non_vault(fn_isolation, alice, owner, vault, strategy):
     with brownie.reverts("Vault calls only"):
-        strategy.harvest(AIRFORCE_SAFE, {"from": owner})
+        strategy.harvest(AIRFORCE_SAFE, 0, False, {"from": owner})
     with brownie.reverts("Vault calls only"):
-        strategy.harvest(AIRFORCE_SAFE, {"from": alice})
+        strategy.harvest(AIRFORCE_SAFE, 0, False, {"from": alice})
 
 
 def test_stake_non_vault(fn_isolation, alice, owner, vault, strategy):

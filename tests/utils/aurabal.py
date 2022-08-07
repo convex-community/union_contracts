@@ -19,6 +19,7 @@ from tests.utils.constants import (
     BAL_ETH_POOL_TOKEN,
     AURA_BAL_TOKEN,
     AURABAL_BAL_ETH_BPT_POOL_ID,
+    AURABAL_TOKEN,
 )
 
 
@@ -153,6 +154,25 @@ def estimate_underlying_received_baleth(strategy, lp_amount, asset_index):
     return token_out
 
 
-def calc_harvest_amount_aura(strategy):
+def get_blp_to_aurabal(amount):
+    vault = interface.IBalancerVault(BAL_VAULT)
+    swap_step = (
+        AURABAL_BAL_ETH_BPT_POOL_ID,
+        0,
+        1,
+        amount,
+        eth_abi.encode_abi(["uint256"], [0]),
+    )
+    assets = [BAL_ETH_POOL_TOKEN, AURABAL_TOKEN]
+    funds = (WETH, False, WETH, False)
+    query = vault.queryBatchSwap(0, [swap_step], assets, funds, {"from": accounts[0]})
+    return query.return_value[-1] * -1
+
+
+def calc_harvest_amount_aura(strategy, lock=True):
     bal_balance, eth_balance = calc_rewards(strategy)
-    return estimate_wethbal_lp_tokens_received(strategy, bal_balance, eth_balance)
+    blp_tokens = estimate_wethbal_lp_tokens_received(strategy, bal_balance, eth_balance)
+    if lock:
+        return blp_tokens
+    else:
+        return get_blp_to_aurabal(blp_tokens)
