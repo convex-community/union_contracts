@@ -16,6 +16,8 @@ def test_set_harvest_permissions(fn_isolation, owner, alice, bob, vault):
     vault.harvest({"from": owner})
     # create supply
     vault.deposit(alice, 1e18, {"from": alice})
+    chain.sleep(60 * 60)
+    chain.mine(1)
     with brownie.reverts("permissioned harvest"):
         vault.harvest({"from": owner})
     with brownie.reverts("permissioned harvest"):
