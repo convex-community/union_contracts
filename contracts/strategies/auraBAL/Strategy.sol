@@ -156,6 +156,9 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
         uint256 _wethBalance = IERC20(WETH_TOKEN).balanceOf(address(this));
         uint256 _balBalance = IERC20(BAL_TOKEN).balanceOf(address(this));
 
+        if (_wethBalance + _balBalance == 0) {
+            return 0;
+        }
         // Deposit to BLP
         _depositToBalEthPool(_balBalance, _wethBalance, 0);
 
