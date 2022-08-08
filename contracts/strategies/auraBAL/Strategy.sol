@@ -82,7 +82,7 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
     }
 
     /// @notice Deposits underlying tokens in the staking contract
-    function stake(uint256 _amount) external onlyVault {
+    function stake(uint256 _amount) public onlyVault {
         auraBalStaking.stake(_amount);
     }
 
@@ -192,7 +192,7 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
                 }
             }
             // stake what is left after fees
-            auraBalStaking.stake(_stakingAmount);
+            stake(_stakingAmount);
         }
 
         return _stakingAmount;
