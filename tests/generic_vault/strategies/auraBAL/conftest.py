@@ -62,7 +62,7 @@ def set_handlers(owner, strategy, aura_handler, bbusd_handler):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def distribute_fxs_and_lp_tokens(accounts, vault):
+def distribute_aurabal_tokens(accounts, vault):
 
     for account in accounts[:10]:
         interface.IERC20(AURA_BAL_TOKEN).transfer(
