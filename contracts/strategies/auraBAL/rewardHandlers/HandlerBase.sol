@@ -4,8 +4,9 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../../interfaces/balancer/IBalancer.sol";
 import "../../../../interfaces/balancer/IAsset.sol";
+import "../../../../interfaces/balancer/IRewardHandler.sol";
 
-contract HandlerBase {
+contract HandlerBase is IRewardHandler {
     using SafeERC20 for IERC20;
     address public owner;
     address public pendingOwner;
@@ -54,6 +55,8 @@ contract HandlerBase {
                 toInternalBalance: false
             });
     }
+
+    function sell() external virtual onlyStrategy {}
 
     modifier onlyOwner() {
         require((msg.sender == owner), "owner only");

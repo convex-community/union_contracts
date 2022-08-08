@@ -73,7 +73,7 @@ contract BBUSDHandler is HandlerBase {
         );
     }
 
-    function sell() external onlyStrategy {
+    function sell() external override onlyStrategy {
         _swapBbUsdToWEth(IERC20(BBUSD_TOKEN).balanceOf(address(this)));
         IERC20(WETH_TOKEN).safeTransfer(
             strategy,

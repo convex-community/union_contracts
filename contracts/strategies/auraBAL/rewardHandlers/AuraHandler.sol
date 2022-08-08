@@ -43,7 +43,7 @@ contract AuraHandler is HandlerBase {
         );
     }
 
-    function sell() external onlyStrategy {
+    function sell() external override onlyStrategy {
         _swapAuraToWEth(IERC20(AURA_TOKEN).balanceOf(address(this)));
         IERC20(WETH_TOKEN).safeTransfer(
             strategy,
