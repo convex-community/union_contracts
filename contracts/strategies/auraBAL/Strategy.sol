@@ -120,6 +120,36 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
         }
     }
 
+    function _levyFees(uint256 _auraBalBalance, address _caller)
+        internal
+        returns (uint256)
+    {
+        uint256 platformFee = IGenericVault(vault).platformFee();
+        uint256 callIncentive = IGenericVault(vault).callIncentive();
+        uint256 _stakingAmount = _auraBalBalance;
+        // if this is the last call, no fees
+        if (IGenericVault(vault).totalSupply() != 0) {
+            // Deduce and pay out incentive to caller (not needed for final exit)
+            if (callIncentive > 0) {
+                uint256 incentiveAmount = (_auraBalBalance * callIncentive) /
+                    FEE_DENOMINATOR;
+                IERC20(AURABAL_TOKEN).safeTransfer(_caller, incentiveAmount);
+                _stakingAmount = _stakingAmount - incentiveAmount;
+            }
+            // Deduce and pay platform fee
+            if (platformFee > 0) {
+                uint256 feeAmount = (_auraBalBalance * platformFee) /
+                    FEE_DENOMINATOR;
+                IERC20(AURABAL_TOKEN).safeTransfer(
+                    IGenericVault(vault).platform(),
+                    feeAmount
+                );
+                _stakingAmount = _stakingAmount - feeAmount;
+            }
+        }
+        return _stakingAmount;
+    }
+
     /// @notice Claim rewards and swaps them to FXS for restaking
     /// @dev Can be called by the vault only
     /// @param _caller - the address calling the harvest on the vault
@@ -165,37 +195,14 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
         // lock or swap the LP tokens for aura BAL
         uint256 _auraBalBalance = _lockOrSwap(_lock, _minAmountOut);
 
-        uint256 _stakingAmount = _auraBalBalance;
-
         if (_auraBalBalance > 0) {
-            // if this is the last call, no fees
-            if (IGenericVault(vault).totalSupply() != 0) {
-                // Deduce and pay out incentive to caller (not needed for final exit)
-                if (IGenericVault(vault).callIncentive() > 0) {
-                    uint256 incentiveAmount = (_auraBalBalance *
-                        IGenericVault(vault).callIncentive()) / FEE_DENOMINATOR;
-                    IERC20(AURABAL_TOKEN).safeTransfer(
-                        _caller,
-                        incentiveAmount
-                    );
-                    _stakingAmount = _stakingAmount - incentiveAmount;
-                }
-                // Deduce and pay platform fee
-                if (IGenericVault(vault).platformFee() > 0) {
-                    uint256 feeAmount = (_auraBalBalance *
-                        IGenericVault(vault).platformFee()) / FEE_DENOMINATOR;
-                    IERC20(AURABAL_TOKEN).safeTransfer(
-                        IGenericVault(vault).platform(),
-                        feeAmount
-                    );
-                    _stakingAmount = _stakingAmount - feeAmount;
-                }
-            }
+            uint256 _stakingAmount = _levyFees(_auraBalBalance, _caller);
             // stake what is left after fees
             stake(_stakingAmount);
+            return _stakingAmount;
         }
 
-        return _stakingAmount;
+        return 0;
     }
 
     modifier onlyVault() {
