@@ -22,6 +22,8 @@ def test_set_harvest_permissions(fn_isolation, owner, alice, bob, vault):
         vault.harvest(10, {"from": owner})
 
     vault.updateAuthorizedHarvesters(bob, True, {"from": owner})
+    chain.sleep(30)
+    chain.mine(1)
     vault.harvest({"from": bob})
     with brownie.reverts("slippage"):
         vault.harvest(1e18, {"from": bob})

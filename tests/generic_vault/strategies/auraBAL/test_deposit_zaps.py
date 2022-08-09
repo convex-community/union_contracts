@@ -6,11 +6,11 @@ from ....utils import aurabal_balance, approx
 from ....utils.aurabal import estimate_wethbal_lp_tokens_received
 from ....utils.constants import (
     ADDRESS_ZERO,
-    SPELL,
     SUSHI_ROUTER,
     WETH,
     BAL_TOKEN,
     BAL_VAULT,
+    FXS,
 )
 
 
@@ -34,19 +34,22 @@ def test_deposit_from_underlying(fn_isolation, alice, zaps, vault, strategy):
 
     lp_tokens_amount_from_bal = estimate_wethbal_lp_tokens_received(strategy, amount, 0)
     zaps.depositFromUnderlyingAssets([amount, 0], 0, alice, {"from": alice})
-    assert vault.balanceOfUnderlying(alice) == lp_tokens_amount_from_bal
-    assert vault.balanceOf(alice) == lp_tokens_amount_from_bal
+    assert approx(vault.balanceOfUnderlying(alice), lp_tokens_amount_from_bal, 1e-3)
+    assert vault.balanceOf(alice) == vault.balanceOfUnderlying(alice)
 
     lp_tokens_amount_from_weth = estimate_wethbal_lp_tokens_received(
         strategy, 0, amount
     )
     zaps.depositFromUnderlyingAssets([0, amount], 0, alice, {"from": alice})
-    assert (
-        vault.balanceOfUnderlying(alice)
-        == lp_tokens_amount_from_bal + lp_tokens_amount_from_weth
+    assert approx(
+        vault.balanceOfUnderlying(alice),
+        lp_tokens_amount_from_bal + lp_tokens_amount_from_weth,
+        1e-3,
     )
-    assert (
-        vault.balanceOf(alice) == lp_tokens_amount_from_bal + lp_tokens_amount_from_weth
+    assert approx(
+        vault.balanceOf(alice),
+        lp_tokens_amount_from_bal + lp_tokens_amount_from_weth,
+        1e-3,
     )
 
     lp_tokens_from_both = estimate_wethbal_lp_tokens_received(strategy, amount, amount)
@@ -54,12 +57,12 @@ def test_deposit_from_underlying(fn_isolation, alice, zaps, vault, strategy):
     assert approx(
         vault.balanceOfUnderlying(alice),
         lp_tokens_amount_from_bal + lp_tokens_amount_from_weth + lp_tokens_from_both,
-        1e-4,
+        1e-3,
     )
     assert approx(
         vault.balanceOf(alice),
         lp_tokens_amount_from_bal + lp_tokens_amount_from_weth + lp_tokens_from_both,
-        1e-4,
+        1e-3,
     )
 
     vault.withdrawAll(alice, {"from": alice})
@@ -76,27 +79,27 @@ def test_deposit_from_eth(fn_isolation, alice, zaps, owner, vault, strategy):
     lp_tokens_from_eth = estimate_wethbal_lp_tokens_received(strategy, 0, amount)
     zaps.depositFromEth(0, alice, {"value": amount, "from": alice})
 
-    assert approx(vault.balanceOfUnderlying(alice), lp_tokens_from_eth, 1e-4)
+    assert approx(vault.balanceOfUnderlying(alice), lp_tokens_from_eth, 1e-3)
     assert vault.balanceOf(alice) == vault.balanceOfUnderlying(alice)
 
 
 def test_deposit_from_sushi(fn_isolation, alice, zaps, owner, vault, strategy):
 
     amount = int(1e21)
-    interface.IERC20(SPELL).transfer(alice.address, 2e22, {"from": SPELL})
-    interface.IERC20(SPELL).approve(zaps, 2**256 - 1, {"from": alice})
+    interface.IERC20(FXS).transfer(alice.address, 2e21, {"from": FXS})
+    interface.IERC20(FXS).approve(zaps, 2**256 - 1, {"from": alice})
 
     with brownie.reverts():
         zaps.depositViaUniV2EthPair(
-            amount, 0, SUSHI_ROUTER, SPELL, ADDRESS_ZERO, {"from": alice}
+            amount, 0, SUSHI_ROUTER, FXS, ADDRESS_ZERO, {"from": alice}
         )
 
     eth_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
-        amount, [SPELL, WETH]
+        amount, [FXS, WETH]
     )[-1]
 
     lp_tokens_from_eth = estimate_wethbal_lp_tokens_received(strategy, 0, eth_amount)
-    zaps.depositViaUniV2EthPair(amount, 0, SUSHI_ROUTER, SPELL, alice, {"from": alice})
+    zaps.depositViaUniV2EthPair(amount, 0, SUSHI_ROUTER, FXS, alice, {"from": alice})
 
-    assert approx(vault.balanceOfUnderlying(alice), lp_tokens_from_eth, 1e-4)
+    assert approx(vault.balanceOfUnderlying(alice), lp_tokens_from_eth, 1e-3)
     assert vault.balanceOf(alice) == vault.balanceOfUnderlying(alice)
