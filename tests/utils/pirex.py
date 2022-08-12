@@ -17,13 +17,17 @@ from tests.utils.constants import (
 
 
 def get_cvx_to_pxcvx(amount):
-    swap_amount = interface.ICurveFactoryPool(CURVE_CVX_PCVX_POOL).get_dy(1, 0, amount)
-    return swap_amount if swap_amount > amount else amount
+    swap_amount = interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).get_dy(1, 0, amount)
+    return (
+        swap_amount
+        if interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).price_oracle() > 1e18
+        else amount
+    )
 
 
 def get_pcvx_to_cvx(amount):
     return (
-        interface.ICurveFactoryPool(CURVE_CVX_PCVX_POOL).get_dy(0, 1, amount)
+        interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).get_dy(0, 1, amount)
         if amount > 0
         else 0
     )
@@ -76,8 +80,8 @@ def estimate_output_cvx_amount(tokens, union_contract, router_choices, gas_fee, 
     print("CVX Amount: ", cvx_amount)
 
     if lock:
-        cvx_amount = interface.ICurveFactoryPool(CURVE_CVX_PCVX_POOL).get_dy(
-            1, 0, cvx_amount
+        cvx_amount = interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).get_dy(
+            0, 1, cvx_amount
         )
 
     return cvx_amount

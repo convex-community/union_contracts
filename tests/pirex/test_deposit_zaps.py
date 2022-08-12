@@ -23,7 +23,7 @@ def test_deposit_from_cvx(fn_isolation, alice, cvx_zaps, cvx_vault):
     initial_vault_balance = cvx_vault.balanceOf(alice)
     interface.IERC20(CVX).approve(cvx_zaps, 2**256 - 1, {"from": alice})
 
-    amount = 1e23
+    amount = 1e22
 
     with brownie.reverts():
         cvx_zaps.depositFromCvx(amount, amount * 2, alice, {"from": alice})
