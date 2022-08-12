@@ -26,6 +26,30 @@ interface ICurveV2Pool {
 
     function lp_price() external view returns (uint256);
 
+    function exchange(
+        uint256 i,
+        uint256 j,
+        uint256 dx,
+        uint256 min_dy
+    ) external payable returns (uint256);
+
+    function exchange(
+        uint256 i,
+        uint256 j,
+        uint256 dx,
+        uint256 min_dy,
+        bool use_eth
+    ) external payable returns (uint256);
+
+    function exchange(
+        uint256 i,
+        uint256 j,
+        uint256 dx,
+        uint256 min_dy,
+        bool use_eth,
+        address receiver
+    ) external payable returns (uint256);
+
     function price_oracle() external view returns (uint256);
 
     function remove_liquidity_one_coin(
