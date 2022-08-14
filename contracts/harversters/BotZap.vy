@@ -35,8 +35,8 @@ interface BalVault:
     def swap(single_swap: SingleSwap, funds: FundManagement, limit: uint256, deadline: uint256) -> uint256: payable
     def exitPool(pool_id: bytes32, sender: address, recipient: address, request: ExitPoolRequest): nonpayable
 
-authorized_callers: HashMap[address, bool]
-owner: address
+authorized_callers: public(HashMap[address, bool])
+owner: public(address)
 
 # ---- storage variables ---- #
 aurabal_pounder: immutable(address)
@@ -74,6 +74,7 @@ def set_approvals():
 
 @external
 def update_authorized_caller(_caller: address, _authorized: bool):
+    assert(msg.sender == self.owner)
     self.authorized_callers[_caller] = _authorized
 
 @internal
