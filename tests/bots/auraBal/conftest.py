@@ -1,6 +1,6 @@
 import pytest
 from brownie import (
-    BotZap,
+    AuraBalBotZap,
     interface,
     chain,
     AuraBalVault,
@@ -81,7 +81,7 @@ def bbusd_handler(owner, vault, strategy):
 
 @pytest.fixture(scope="module")
 def bot(owner, vault):
-    bot = BotZap.deploy(vault, {"from": owner})
+    bot = AuraBalBotZap.deploy(vault, {"from": owner})
     bot.set_approvals({"from": owner})
     yield bot
 
