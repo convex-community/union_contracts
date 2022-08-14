@@ -96,7 +96,7 @@ def set_handlers(owner, strategy, aura_handler, bbusd_handler):
 @pytest.fixture(scope="module", autouse=True)
 def deposit_funds(alice, vault, strategy):
     aurabal = interface.IERC20(AURABAL_TOKEN)
-    aurabal.transfer(alice, 1e22, {"from": AURABAL_REWARDS})
+    aurabal.transfer(alice, 1e24, {"from": AURABAL_REWARDS})
     aurabal.approve(vault, 2**256 - 1, {"from": alice})
     vault.depositAll(alice, {"from": alice})
     chain.sleep(60 * 60 * 24 * 30)
