@@ -85,8 +85,9 @@ def _createSwapFunds() -> FundManagement:
     to_internal_balance: False})
 
 @external
-def harvest(_min_amount_out: uint256, _lock: bool):
+def harvest(_min_amount_out: uint256, _lock: bool) -> uint256:
     assert(self.authorized_callers[msg.sender])
+    original_balance = msg.sender.balance
     UnionVault(aurabal_pounder).harvest(_min_amount_out, _lock)
     auraBalBalance: uint256 = ERC20(AURABAL_TOKEN).balanceOf(self)
     auraBalParams: SingleSwap = SingleSwap({
@@ -121,6 +122,7 @@ def harvest(_min_amount_out: uint256, _lock: bool):
         msg.sender,
         exit_request
     )
+    return (msg.sender.balance - original_balance)
     
 
 @external
