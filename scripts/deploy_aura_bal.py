@@ -4,9 +4,12 @@ from brownie import (
     AuraBalVault,
     AuraHandler,
     BBUSDHandler,
+    AuraBalBotZap,
     AuraBalStrategy,
     AuraBalZaps,
 )
+from brownie.network.gas.strategies import LinearScalingStrategy
+from brownie.network import gas_price
 
 from tests.utils.constants import (
     AURA_BAL_TOKEN,
@@ -19,6 +22,8 @@ from tests.utils.constants import (
 
 
 def main():
+    gas_strategy = LinearScalingStrategy("12 gwei", "25 gwei", 1.1)
+    gas_price(gas_strategy)
     deployer = accounts.load("mainnet-deploy")
     vault = AuraBalVault.deploy(AURA_BAL_TOKEN, {"from": deployer}, publish_source=True)
     vault.setPlatform(AIRFORCE_SAFE, {"from": deployer})
@@ -41,6 +46,11 @@ def main():
 
     zaps = AuraBalZaps.deploy(vault, {"from": deployer}, publish_source=True)
     zaps.setApprovals({"from": deployer})
+
+    bot = AuraBalBotZap.deploy(vault, {"from": deployer})
+    vault.setHarvestPermissions(True, {"from": deployer})
+    vault.updateAuthorizedHarvesters(deployer.address, True, {"from": deployer})
+    vault.updateAuthorizedHarvesters(bot, True, {"from": deployer})
 
     vault.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
     assert vault.owner() == AIRFORCE_SAFE
