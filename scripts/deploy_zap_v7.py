@@ -42,4 +42,3 @@ def main():
 
     zap.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
     assert zap.owner() == AIRFORCE_SAFE
-

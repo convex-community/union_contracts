@@ -37,7 +37,7 @@ contract PirexClaims is Ownable, UnionBase {
     address private constant PCVX_STRATEGY =
         0x45F97D07dAB04B21F36fA3b1149c35e316b35d03;
     address private constant CURVE_CVX_PCVX_POOL =
-        0xF38a67dA7a3A12aA12A9981ae6a79C0fdDdd71aB;
+        0xF3456E8061461e144b3f252E69DcD5b6070fdEE0;
 
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
@@ -269,8 +269,14 @@ contract PirexClaims is Ownable, UnionBase {
 
         // swap on Curve if there is a premium for doing so
         if (!lock) {
-            uint256 _pxCvxAmount = ICurveFactoryPool(CURVE_CVX_PCVX_POOL)
-                .exchange(1, 0, _cvxBalance, minAmountOut, PCVX_STRATEGY);
+            uint256 _pxCvxAmount = ICurveV2Pool(CURVE_CVX_PCVX_POOL).exchange(
+                0,
+                1,
+                _cvxBalance,
+                minAmountOut,
+                false,
+                PCVX_STRATEGY
+            );
         } else {
             require(_cvxBalance >= minAmountOut, "slippage");
             IPirexCVX(PIREX_CVX).deposit(

@@ -27,7 +27,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
     address private constant USDT_TOKEN =
         0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address private constant CURVE_CVX_PCVX_POOL =
-        0xF38a67dA7a3A12aA12A9981ae6a79C0fdDdd71aB;
+        0xF3456E8061461e144b3f252E69DcD5b6070fdEE0;
     IERC4626 vault = IERC4626(PXCVX_VAULT);
     ICurveTriCrypto triCryptoSwap = ICurveTriCrypto(TRICRYPTO);
 
@@ -66,13 +66,16 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         uint256 _minAmountOut,
         address _to
     ) internal {
-        if (
-            ICurveFactoryPool(CURVE_CVX_PCVX_POOL).get_dy(1, 0, _amount) >=
-            _amount
-        ) {
-            uint256 _pxCvxAmount = ICurveFactoryPool(CURVE_CVX_PCVX_POOL)
-                .exchange(1, 0, _amount, _minAmountOut, address(this));
-            vault.deposit(_amount, _to);
+        if (ICurveV2Pool(CURVE_CVX_PCVX_POOL).price_oracle() < 1 ether) {
+            uint256 _pxCvxAmount = ICurveV2Pool(CURVE_CVX_PCVX_POOL).exchange(
+                0,
+                1,
+                _amount,
+                _minAmountOut,
+                false,
+                address(this)
+            );
+            vault.deposit(_pxCvxAmount, _to);
         } else {
             require(_amount >= _minAmountOut, "slippage");
             IPirexCVX(PIREX_CVX).deposit(_amount, _to, true, address(0));
@@ -193,11 +196,12 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         address _to
     ) internal returns (uint256) {
         return
-            ICurveFactoryPool(CURVE_CVX_PCVX_POOL).exchange(
-                0,
+            ICurveV2Pool(CURVE_CVX_PCVX_POOL).exchange(
                 1,
+                0,
                 _amount,
                 _minAmountOut,
+                false,
                 _to
             );
     }
