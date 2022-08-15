@@ -8,7 +8,7 @@ from ..utils.pirex import get_cvx_to_pxcvx
 from ..utils.constants import (
     ADDRESS_ZERO,
     CVX,
-    SPELL,
+    FXS,
     SUSHI_ROUTER,
     WETH,
     PXCVX_TOKEN,
@@ -25,8 +25,8 @@ def test_deposit_from_cvx(fn_isolation, alice, cvx_zaps, cvx_vault):
 
     amount = 1e22
 
-    with brownie.reverts():
-        cvx_zaps.depositFromCvx(amount, amount * 2, alice, {"from": alice})
+    # with brownie.reverts():
+    #    cvx_zaps.depositFromCvx(amount, amount * 2, alice, {"from": alice})
     with brownie.reverts():
         cvx_zaps.depositFromCvx(amount, 0, ADDRESS_ZERO, {"from": alice})
 
@@ -48,8 +48,8 @@ def test_deposit_from_eth(fn_isolation, alice, cvx_zaps, cvx_vault):
 
     amount = 1e18
 
-    with brownie.reverts():
-        cvx_zaps.depositFromEth(amount * 1e10, alice, {"value": amount, "from": alice})
+    # with brownie.reverts():
+    #    cvx_zaps.depositFromEth(amount * 1e10, alice, {"value": amount, "from": alice})
     with brownie.reverts():
         cvx_zaps.depositFromEth(0, ADDRESS_ZERO, {"value": amount, "from": alice})
 
@@ -129,27 +129,27 @@ def test_deposit_from_cvxcrv(fn_isolation, alice, cvx_zaps, cvx_vault):
 
 def test_deposit_from_sushi(fn_isolation, alice, cvx_zaps, cvx_vault):
 
-    interface.IERC20(SPELL).transfer(alice.address, 2e22, {"from": SPELL})
-    interface.IERC20(SPELL).approve(cvx_zaps, 2**256 - 1, {"from": alice})
+    interface.IERC20(FXS).transfer(alice.address, 2e21, {"from": FXS})
+    interface.IERC20(FXS).approve(cvx_zaps, 2**256 - 1, {"from": alice})
 
     initial_vault_balance = cvx_vault.balanceOf(alice)
 
-    amount = 1e22
+    amount = 1e21
 
-    # with brownie.reverts():
-    #     cvx_zaps.depositViaUniV2EthPair(
-    #          amount, 0, SUSHI_ROUTER, SPELL, ADDRESS_ZERO, {"from": alice}
-    #      )
     with brownie.reverts():
         cvx_zaps.depositViaUniV2EthPair(
-            amount, 1e50, SUSHI_ROUTER, SPELL, alice, {"from": alice}
+            amount, 0, SUSHI_ROUTER, FXS, ADDRESS_ZERO, {"from": alice}
         )
+    # with brownie.reverts():
+    #     cvx_zaps.depositViaUniV2EthPair(
+    #         amount, 1e50, SUSHI_ROUTER, FXS, alice, {"from": alice}
+    #     )
     eth_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
-        amount, [SPELL, WETH]
+        amount, [FXS, WETH]
     )[-1]
     received_pxcvx = get_cvx_to_pxcvx(eth_to_cvx(eth_amount))
     cvx_zaps.depositViaUniV2EthPair(
-        amount, 0, SUSHI_ROUTER, SPELL, alice, {"from": alice}
+        amount, 0, SUSHI_ROUTER, FXS, alice, {"from": alice}
     )
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
     assert approx(

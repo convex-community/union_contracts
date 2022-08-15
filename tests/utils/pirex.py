@@ -20,7 +20,7 @@ def get_cvx_to_pxcvx(amount):
     swap_amount = interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).get_dy(0, 1, amount)
     return (
         swap_amount
-        if interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).price_oracle() > 1e18
+        if interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).price_oracle() < 1e18
         else amount
     )
 
