@@ -25,19 +25,18 @@ def test_withdraw_as_cvx(fn_isolation, alice, cvx_zaps, cvx_vault):
     cvx_zaps.depositFromCvx(amount, 0, alice, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
 
-    pcvx_received = cvx_vault.previewWithdraw(cvx_vault.balanceOf(alice))
+    pcvx_received = cvx_vault.previewRedeem(cvx_vault.balanceOf(alice))
     cvx_received = get_pcvx_to_cvx(pcvx_received)
 
     before_redeem_balance = interface.IERC20(CVX).balanceOf(alice)
     interface.IERC20(cvx_vault).approve(cvx_zaps, 2**256 - 1, {"from": alice})
-
     cvx_zaps.claimFromVaultAsCvx(cvx_vault.balanceOf(alice), 0, alice, {"from": alice})
     assert cvx_vault.balanceOf(alice) == 0
     assert cvx_vault.balanceOf(cvx_zaps) == 0
     assert approx(
         interface.IERC20(CVX).balanceOf(alice),
         before_redeem_balance + cvx_received,
-        1e-1,
+        1e-4,
     )
 
 
@@ -51,16 +50,17 @@ def test_withdraw_as_eth(fn_isolation, alice, cvx_zaps, cvx_vault):
     cvx_zaps.depositFromCvx(amount, 0, alice, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
 
-    pcvx_received = cvx_vault.previewWithdraw(cvx_vault.balanceOf(alice))
+    pcvx_received = cvx_vault.previewRedeem(cvx_vault.balanceOf(alice))
     token_received = get_cvx_to_eth_amount(get_pcvx_to_cvx(pcvx_received))
 
     before_redeem_balance = alice.balance()
     interface.IERC20(cvx_vault).approve(cvx_zaps, 2**256 - 1, {"from": alice})
 
     cvx_zaps.claimFromVaultAsEth(cvx_vault.balanceOf(alice), 0, alice, {"from": alice})
+
     assert cvx_vault.balanceOf(alice) == 0
     assert cvx_vault.balanceOf(cvx_zaps) == 0
-    assert approx(alice.balance(), before_redeem_balance + token_received, 1e-1)
+    assert approx(alice.balance(), before_redeem_balance + token_received, 1e-4)
 
 
 def test_withdraw_as_crv(fn_isolation, alice, cvx_zaps, cvx_vault):
@@ -73,7 +73,7 @@ def test_withdraw_as_crv(fn_isolation, alice, cvx_zaps, cvx_vault):
     cvx_zaps.depositFromCvx(amount, 0, alice, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
 
-    pcvx_received = cvx_vault.previewWithdraw(cvx_vault.balanceOf(alice))
+    pcvx_received = cvx_vault.previewRedeem(cvx_vault.balanceOf(alice))
     token_received = eth_to_crv(get_cvx_to_eth_amount(get_pcvx_to_cvx(pcvx_received)))
 
     before_redeem_balance = interface.IERC20(CRV).balanceOf(alice)
@@ -85,7 +85,7 @@ def test_withdraw_as_crv(fn_isolation, alice, cvx_zaps, cvx_vault):
     assert approx(
         interface.IERC20(CRV).balanceOf(alice),
         before_redeem_balance + token_received,
-        1e-1,
+        1e-4,
     )
 
 
@@ -99,7 +99,7 @@ def test_withdraw_as_cvxcrv(fn_isolation, alice, cvx_zaps, cvx_vault):
     cvx_zaps.depositFromCvx(amount, 0, alice, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
 
-    pcvx_received = cvx_vault.previewWithdraw(cvx_vault.balanceOf(alice))
+    pcvx_received = cvx_vault.previewRedeem(cvx_vault.balanceOf(alice))
     token_received = crv_to_cvxcrv(
         eth_to_crv(get_cvx_to_eth_amount(get_pcvx_to_cvx(pcvx_received)))
     )
@@ -115,7 +115,7 @@ def test_withdraw_as_cvxcrv(fn_isolation, alice, cvx_zaps, cvx_vault):
     assert approx(
         interface.IERC20(CVXCRV_TOKEN).balanceOf(alice),
         before_redeem_balance + token_received,
-        1e-1,
+        1e-4,
     )
 
 
@@ -129,7 +129,7 @@ def test_withdraw_as_usdt(fn_isolation, alice, cvx_zaps, cvx_vault):
     cvx_zaps.depositFromCvx(amount, 0, alice, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
 
-    pcvx_received = cvx_vault.previewWithdraw(cvx_vault.balanceOf(alice))
+    pcvx_received = cvx_vault.previewRedeem(cvx_vault.balanceOf(alice))
     eth_amount = get_cvx_to_eth_amount(get_pcvx_to_cvx(pcvx_received))
     usdt_amount = interface.ICurveV2Pool(TRICRYPTO).get_dy(2, 0, eth_amount)
 
@@ -142,7 +142,7 @@ def test_withdraw_as_usdt(fn_isolation, alice, cvx_zaps, cvx_vault):
     assert approx(
         interface.IERC20(USDT_TOKEN).balanceOf(alice),
         before_redeem_balance + usdt_amount,
-        1e-1,
+        1e-4,
     )
 
 
@@ -156,7 +156,7 @@ def test_withdraw_via_sushi(fn_isolation, alice, cvx_zaps, cvx_vault):
     cvx_zaps.depositFromCvx(amount, 0, alice, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
 
-    pcvx_received = cvx_vault.previewWithdraw(cvx_vault.balanceOf(alice))
+    pcvx_received = cvx_vault.previewRedeem(cvx_vault.balanceOf(alice))
     eth_amount = get_cvx_to_eth_amount(get_pcvx_to_cvx(pcvx_received))
     spell_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
         eth_amount, [WETH, FXS]
@@ -173,5 +173,5 @@ def test_withdraw_via_sushi(fn_isolation, alice, cvx_zaps, cvx_vault):
     assert approx(
         interface.IERC20(FXS).balanceOf(alice),
         before_redeem_balance + spell_amount,
-        1e-1,
+        1e-4,
     )

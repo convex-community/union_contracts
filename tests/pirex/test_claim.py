@@ -11,14 +11,13 @@ from ..utils.constants import (
     PXCVX_TOKEN,
     WETH,
     VOTIUM_DISTRIBUTOR,
+    BAL_VAULT,
 )
 from ..utils.pirex import estimate_output_cvx_amount
 
 
 def mock_distribute(union_contract, token_list):
-    interface.IERC20(WETH).transfer(
-        VOTIUM_DISTRIBUTOR, 1e20, {"from": "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0"}
-    )
+    interface.IERC20(WETH).transfer(VOTIUM_DISTRIBUTOR, 1e20, {"from": BAL_VAULT})
     for token in token_list:
         interface.IERC20(token).transfer(
             union_contract, CLAIM_AMOUNT, {"from": VOTIUM_DISTRIBUTOR}

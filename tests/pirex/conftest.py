@@ -9,14 +9,8 @@ from ..utils.constants import (
     PIREX_CVX,
     CVX,
     CVX_STAKING_CONTRACT,
-    CLAIM_AMOUNT,
-    VOTIUM_DISTRIBUTOR,
-    VOTIUM_OWNER,
-    TOKENS,
-    WETH,
     PIREX_CVX_STRATEGY,
 )
-from ..utils.merkle import OrderedMerkleTree
 
 
 @pytest.fixture(scope="session")
