@@ -17,7 +17,7 @@ BAL_ETH_POOL_TOKEN = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
 ALCHEMY_API_KEY = os.environ["ALCHEMY_API_KEY"]
 PROVIDER = f"https://eth-mainnet.alchemyapi.io/v2/{ALCHEMY_API_KEY}"
 web3 = Web3(HTTPProvider(PROVIDER))
-BOT_ADDRESS = Web3.toChecksumAddress("0xBA12222222228d8Ba445958a75a0704d566BF2C8")
+BOT_ADDRESS = Web3.toChecksumAddress("0x2251AF9804d0A1A04e8e0e7A1FBB83F4D7423f9e")
 ACCOUNT = os.environ["HARVESTER_KEY"]
 
 
@@ -54,8 +54,10 @@ if __name__ == "__main__":
 
         gas_price = get_gas_price()
         lock = ratio > amount
-        gas_used = bot.functions.harvest(0, lock).estimate_gas()
-        eth_received = bot.functions.harvest(0, lock).call()
+        gas_used = bot.functions.harvest(0, lock).estimate_gas(
+            {"from": account.address}
+        )
+        eth_received = bot.functions.harvest(0, lock).call({"from": account.address})
         gas_cost = gas_used * gas_price * 1e9
         print(f"AuraBAL to ETH20BAL80LP Ratio: {ratio} (Lock: {lock})")
         print(f"Gas price: {gas_price}")
