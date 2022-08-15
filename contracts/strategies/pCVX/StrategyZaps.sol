@@ -75,7 +75,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
                 false,
                 address(this)
             );
-            vault.deposit(_amount, _to);
+            vault.deposit(_pxCvxAmount, _to);
         } else {
             require(_amount >= _minAmountOut, "slippage");
             IPirexCVX(PIREX_CVX).deposit(_amount, _to, true, address(0));
