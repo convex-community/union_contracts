@@ -48,6 +48,7 @@ def main():
     zaps.setApprovals({"from": deployer})
 
     bot = AuraBalBotZap.deploy(vault, {"from": deployer})
+    bot.set_approvals({"from": deployer})
     vault.setHarvestPermissions(True, {"from": deployer})
     vault.updateAuthorizedHarvesters(deployer.address, True, {"from": deployer})
     vault.updateAuthorizedHarvesters(bot, True, {"from": deployer})
