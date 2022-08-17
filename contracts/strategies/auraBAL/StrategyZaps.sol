@@ -31,6 +31,8 @@ contract AuraBalZaps is AuraBalStrategyBase {
         IERC20(AURABAL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(AURABAL_TOKEN).safeApprove(vault, 0);
         IERC20(AURABAL_TOKEN).safeApprove(vault, type(uint256).max);
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(BAL_VAULT, 0);
+        IERC20(BAL_ETH_POOL_TOKEN).safeApprove(BAL_VAULT, type(uint256).max);
         IERC20(BAL_ETH_POOL_TOKEN).safeApprove(AURABAL_PT_DEPOSIT, 0);
         IERC20(BAL_ETH_POOL_TOKEN).safeApprove(
             AURABAL_PT_DEPOSIT,
@@ -45,7 +47,8 @@ contract AuraBalZaps is AuraBalStrategyBase {
     function depositFromUnderlyingAssets(
         uint256[2] calldata _amounts,
         uint256 _minAmountOut,
-        address _to
+        address _to,
+        bool _lock
     ) external notToZeroAddress(_to) {
         if (_amounts[0] > 0) {
             IERC20(BAL_TOKEN).safeTransferFrom(
@@ -61,33 +64,41 @@ contract AuraBalZaps is AuraBalStrategyBase {
                 _amounts[1]
             );
         }
-        _addAndDeposit(_amounts, _minAmountOut, _to);
+        _addAndDeposit(_amounts, _minAmountOut, _to, _lock);
     }
 
     function _addAndDeposit(
         uint256[2] memory _amounts,
         uint256 _minAmountOut,
-        address _to
+        address _to,
+        bool _lock
     ) internal {
-        _depositToBalEthPool(_amounts[0], _amounts[1], _minAmountOut);
-        bptDepositor.deposit(
-            IERC20(BAL_ETH_POOL_TOKEN).balanceOf(address(this)),
-            true,
-            address(0)
+        _depositToBalEthPool(
+            _amounts[0],
+            _amounts[1],
+            _lock ? _minAmountOut : 0
         );
+        uint256 _bptBalance = IERC20(BAL_ETH_POOL_TOKEN).balanceOf(
+            address(this)
+        );
+        if (_lock) {
+            bptDepositor.deposit(_bptBalance, true, address(0));
+        } else {
+            _swapBptToAuraBal(_bptBalance, _minAmountOut);
+        }
         IGenericVault(vault).depositAll(_to);
     }
 
     /// @notice Deposit into the pounder from ETH
     /// @param _minAmountOut - min amount of lp tokens expected
     /// @param _to - address to stake on behalf of
-    function depositFromEth(uint256 _minAmountOut, address _to)
-        external
-        payable
-        notToZeroAddress(_to)
-    {
+    function depositFromEth(
+        uint256 _minAmountOut,
+        address _to,
+        bool _lock
+    ) external payable notToZeroAddress(_to) {
         require(msg.value > 0, "cheap");
-        _depositFromEth(msg.value, _minAmountOut, _to);
+        _depositFromEth(msg.value, _minAmountOut, _to, _lock);
     }
 
     /// @notice Internal function to deposit ETH to the pounder
@@ -97,10 +108,11 @@ contract AuraBalZaps is AuraBalStrategyBase {
     function _depositFromEth(
         uint256 _amount,
         uint256 _minAmountOut,
-        address _to
+        address _to,
+        bool _lock
     ) internal {
         IWETH(WETH_TOKEN).deposit{value: _amount}();
-        _addAndDeposit([0, _amount], _minAmountOut, _to);
+        _addAndDeposit([0, _amount], _minAmountOut, _to, _lock);
     }
 
     /// @notice Deposit into the pounder from any token via Uni interface
@@ -116,7 +128,8 @@ contract AuraBalZaps is AuraBalStrategyBase {
         uint256 _minAmountOut,
         address _router,
         address _inputToken,
-        address _to
+        address _to,
+        bool _lock
     ) external notToZeroAddress(_to) {
         require(_router != address(0));
 
@@ -139,7 +152,7 @@ contract AuraBalZaps is AuraBalStrategyBase {
             address(this),
             block.timestamp + 1
         );
-        _depositFromEth(address(this).balance, _minAmountOut, _to);
+        _depositFromEth(address(this).balance, _minAmountOut, _to, _lock);
     }
 
     /// @notice Retrieves a user's vault shares and withdraw all
