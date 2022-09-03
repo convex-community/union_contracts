@@ -37,45 +37,49 @@ if __name__ == "__main__":
     bal_vault = web3.eth.contract(BAL_VAULT, abi=bal_vault_abi)
 
     while True:
-        amount = int(1e20)
-        swap_step = (
-            AURABAL_BAL_ETH_BPT_POOL_ID,
-            0,
-            1,
-            amount,
-            eth_abi.encode_abi(["uint256"], [0]),
-        )
-        assets = [BAL_ETH_POOL_TOKEN, AURABAL_TOKEN]
-        funds = (BOT_ADDRESS, False, BOT_ADDRESS, False)
-        ratio = (
-            bal_vault.functions.queryBatchSwap(0, [swap_step], assets, funds).call()[-1]
-            * -1
-        )
+        try:
+            amount = int(1e20)
+            swap_step = (
+                AURABAL_BAL_ETH_BPT_POOL_ID,
+                0,
+                1,
+                amount,
+                eth_abi.encode_abi(["uint256"], [0]),
+            )
+            assets = [BAL_ETH_POOL_TOKEN, AURABAL_TOKEN]
+            funds = (BOT_ADDRESS, False, BOT_ADDRESS, False)
+            ratio = (
+                bal_vault.functions.queryBatchSwap(0, [swap_step], assets, funds).call()[-1]
+                * -1
+            )
 
-        gas_price = get_gas_price()
-        lock = ratio > amount
-        gas_used = bot.functions.harvest(0, lock).estimate_gas(
-            {"from": account.address}
-        )
-        eth_received = bot.functions.harvest(0, lock).call({"from": account.address})
-        gas_cost = gas_used * gas_price * 1e9
-        print(f"AuraBAL to ETH20BAL80LP Ratio: {ratio} (Lock: {lock})")
-        print(f"Gas price: {gas_price}")
-        print(f"Gas used: {gas_used}")
-        print(f"Gas cost (ETH): {gas_cost * 1e-18} ({gas_cost})")
-        print(f"ETH received: {eth_received * 1e-18} ({eth_received})")
-        if (eth_received - gas_cost) > 1e16:
-            print("Calling harvest")
-            try:
-                nonce = web3.eth.getTransactionCount(account.address)
-                tx = bot.functions.harvest(eth_received * 0.85, lock).buildTransaction(
-                    {"chainId": 1, "nonce": nonce, "from": account.address}
-                )
-                signed = account.signTransaction(tx)
-                hash = web3.eth.send_raw_transaction(signed.rawTransaction)
-                print("Waiting for approval transaction receipt")
-                receipt = web3.eth.wait_for_transaction_receipt(hash)
-                print("Tx confirmed %s " % receipt)
-            except Exception as e:
-                print(f"Error: {e}")
-        time.sleep(60)
+            gas_price = 8 #get_gas_price()
+            lock = ratio > amount
+            gas_used = bot.functions.harvest(0, lock).estimate_gas(
+                {"from": account.address}
+            )
+            print(f"GAS PRICE: {gas_price} GAS USED: {gas_used}")
+            eth_received = bot.functions.harvest(0, lock).call({"from": account.address})
+            gas_cost = gas_used * gas_price * 1e9
+            print(f"AuraBAL to ETH20BAL80LP Ratio: {ratio} (Lock: {lock})")
+            print(f"Gas price: {gas_price}")
+            print(f"Gas used: {gas_used}")
+            print(f"Gas cost (ETH): {gas_cost * 1e-18} ({gas_cost})")
+            print(f"ETH received: {eth_received * 1e-18} ({eth_received})")
+            if (eth_received - gas_cost) > 1e15:
+                print("Calling harvest")
+                try:
+                    nonce = web3.eth.get_transaction_count(account.address)
+                    tx = bot.functions.harvest(int(eth_received * 0.9), lock).build_transaction(
+                        {"chainId": 1, "nonce": nonce, "from": account.address}
+                    )
+                    signed = account.sign_transaction(tx)
+                    hash = web3.eth.send_raw_transaction(signed.rawTransaction)
+                    print("Waiting for approval transaction receipt")
+                    receipt = web3.eth.wait_for_transaction_receipt(hash)
+                    print("Tx confirmed %s " % receipt)
+                except Exception as e:
+                    print(f"Error: {e}")
+            time.sleep(60)
+        except Exception as e:
+            print("Error: ", e)
