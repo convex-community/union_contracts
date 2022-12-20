@@ -41,7 +41,7 @@ contract AuraBalZaps is AuraBalStrategyBase {
     }
 
     /// @notice Deposit from BAL and/or WETH
-    /// @param _amounts - the amounts of FXS and cvxFXS to deposit respectively
+    /// @param _amounts - the amounts of BAL and WETH to deposit respectively
     /// @param _minAmountOut - min amount of LP tokens expected
     /// @param _to - address to stake on behalf of
     function depositFromUnderlyingAssets(
