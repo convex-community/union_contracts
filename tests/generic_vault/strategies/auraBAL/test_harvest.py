@@ -30,22 +30,22 @@ def test_harvest_single_staker(fn_isolation, alice, bob, owner, vault, strategy,
 
     actual_harvest = tx.events["Harvest"]["_value"]
 
-    assert approx(estimated_harvest, actual_harvest, 1e-3)
-    assert approx(aurabal_balance(bob), bob_initial_balance + caller_incentive, 1e-5)
+    assert approx(estimated_harvest, actual_harvest, 3e-3)
+    assert approx(aurabal_balance(bob), bob_initial_balance + caller_incentive, 3e-3)
     assert approx(
         aurabal_balance(vault.platform()),
         platform_initial_balance + platform_fees,
-        1e-5,
+        3e-3,
     )
     assert approx(
         interface.IBasicRewards(AURA_BAL_STAKING).balanceOf(strategy),
         alice_initial_balance + estimated_harvest,
-        1e-5,
+        3e-3,
     )
     assert approx(
         vault.balanceOfUnderlying(alice),
         alice_initial_balance + estimated_harvest,
-        1e-5,
+        3e-3,
     )
 
 
@@ -81,22 +81,22 @@ def test_harvest_multiple_stakers(
     tx = vault.harvest(0, lock, {"from": bob})
 
     actual_harvest = tx.events["Harvest"]["_value"]
-    assert approx(estimated_harvest, actual_harvest, 1e-3)
+    assert approx(estimated_harvest, actual_harvest, 3e-3)
 
-    assert approx(aurabal_balance(bob), bob_initial_balance + caller_incentive, 1e-5)
+    assert approx(aurabal_balance(bob), bob_initial_balance + caller_incentive, 3e-3)
     assert approx(
         aurabal_balance(vault.platform()),
         platform_initial_balance + platform_fees,
-        1e-5,
+        3e-3,
     )
     assert approx(
         vault.totalUnderlying(),
         initial_vault_balance + estimated_harvest,
-        1e-5,
+        3e-3,
     )
     for account in accounts:
         assert approx(
             vault.balanceOfUnderlying(account) - initial_balances[account.address],
             (estimated_harvest) // len(accounts),
-            1e5,
+            3e-3,
         )
