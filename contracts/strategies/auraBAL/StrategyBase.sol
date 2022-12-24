@@ -10,7 +10,7 @@ contract AuraBalStrategyBase {
     address public constant AURABAL_PT_DEPOSIT =
         0xeAd792B55340Aa20181A80d6a16db6A0ECd1b827;
     address public constant AURABAL_STAKING =
-        0x5e5ea2048475854a5702F5B8468A51Ba1296EFcC;
+        0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2;
     address public constant BAL_VAULT =
         0xBA12222222228d8Ba445958a75a0704d566BF2C8;
 
