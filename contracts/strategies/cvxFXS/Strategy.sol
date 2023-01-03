@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./StrategyBase.sol";
 import "../../../interfaces/IBooster.sol";
-import "../../../interfaces/IStrategy.sol";
+import "../../../interfaces/IStrategyOracle.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/ICvxFxsDeposit.sol";
 
-contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
+contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategyOracle {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
@@ -59,6 +59,18 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategy {
             CURVE_CVXFXS_FXS_POOL,
             type(uint256).max
         );
+
+        IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
 
         IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
         IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
