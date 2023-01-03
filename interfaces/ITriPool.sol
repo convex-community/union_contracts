@@ -6,4 +6,11 @@ interface ITriPool {
         external;
 
     function get_virtual_price() external view returns (uint256);
+
+    function exchange(
+        uint256 i,
+        uint256 j,
+        uint256 dx,
+        uint256 min_dy
+    ) external;
 }
