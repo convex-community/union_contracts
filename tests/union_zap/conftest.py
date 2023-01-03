@@ -195,7 +195,9 @@ def claim_tree(accounts, union_contract):
 def mock_claims(claim_tree, token_list):
     votium_multi_merkle = interface.IMultiMerkleStash(VOTIUM_DISTRIBUTOR)
     interface.IERC20(WETH).transfer(
-        VOTIUM_DISTRIBUTOR, 1e20, {"from": "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0"}
+        VOTIUM_DISTRIBUTOR,
+        1e20,
+        {"from": "0x8eb8a3b98659cce290402893d0123abb75e3ab28"},  # Avax bridge
     )
     for token in token_list:
         votium_multi_merkle.updateMerkleRoot(

@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/ICurveV2Pool.sol";
-import "../../interfaces/ICurveFactoryPool.sol";
+import "../../interfaces/ICurvePool.sol";
 import "../../interfaces/IBasicRewards.sol";
 import "../../interfaces/IWETH.sol";
 import "../../interfaces/IUniV3Router.sol";
@@ -15,6 +15,8 @@ contract FXSSwapper is Ownable {
 
     address public constant CURVE_FXS_ETH_POOL =
         0x941Eb6F616114e4Ecaa85377945EA306002612FE;
+    address public constant CURVE_FRAX_USDC_POOL =
+        0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
     address public constant FXS_TOKEN =
         0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0;
     address public constant UNISWAP_ROUTER =
@@ -32,13 +34,15 @@ contract FXSSwapper is Ownable {
     address public depositor;
 
     ICurveV2Pool fxsEthSwap = ICurveV2Pool(CURVE_FXS_ETH_POOL);
+    ICurvePool fraxUsdcSwap = ICurvePool(CURVE_FRAX_USDC_POOL);
     // The swap strategy to use when going eth -> fxs
     enum SwapOption {
         Curve,
         Uniswap,
-        Unistables
+        Unistables,
+        UniCurve1
     }
-    SwapOption public swapOption = SwapOption.Unistables;
+    SwapOption public swapOption = SwapOption.UniCurve1;
 
     constructor(address _depositor) {
         require(_depositor != address(0));
@@ -56,8 +60,20 @@ contract FXSSwapper is Ownable {
         IERC20(FXS_TOKEN).safeApprove(UNIV3_ROUTER, 0);
         IERC20(FXS_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
 
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
+
         IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
         IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
     }
 
     /// @notice Change the contract authorized to call buy and sell functions
@@ -234,6 +250,86 @@ contract FXSSwapper is Ownable {
         return _ethAmount;
     }
 
+    /// @notice Swap FXS->ETH on a mix of UniV2, UniV3 & Curve
+    /// @param _amount - amount to swap
+    /// @return amount of token obtained after the swap
+    function _uniCurve1FxsToEthSwap(uint256 _amount)
+        internal
+        returns (uint256)
+    {
+        address[] memory _path = new address[](2);
+        _path[0] = FXS_TOKEN;
+        _path[1] = FRAX_TOKEN;
+        uint256[] memory amounts = IUniV2Router(UNISWAP_ROUTER)
+            .swapExactTokensForTokens(
+                _amount,
+                1,
+                _path,
+                address(this),
+                block.timestamp + 1
+            );
+
+        uint256 _fraxAmount = amounts[1];
+        // Swap FRAX for USDC on Curve
+        uint256 _usdcAmount = fraxUsdcSwap.exchange(0, 1, _fraxAmount, 0);
+
+        // USDC to ETH on UniV3
+        uint24 fee = 500;
+        IUniV3Router.ExactInputParams memory _params = IUniV3Router
+            .ExactInputParams(
+                abi.encodePacked(USDC_TOKEN, fee, WETH_TOKEN),
+                address(this),
+                block.timestamp + 1,
+                _usdcAmount,
+                0
+            );
+
+        uint256 _ethAmount = IUniV3Router(UNIV3_ROUTER).exactInput{value: 0}(
+            _params
+        );
+
+        IWETH(WETH_TOKEN).withdraw(_ethAmount);
+        return _ethAmount;
+    }
+
+    /// @notice Swap ETH->FXS on a mix of UniV2, UniV3 & Curve
+    /// @param _amount - amount to swap
+    /// @return amount of token obtained after the swap
+    function _uniCurve1EthToFxsSwap(uint256 _amount)
+        internal
+        returns (uint256)
+    {
+        uint24 fee = 500;
+        IUniV3Router.ExactInputParams memory _params = IUniV3Router
+            .ExactInputParams(
+                abi.encodePacked(WETH_TOKEN, fee, USDC_TOKEN),
+                address(this),
+                block.timestamp + 1,
+                _amount,
+                0
+            );
+
+        uint256 _usdcAmount = IUniV3Router(UNIV3_ROUTER).exactInput{
+            value: _amount
+        }(_params);
+
+        // Swap USDC for FRAX on Curve
+        uint256 _fraxAmount = fraxUsdcSwap.exchange(1, 0, _usdcAmount, 0);
+
+        address[] memory _path = new address[](2);
+        _path[0] = FRAX_TOKEN;
+        _path[1] = FXS_TOKEN;
+        uint256[] memory amounts = IUniV2Router(UNISWAP_ROUTER)
+            .swapExactTokensForTokens(
+                _fraxAmount,
+                1,
+                _path,
+                address(this),
+                block.timestamp + 1
+            );
+        return amounts[1];
+    }
+
     /// @notice Swap native ETH for FXS via different routes
     /// @param _amount - amount to swap
     /// @param _option - the option to use when swapping
@@ -248,6 +344,11 @@ contract FXSSwapper is Ownable {
             return _curveEthFxsSwap(_amount, _ethToFxs);
         } else if (_option == SwapOption.Uniswap) {
             return _uniV3EthFxsSwap(_amount, _ethToFxs);
+        } else if (_option == SwapOption.UniCurve1) {
+            return
+                _ethToFxs
+                    ? _uniCurve1EthToFxsSwap(_amount)
+                    : _uniCurve1FxsToEthSwap(_amount);
         } else {
             return
                 _ethToFxs

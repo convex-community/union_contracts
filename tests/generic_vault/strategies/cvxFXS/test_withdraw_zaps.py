@@ -21,6 +21,7 @@ from ....utils.cvxfxs import (
     fxs_eth_curve,
     fxs_eth_uniswap,
     fxs_eth_unistable,
+    fxs_eth_unicurve1,
 )
 
 
@@ -112,7 +113,7 @@ def test_claim_as_cvx_and_lock(
     assert interface.ICVXLocker(CONVEX_LOCKER).balances(alice)[0] == cvx_amount
 
 
-@pytest.mark.parametrize("option", [0, 1, 2])
+@pytest.mark.parametrize("option", [0, 1, 2, 3])
 def test_claim_as_eth(
     fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option
 ):
@@ -134,6 +135,9 @@ def test_claim_as_eth(
     elif option == 2:
         eth_amount = fxs_eth_unistable(fxs_amount)
         print(f"Harvested UniStable: {eth_amount} ETH")
+    else:
+        eth_amount = fxs_eth_unicurve1(fxs_amount)
+        print(f"Harvested UniCurve1: {eth_amount} ETH")
 
     vault.approve(zaps, 2**256 - 1, {"from": alice})
 
