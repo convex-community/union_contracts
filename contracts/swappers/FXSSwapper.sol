@@ -42,7 +42,7 @@ contract FXSSwapper is Ownable {
         Unistables,
         UniCurve1
     }
-    SwapOption public swapOption = SwapOption.Unistables;
+    SwapOption public swapOption = SwapOption.UniCurve1;
 
     constructor(address _depositor) {
         require(_depositor != address(0));
@@ -68,6 +68,9 @@ contract FXSSwapper is Ownable {
 
         IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
         IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
 
         IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, 0);
         IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
