@@ -18,6 +18,7 @@ from .constants import (
     CVXFXS,
     CVXFXS_FXS_GAUGE_DEPOSIT,
     CVX_MINING_LIB,
+    CURVE_FRAX_USDC_POOL,
 )
 
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
@@ -104,6 +105,24 @@ def calc_harvest_amount_uniswap(strategy):
     return fxs_balance
 
 
+def fxs_eth_unicurve1(amount):
+    frax_balance = interface.IUniV2Router(UNI_ROUTER).getAmountsOut(
+        amount, [FXS, FRAX]
+    )[-1]
+    usdc_balance = interface.ICurvePool(CURVE_FRAX_USDC_POOL).get_dy(0, 1, frax_balance)
+    path = encode_single_packed("(address,uint24,address)", [USDC, 500, WETH])
+    return interface.IQuoter(UNI_QUOTER).quoteExactInput(path, usdc_balance)
+
+
+def eth_fxs_unicurve1(amount):
+    path = encode_single_packed("(address,uint24,address)", [WETH, 500, USDC])
+    usdc_balance = interface.IQuoter(UNI_QUOTER).quoteExactInput(path, amount)
+    frax_balance = interface.ICurvePool(CURVE_FRAX_USDC_POOL).get_dy(1, 0, usdc_balance)
+    return interface.IUniV2Router(UNI_ROUTER).getAmountsOut(frax_balance, [FRAX, FXS])[
+        -1
+    ]
+
+
 def eth_fxs_unistable(amount):
     path = encode_single_packed(
         "(address,uint24,address,uint24,address)", [WETH, 500, USDC, 500, FRAX]
@@ -162,6 +181,8 @@ def eth_to_fxs(amount, option):
         return eth_fxs_curve(amount)
     elif option == 1:
         return eth_fxs_uniswap(amount)
+    elif option == 3:
+        return eth_fxs_unicurve1(amount)
     else:
         return eth_fxs_unistable(amount)
 
@@ -171,5 +192,7 @@ def fxs_to_eth(amount, option):
         return fxs_eth_curve(amount)
     elif option == 1:
         return fxs_eth_uniswap(amount)
+    elif option == 3:
+        return fxs_eth_unicurve1(amount)
     else:
         return fxs_eth_unistable(amount)

@@ -17,11 +17,18 @@ session = CachedSession("test_cache", expire_after=300)
 
 
 def get_spot_prices(token):
-    r = requests.get(
+    r = session.get(
         f"https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses={token}&vs_currencies=ETH"
     )
     data = json.loads(r.content)
-    return data[token.lower()]["eth"]
+    try:
+        price = data[token.lower()]["eth"]
+    except KeyError:
+        print("Failed to get price from Coingecko, trying defillama")
+        r = session.get(f"https://coins.llama.fi/prices/current/ethereum:{token}")
+        data = json.loads(r.content)
+        price = data["coins"][f"ethereum:{token}"]["price"]
+    return price
 
 
 def simulate_adjust(union_contract, lock, weights, option, output_tokens, adjust_order):
