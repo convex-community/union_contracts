@@ -32,6 +32,9 @@ def estimate_underlying_received(amount, token):
         amount, token, 0, False, random_wallet, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
     )
     value = tx.return_value
+    # older version of brownie bork the return value
+    if value is None:
+        value = tx.events[-1]["coin_amount"]
     chain.undo(2)
     return value
 
