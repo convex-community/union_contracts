@@ -4,34 +4,61 @@ pragma experimental ABIEncoderV2;
 
 interface IRewardStaking {
     function stakeFor(address, uint256) external;
-    function stake( uint256) external;
+
+    function stake(uint256) external;
+
     function withdraw(uint256 amount, bool claim) external;
+
     function withdrawAndUnwrap(uint256 amount, bool claim) external;
+
     function earned(address account) external view returns (uint256);
+
     function getReward() external;
+
     function getReward(address _account, bool _claimExtras) external;
+
     function extraRewardsLength() external view returns (uint256);
+
     function extraRewards(uint256 _pid) external view returns (address);
+
     function rewardToken() external view returns (address);
+
     function balanceOf(address _account) external view returns (uint256);
-    function rewardRate() external view returns(uint256);
-    function totalSupply() external view returns(uint256);
+
+    function rewardRate() external view returns (uint256);
+
+    function totalSupply() external view returns (uint256);
 }
 
 interface IConvexDeposits {
-    function deposit(uint256 _pid, uint256 _amount, bool _stake) external returns(bool);
-    function deposit(uint256 _amount, bool _lock, address _stakeAddress) external;
+    function deposit(
+        uint256 _pid,
+        uint256 _amount,
+        bool _stake
+    ) external returns (bool);
+
+    function deposit(
+        uint256 _amount,
+        bool _lock,
+        address _stakeAddress
+    ) external;
 }
+
 interface IRewardHook {
     function onRewardClaim() external;
 }
+
 library SafeMath {
     /**
      * @dev Returns the addition of two unsigned integers, with an overflow flag.
      *
      * _Available since v3.4._
      */
-    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function tryAdd(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         uint256 c = a + b;
         if (c < a) return (false, 0);
         return (true, c);
@@ -42,7 +69,11 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function trySub(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         if (b > a) return (false, 0);
         return (true, a - b);
     }
@@ -52,7 +83,11 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function tryMul(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
         // benefit is lost if 'b' is also tested.
         // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
@@ -67,7 +102,11 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function tryDiv(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         if (b == 0) return (false, 0);
         return (true, a / b);
     }
@@ -77,7 +116,11 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function tryMod(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         if (b == 0) return (false, 0);
         return (true, a % b);
     }
@@ -177,7 +220,11 @@ library SafeMath {
      *
      * - Subtraction cannot overflow.
      */
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b <= a, errorMessage);
         return a - b;
     }
@@ -197,7 +244,11 @@ library SafeMath {
      *
      * - The divisor cannot be zero.
      */
-    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b > 0, errorMessage);
         return a / b;
     }
@@ -217,7 +268,11 @@ library SafeMath {
      *
      * - The divisor cannot be zero.
      */
-    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b > 0, errorMessage);
         return a % b;
     }
@@ -244,7 +299,9 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transfer(address recipient, uint256 amount) external returns (bool);
+    function transfer(address recipient, uint256 amount)
+        external
+        returns (bool);
 
     /**
      * @dev Returns the remaining number of tokens that `spender` will be
@@ -253,7 +310,10 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -280,7 +340,11 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -294,7 +358,11 @@ interface IERC20 {
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}. `value` is the new allowance.
      */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 }
 
 /**
@@ -310,12 +378,27 @@ library SafeERC20 {
     using SafeMath for uint256;
     using Address for address;
 
-    function safeTransfer(IERC20 token, address to, uint256 value) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
+    function safeTransfer(
+        IERC20 token,
+        address to,
+        uint256 value
+    ) internal {
+        _callOptionalReturn(
+            token,
+            abi.encodeWithSelector(token.transfer.selector, to, value)
+        );
     }
 
-    function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
+    function safeTransferFrom(
+        IERC20 token,
+        address from,
+        address to,
+        uint256 value
+    ) internal {
+        _callOptionalReturn(
+            token,
+            abi.encodeWithSelector(token.transferFrom.selector, from, to, value)
+        );
     }
 
     /**
@@ -325,25 +408,60 @@ library SafeERC20 {
      * Whenever possible, use {safeIncreaseAllowance} and
      * {safeDecreaseAllowance} instead.
      */
-    function safeApprove(IERC20 token, address spender, uint256 value) internal {
+    function safeApprove(
+        IERC20 token,
+        address spender,
+        uint256 value
+    ) internal {
         // safeApprove should only be called when setting an initial allowance,
         // or when resetting it to zero. To increase and decrease it, use
         // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
         // solhint-disable-next-line max-line-length
-        require((value == 0) || (token.allowance(address(this), spender) == 0),
+        require(
+            (value == 0) || (token.allowance(address(this), spender) == 0),
             "SafeERC20: approve from non-zero to non-zero allowance"
         );
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
+        _callOptionalReturn(
+            token,
+            abi.encodeWithSelector(token.approve.selector, spender, value)
+        );
     }
 
-    function safeIncreaseAllowance(IERC20 token, address spender, uint256 value) internal {
-        uint256 newAllowance = token.allowance(address(this), spender).add(value);
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
+    function safeIncreaseAllowance(
+        IERC20 token,
+        address spender,
+        uint256 value
+    ) internal {
+        uint256 newAllowance = token.allowance(address(this), spender).add(
+            value
+        );
+        _callOptionalReturn(
+            token,
+            abi.encodeWithSelector(
+                token.approve.selector,
+                spender,
+                newAllowance
+            )
+        );
     }
 
-    function safeDecreaseAllowance(IERC20 token, address spender, uint256 value) internal {
-        uint256 newAllowance = token.allowance(address(this), spender).sub(value, "SafeERC20: decreased allowance below zero");
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
+    function safeDecreaseAllowance(
+        IERC20 token,
+        address spender,
+        uint256 value
+    ) internal {
+        uint256 newAllowance = token.allowance(address(this), spender).sub(
+            value,
+            "SafeERC20: decreased allowance below zero"
+        );
+        _callOptionalReturn(
+            token,
+            abi.encodeWithSelector(
+                token.approve.selector,
+                spender,
+                newAllowance
+            )
+        );
     }
 
     /**
@@ -357,13 +475,21 @@ library SafeERC20 {
         // we're implementing it ourselves. We use {Address.functionCall} to perform this call, which verifies that
         // the target address contains contract code and also asserts for success in the low-level call.
 
-        bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-        if (returndata.length > 0) { // Return data is optional
+        bytes memory returndata = address(token).functionCall(
+            data,
+            "SafeERC20: low-level call failed"
+        );
+        if (returndata.length > 0) {
+            // Return data is optional
             // solhint-disable-next-line max-line-length
-            require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
+            require(
+                abi.decode(returndata, (bool)),
+                "SafeERC20: ERC20 operation did not succeed"
+            );
         }
     }
 }
+
 /**
  * @dev Collection of functions related to the address type
  */
@@ -392,7 +518,9 @@ library Address {
 
         uint256 size;
         // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
+        assembly {
+            size := extcodesize(account)
+        }
         return size > 0;
     }
 
@@ -413,11 +541,17 @@ library Address {
      * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
      */
     function sendValue(address payable recipient, uint256 amount) internal {
-        require(address(this).balance >= amount, "Address: insufficient balance");
+        require(
+            address(this).balance >= amount,
+            "Address: insufficient balance"
+        );
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{ value: amount }("");
-        require(success, "Address: unable to send value, recipient may have reverted");
+        (bool success, ) = recipient.call{value: amount}("");
+        require(
+            success,
+            "Address: unable to send value, recipient may have reverted"
+        );
     }
 
     /**
@@ -438,7 +572,10 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+    function functionCall(address target, bytes memory data)
+        internal
+        returns (bytes memory)
+    {
         return functionCall(target, data, "Address: low-level call failed");
     }
 
@@ -448,7 +585,11 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         return functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -463,8 +604,18 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
-        return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value
+    ) internal returns (bytes memory) {
+        return
+            functionCallWithValue(
+                target,
+                data,
+                value,
+                "Address: low-level call with value failed"
+            );
     }
 
     /**
@@ -473,12 +624,22 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
-        require(address(this).balance >= value, "Address: insufficient balance for call");
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
+        require(
+            address(this).balance >= value,
+            "Address: insufficient balance for call"
+        );
         require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: value }(data);
+        (bool success, bytes memory returndata) = target.call{value: value}(
+            data
+        );
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
@@ -488,8 +649,17 @@ library Address {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
-        return functionStaticCall(target, data, "Address: low-level static call failed");
+    function functionStaticCall(address target, bytes memory data)
+        internal
+        view
+        returns (bytes memory)
+    {
+        return
+            functionStaticCall(
+                target,
+                data,
+                "Address: low-level static call failed"
+            );
     }
 
     /**
@@ -498,7 +668,11 @@ library Address {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
+    function functionStaticCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal view returns (bytes memory) {
         require(isContract(target), "Address: static call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
@@ -512,8 +686,16 @@ library Address {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
-        return functionDelegateCall(target, data, "Address: low-level delegate call failed");
+    function functionDelegateCall(address target, bytes memory data)
+        internal
+        returns (bytes memory)
+    {
+        return
+            functionDelegateCall(
+                target,
+                data,
+                "Address: low-level delegate call failed"
+            );
     }
 
     /**
@@ -522,7 +704,11 @@ library Address {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionDelegateCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         require(isContract(target), "Address: delegate call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
@@ -530,7 +716,11 @@ library Address {
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
-    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
+    function _verifyCallResult(
+        bool success,
+        bytes memory returndata,
+        string memory errorMessage
+    ) private pure returns (bytes memory) {
         if (success) {
             return returndata;
         } else {
@@ -549,6 +739,7 @@ library Address {
         }
     }
 }
+
 /*
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -597,9 +788,9 @@ abstract contract Context {
 contract ERC20 is Context, IERC20 {
     using SafeMath for uint256;
 
-    mapping (address => uint256) private _balances;
+    mapping(address => uint256) private _balances;
 
-    mapping (address => mapping (address => uint256)) private _allowances;
+    mapping(address => mapping(address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
 
@@ -616,7 +807,7 @@ contract ERC20 is Context, IERC20 {
      * All three of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor (string memory name_, string memory symbol_) public {
+    constructor(string memory name_, string memory symbol_) public {
         _name = name_;
         _symbol = symbol_;
         _decimals = 18;
@@ -664,7 +855,13 @@ contract ERC20 is Context, IERC20 {
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) public view virtual override returns (uint256) {
+    function balanceOf(address account)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _balances[account];
     }
 
@@ -676,7 +873,12 @@ contract ERC20 is Context, IERC20 {
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+    function transfer(address recipient, uint256 amount)
+        public
+        virtual
+        override
+        returns (bool)
+    {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -684,7 +886,13 @@ contract ERC20 is Context, IERC20 {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+    function allowance(address owner, address spender)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _allowances[owner][spender];
     }
 
@@ -695,7 +903,12 @@ contract ERC20 is Context, IERC20 {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+    function approve(address spender, uint256 amount)
+        public
+        virtual
+        override
+        returns (bool)
+    {
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -713,9 +926,20 @@ contract ERC20 is Context, IERC20 {
      * - the caller must have allowance for ``sender``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        _approve(
+            sender,
+            _msgSender(),
+            _allowances[sender][_msgSender()].sub(
+                amount,
+                "ERC20: transfer amount exceeds allowance"
+            )
+        );
         return true;
     }
 
@@ -731,8 +955,16 @@ contract ERC20 is Context, IERC20 {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
+    function increaseAllowance(address spender, uint256 addedValue)
+        public
+        virtual
+        returns (bool)
+    {
+        _approve(
+            _msgSender(),
+            spender,
+            _allowances[_msgSender()][spender].add(addedValue)
+        );
         return true;
     }
 
@@ -750,8 +982,19 @@ contract ERC20 is Context, IERC20 {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
+    function decreaseAllowance(address spender, uint256 subtractedValue)
+        public
+        virtual
+        returns (bool)
+    {
+        _approve(
+            _msgSender(),
+            spender,
+            _allowances[_msgSender()][spender].sub(
+                subtractedValue,
+                "ERC20: decreased allowance below zero"
+            )
+        );
         return true;
     }
 
@@ -769,13 +1012,20 @@ contract ERC20 is Context, IERC20 {
      * - `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      */
-    function _transfer(address sender, address recipient, uint256 amount) internal virtual {
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal virtual {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
         _beforeTokenTransfer(sender, recipient, amount);
 
-        _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
+        _balances[sender] = _balances[sender].sub(
+            amount,
+            "ERC20: transfer amount exceeds balance"
+        );
         _balances[recipient] = _balances[recipient].add(amount);
         emit Transfer(sender, recipient, amount);
     }
@@ -815,7 +1065,10 @@ contract ERC20 is Context, IERC20 {
 
         _beforeTokenTransfer(account, address(0), amount);
 
-        _balances[account] = _balances[account].sub(amount, "ERC20: burn amount exceeds balance");
+        _balances[account] = _balances[account].sub(
+            amount,
+            "ERC20: burn amount exceeds balance"
+        );
         _totalSupply = _totalSupply.sub(amount);
         emit Transfer(account, address(0), amount);
     }
@@ -833,7 +1086,11 @@ contract ERC20 is Context, IERC20 {
      * - `owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
+    function _approve(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal virtual {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
@@ -866,8 +1123,13 @@ contract ERC20 is Context, IERC20 {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
 }
+
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
  *
@@ -901,7 +1163,7 @@ abstract contract ReentrancyGuard {
 
     uint256 private _status;
 
-    constructor () internal {
+    constructor() internal {
         _status = _NOT_ENTERED;
     }
 
@@ -927,15 +1189,12 @@ abstract contract ReentrancyGuard {
     }
 }
 
-
 //Wrapper for staked cvxcrv that allows other incentives to be added
 
 //Based on Curve.fi's gauge wrapper implementations at https://github.com/curvefi/curve-dao-contracts/tree/master/contracts/gauges/wrappers
 contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
-    using SafeERC20
-    for IERC20;
-    using SafeMath
-    for uint256;
+    using SafeERC20 for IERC20;
+    using SafeMath for uint256;
 
     struct EarnedData {
         address token;
@@ -952,21 +1211,29 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     //constants/immutables
-    address public constant crvDepositor = address(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae);
-    address public constant cvxCrvStaking = address(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
-    address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
-    address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
-    address public constant cvxCrv = address(0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7);
-    address public constant threeCrv = address(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
-    address public constant treasury = address(0x1389388d01708118b497f59521f6943Be2541bb7);
-    address public constant threeCrvRewards = address(0x7091dbb7fcbA54569eF1387Ac89Eb2a5C9F6d2EA);
+    address public constant crvDepositor =
+        address(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae);
+    address public constant cvxCrvStaking =
+        address(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
+    address public constant crv =
+        address(0xD533a949740bb3306d119CC777fa900bA034cd52);
+    address public constant cvx =
+        address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
+    address public constant cvxCrv =
+        address(0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7);
+    address public constant threeCrv =
+        address(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
+    address public constant treasury =
+        address(0x1389388d01708118b497f59521f6943Be2541bb7);
+    address public constant threeCrvRewards =
+        address(0x7091dbb7fcbA54569eF1387Ac89Eb2a5C9F6d2EA);
     uint256 private constant WEIGHT_PRECISION = 10000;
 
     //rewards
     RewardType[] public rewards;
     mapping(address => uint256) public registeredRewards;
     address public rewardHook;
-    mapping (address => uint256) public userRewardWeight;
+    mapping(address => uint256) public userRewardWeight;
     uint256 public supplyWeight;
 
     //management
@@ -974,25 +1241,27 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     bool public isInit;
     address public owner;
 
-    event Deposited(address indexed _user, address indexed _account, uint256 _amount, bool _isCrv);
+    event Deposited(
+        address indexed _user,
+        address indexed _account,
+        uint256 _amount,
+        bool _isCrv
+    );
     event Withdrawn(address indexed _user, uint256 _amount);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
     event RewardInvalidated(address _rewardToken);
     event RewardGroupSet(address _rewardToken, uint256 _rewardGroup);
 
-    constructor() public
-    ERC20(
-        "Staked CvxCrv",
-        "stkCvxCrv"
-    ){
-
+    constructor() public ERC20("Staked CvxCrv", "stkCvxCrv") {
         owner = address(0xa3C5A1e09150B75ff251c1a7815A07182c3de2FB); //default to convex multisig
         emit OwnershipTransferred(address(0), owner);
 
         addRewards();
         setApprovals();
     }
-
 
     function decimals() public view override returns (uint8) {
         return 18;
@@ -1004,7 +1273,10 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
@@ -1019,11 +1291,13 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     function reclaim() external onlyOwner {
-        require(isShutdown,"!shutdown");
+        require(isShutdown, "!shutdown");
 
         //reclaim extra staked cvxcrv tokens and return to treasury if this wrapper is shutdown
         //in order that the extra staking weight can be migrated
-        uint256 extraTokens = IRewardStaking(cvxCrvStaking).balanceOf(address(this)) - totalSupply();
+        uint256 extraTokens = IRewardStaking(cvxCrvStaking).balanceOf(
+            address(this)
+        ) - totalSupply();
         IRewardStaking(cvxCrvStaking).withdraw(extraTokens, false);
         IERC20(cvxCrv).safeTransfer(treasury, extraTokens);
     }
@@ -1036,90 +1310,92 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     function addRewards() public {
-
         if (rewards.length == 0) {
             rewards.push(
                 RewardType({
-            reward_token: crv,
-            reward_integral: 0,
-            reward_remaining: 0,
-            reward_group: 0
-            })
+                    reward_token: crv,
+                    reward_integral: 0,
+                    reward_remaining: 0,
+                    reward_group: 0
+                })
             );
             rewards.push(
                 RewardType({
-            reward_token: cvx,
-            reward_integral: 0,
-            reward_remaining: 0,
-            reward_group: 0
-            })
+                    reward_token: cvx,
+                    reward_integral: 0,
+                    reward_remaining: 0,
+                    reward_group: 0
+                })
             );
             rewards.push(
                 RewardType({
-            reward_token: threeCrv,
-            reward_integral: 0,
-            reward_remaining: 0,
-            reward_group: 1
-            })
+                    reward_token: threeCrv,
+                    reward_integral: 0,
+                    reward_remaining: 0,
+                    reward_group: 1
+                })
             );
             registeredRewards[crv] = 1; //mark registered at index+1
             registeredRewards[cvx] = 2; //mark registered at index+1
             registeredRewards[threeCrv] = 3; //mark registered at index+1
             //send to self to warmup state
-            IERC20(crv).transfer(address(this),0);
+            IERC20(crv).transfer(address(this), 0);
             //send to self to warmup state
-            IERC20(cvx).transfer(address(this),0);
+            IERC20(cvx).transfer(address(this), 0);
             //send to self to warmup state
-            IERC20(threeCrv).transfer(address(this),0);
+            IERC20(threeCrv).transfer(address(this), 0);
         }
 
         uint256 extraCount = IRewardStaking(cvxCrvStaking).extraRewardsLength();
         for (uint256 i = 0; i < extraCount; i++) {
             address extraPool = IRewardStaking(cvxCrvStaking).extraRewards(i);
             address extraToken = IRewardStaking(extraPool).rewardToken();
-            if(registeredRewards[extraToken] == 0){
+            if (registeredRewards[extraToken] == 0) {
                 rewards.push(
                     RewardType({
-                reward_token: extraToken,
-                reward_integral: 0,
-                reward_remaining: 0,
-                reward_group: 0
-                })
+                        reward_token: extraToken,
+                        reward_integral: 0,
+                        reward_remaining: 0,
+                        reward_group: 0
+                    })
                 );
                 registeredRewards[extraToken] = rewards.length; //mark registered at index+1
             }
         }
     }
 
-    function addTokenReward(address _token, uint256 _rewardGroup) public onlyOwner {
-        require(_token != address(0),"invalid address");
+    function addTokenReward(address _token, uint256 _rewardGroup)
+        public
+        onlyOwner
+    {
+        require(_token != address(0), "invalid address");
 
         //check if already registered
-        if(registeredRewards[_token] == 0){
+        if (registeredRewards[_token] == 0) {
             //new token, add token to list
             rewards.push(
                 RewardType({
-            reward_token: _token,
-            reward_integral: 0,
-            reward_remaining: 0,
-            reward_group: _rewardGroup > 0 ? uint8(1) : uint8(0)
-            })
+                    reward_token: _token,
+                    reward_integral: 0,
+                    reward_remaining: 0,
+                    reward_group: _rewardGroup > 0 ? uint8(1) : uint8(0)
+                })
             );
             //add to registered map
             registeredRewards[_token] = rewards.length; //mark registered at index+1
             //send to self to warmup state
-            IERC20(_token).transfer(address(this),0);
+            IERC20(_token).transfer(address(this), 0);
 
             emit RewardGroupSet(_token, _rewardGroup);
-        }else{
+        } else {
             //get previous used index of given token
             //this ensures that reviving can only be done on the previous used slot
             uint256 index = registeredRewards[_token];
-            if(index > 0){
+            if (index > 0) {
                 //index is registeredRewards minus one
-                RewardType storage reward = rewards[index-1];
+                RewardType storage reward = rewards[index - 1];
                 //check if it was invalidated
-                if(reward.reward_token == address(0)){
+                if (reward.reward_token == address(0)) {
                     //revive
                     reward.reward_token = _token;
                 }
@@ -1130,9 +1406,9 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     //allow invalidating a reward if the token causes trouble in calcRewardIntegral
     function invalidateReward(address _token) public onlyOwner {
         uint256 index = registeredRewards[_token];
-        if(index > 0){
+        if (index > 0) {
             //index is registered rewards minus one
-            RewardType storage reward = rewards[index-1];
+            RewardType storage reward = rewards[index - 1];
             require(reward.reward_token == _token, "!mismatch");
             //set reward token address to 0, integral calc will now skip
             reward.reward_token = address(0);
@@ -1141,33 +1417,41 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     //set reward group
-    function setRewardGroup(address _token, uint256 _rewardGroup) public onlyOwner {
+    function setRewardGroup(address _token, uint256 _rewardGroup)
+        public
+        onlyOwner
+    {
         //checkpoint
-        _checkpoint([address(msg.sender),address(0)]);
+        _checkpoint([address(msg.sender), address(0)]);
 
         uint256 index = registeredRewards[_token];
-        if(index > 0){
+        if (index > 0) {
             //index is registered rewards minus one
-            RewardType storage reward = rewards[index-1];
+            RewardType storage reward = rewards[index - 1];
             reward.reward_group = _rewardGroup > 0 ? uint8(1) : uint8(0);
             emit RewardGroupSet(_token, _rewardGroup);
         }
     }
 
-    function setHook(address _hook) external onlyOwner{
+    function setHook(address _hook) external onlyOwner {
         rewardHook = _hook;
     }
 
-    function rewardLength() external view returns(uint256) {
+    function rewardLength() external view returns (uint256) {
         return rewards.length;
     }
 
-
-    function _calcRewardIntegral(uint256 _index, address[2] memory _accounts, uint256[2] memory _balances, uint256 _supply, bool _isClaim) internal{
+    function _calcRewardIntegral(
+        uint256 _index,
+        address[2] memory _accounts,
+        uint256[2] memory _balances,
+        uint256 _supply,
+        bool _isClaim
+    ) internal {
         RewardType storage reward = rewards[_index];
         //skip invalidated rewards
         //if a reward token starts throwing an error, calcRewardIntegral needs a way to exit
-        if(reward.reward_token == address(0)){
+        if (reward.reward_token == address(0)) {
             return;
         }
 
@@ -1175,19 +1459,22 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
         //getReward is unguarded so we use reward_remaining to keep track of how much was actually claimed
         uint256 bal = IERC20(reward.reward_token).balanceOf(address(this));
 
-
         if (bal.sub(reward.reward_remaining) > 0) {
             //adjust supply based on reward group
-            if(reward.reward_group == 0){
+            if (reward.reward_group == 0) {
                 //use inverse (supplyWeight can never be more than _supply)
                 _supply = (_supply - supplyWeight);
-            }else{
+            } else {
                 //use supplyWeight
                 _supply = supplyWeight;
             }
 
-            if(_supply > 0){
-                reward.reward_integral = reward.reward_integral + uint128(bal.sub(reward.reward_remaining).mul(1e20).div(_supply));
+            if (_supply > 0) {
+                reward.reward_integral =
+                    reward.reward_integral +
+                    uint128(
+                        bal.sub(reward.reward_remaining).mul(1e20).div(_supply)
+                    );
             }
         }
 
@@ -1195,45 +1482,65 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
         for (uint256 u = 0; u < _accounts.length; u++) {
             //do not give rewards to address 0
             if (_accounts[u] == address(0)) continue;
-            if(_isClaim && u != 0) continue; //if claiming, only update/claim for first address and use second as forwarding
+            if (_isClaim && u != 0) continue; //if claiming, only update/claim for first address and use second as forwarding
 
             //adjust user balance based on reward group
             uint256 userb = _balances[u];
-            if(reward.reward_group == 0){
+            if (reward.reward_group == 0) {
                 //use userRewardWeight inverse: weight of 0 should be full reward group 0
-                userb = userb * (WEIGHT_PRECISION - userRewardWeight[_accounts[u]]) / WEIGHT_PRECISION;
-            }else{
+                userb =
+                    (userb *
+                        (WEIGHT_PRECISION - userRewardWeight[_accounts[u]])) /
+                    WEIGHT_PRECISION;
+            } else {
                 //use userRewardWeight: weight of 10,000 should be full reward group 1
-                userb = userb * userRewardWeight[_accounts[u]] / WEIGHT_PRECISION;
+                userb =
+                    (userb * userRewardWeight[_accounts[u]]) /
+                    WEIGHT_PRECISION;
             }
 
-            uint userI = reward.reward_integral_for[_accounts[u]];
-            if(_isClaim || userI < reward.reward_integral){
-                if(_isClaim){
-                    uint256 receiveable = reward.claimable_reward[_accounts[u]].add(userb.mul( uint256(reward.reward_integral).sub(userI)).div(1e20));
-                    if(receiveable > 0){
+            uint256 userI = reward.reward_integral_for[_accounts[u]];
+            if (_isClaim || userI < reward.reward_integral) {
+                if (_isClaim) {
+                    uint256 receiveable = reward
+                        .claimable_reward[_accounts[u]]
+                        .add(
+                            userb
+                                .mul(uint256(reward.reward_integral).sub(userI))
+                                .div(1e20)
+                        );
+                    if (receiveable > 0) {
                         reward.claimable_reward[_accounts[u]] = 0;
                         //cheat for gas savings by transfering to the second index in accounts list
                         //if claiming only the 0 index will update so 1 index can hold forwarding info
                         //guaranteed to have an address in u+1 so no need to check
-                        IERC20(reward.reward_token).safeTransfer(_accounts[u+1], receiveable);
+                        IERC20(reward.reward_token).safeTransfer(
+                            _accounts[u + 1],
+                            receiveable
+                        );
                         bal = bal.sub(receiveable);
                     }
-                }else{
-                    reward.claimable_reward[_accounts[u]] = reward.claimable_reward[_accounts[u]].add(userb.mul( uint256(reward.reward_integral).sub(userI)).div(1e20));
+                } else {
+                    reward.claimable_reward[_accounts[u]] = reward
+                        .claimable_reward[_accounts[u]]
+                        .add(
+                            userb
+                                .mul(uint256(reward.reward_integral).sub(userI))
+                                .div(1e20)
+                        );
                 }
-                reward.reward_integral_for[_accounts[u]] = reward.reward_integral;
+                reward.reward_integral_for[_accounts[u]] = reward
+                    .reward_integral;
             }
         }
 
         //update remaining reward here since balance could have changed if claiming
-        if(bal != reward.reward_remaining){
+        if (bal != reward.reward_remaining) {
             reward.reward_remaining = uint128(bal);
         }
     }
 
-    function _checkpoint(address[2] memory _accounts) internal nonReentrant{
-
+    function _checkpoint(address[2] memory _accounts) internal nonReentrant {
         uint256 supply = totalSupply();
         uint256[2] memory depositedBalance;
         depositedBalance[0] = balanceOf(_accounts[0]);
@@ -1246,12 +1553,14 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
 
         uint256 rewardCount = rewards.length;
         for (uint256 i = 0; i < rewardCount; i++) {
-            _calcRewardIntegral(i,_accounts,depositedBalance,supply,false);
+            _calcRewardIntegral(i, _accounts, depositedBalance, supply, false);
         }
     }
 
-    function _checkpointAndClaim(address[2] memory _accounts) internal nonReentrant{
-
+    function _checkpointAndClaim(address[2] memory _accounts)
+        internal
+        nonReentrant
+    {
         uint256 supply = totalSupply();
         uint256[2] memory depositedBalance;
         depositedBalance[0] = balanceOf(_accounts[0]); //only do first slot
@@ -1263,34 +1572,39 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
 
         uint256 rewardCount = rewards.length;
         for (uint256 i = 0; i < rewardCount; i++) {
-            _calcRewardIntegral(i,_accounts,depositedBalance,supply,true);
+            _calcRewardIntegral(i, _accounts, depositedBalance, supply, true);
         }
     }
 
     //claim any rewards not part of the convex pool
     function _claimExtras() internal {
         //claim via hook if exists
-        if(rewardHook != address(0)){
-            try IRewardHook(rewardHook).onRewardClaim(){
-            }catch{}
+        if (rewardHook != address(0)) {
+            try IRewardHook(rewardHook).onRewardClaim() {} catch {}
         }
     }
 
-    function user_checkpoint(address _account) external returns(bool) {
+    function user_checkpoint(address _account) external returns (bool) {
         _checkpoint([_account, address(0)]);
         return true;
     }
 
     //run earned as a mutable function to claim everything before calculating earned rewards
-    function earned(address _account) external returns(EarnedData[] memory claimable) {
+    function earned(address _account)
+        external
+        returns (EarnedData[] memory claimable)
+    {
         _checkpoint([_account, address(0)]);
         return _earned(_account);
     }
 
     //because we are doing a mutative earned(), we can just simulate checkpointing a user and looking at recorded claimables
     //thus no need to look at each reward contract's claimable tokens or cvx minting equations etc
-    function _earned(address _account) internal view returns(EarnedData[] memory claimable) {
-
+    function _earned(address _account)
+        internal
+        view
+        returns (EarnedData[] memory claimable)
+    {
         uint256 rewardCount = rewards.length;
         claimable = new EarnedData[](rewardCount);
 
@@ -1298,7 +1612,7 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
             RewardType storage reward = rewards[i];
 
             //skip invalidated rewards
-            if(reward.reward_token == address(0)){
+            if (reward.reward_token == address(0)) {
                 continue;
             }
 
@@ -1309,7 +1623,7 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     //set a user's reward weight to determine how much of each reward group to receive
-    function setRewardWeight(uint256 _weight) external{
+    function setRewardWeight(uint256 _weight) external {
         require(_weight <= WEIGHT_PRECISION, "!invalid");
 
         //checkpoint user
@@ -1320,31 +1634,39 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
         //..which means reward group 0 will be the inverse (real supply - weight)
         uint256 sweight = supplyWeight;
         //remove old user weight
-        sweight -= balanceOf(msg.sender) * userRewardWeight[msg.sender] / WEIGHT_PRECISION;
+        sweight -=
+            (balanceOf(msg.sender) * userRewardWeight[msg.sender]) /
+            WEIGHT_PRECISION;
         //add new user weight
-        sweight += balanceOf(msg.sender) * _weight / WEIGHT_PRECISION;
+        sweight += (balanceOf(msg.sender) * _weight) / WEIGHT_PRECISION;
         //store
         supplyWeight = sweight;
         userRewardWeight[msg.sender] = _weight;
     }
 
     //get user's weighted balance for specified reward group
-    function userRewardBalance(address _address, uint256 _rewardGroup) external view returns(uint256){
+    function userRewardBalance(address _address, uint256 _rewardGroup)
+        external
+        view
+        returns (uint256)
+    {
         uint256 userb = balanceOf(_address);
-        if(_rewardGroup == 0){
+        if (_rewardGroup == 0) {
             //userRewardWeight of 0 should be full weight for reward group 0
-            userb = userb * (WEIGHT_PRECISION - userRewardWeight[_address]) / WEIGHT_PRECISION;
-        }else{
+            userb =
+                (userb * (WEIGHT_PRECISION - userRewardWeight[_address])) /
+                WEIGHT_PRECISION;
+        } else {
             // userRewardWeight of 10,000 should be full weight for reward group 1
-            userb = userb * userRewardWeight[_address] / WEIGHT_PRECISION;
+            userb = (userb * userRewardWeight[_address]) / WEIGHT_PRECISION;
         }
         return userb;
     }
 
     //get weighted supply for specified reward group
-    function rewardSupply(uint256 _rewardGroup) public view returns(uint256){
+    function rewardSupply(uint256 _rewardGroup) public view returns (uint256) {
         //if group 0, return inverse of supplyWeight
-        if(_rewardGroup == 0){
+        if (_rewardGroup == 0) {
             return (totalSupply() - supplyWeight);
         }
 
@@ -1364,7 +1686,7 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
         require(msg.sender == _account, "!self");
         //claim directly in checkpoint logic to save a bit of gas
         //pack forwardTo into account array to save gas so that a proxy etc doesnt have to double transfer
-        _checkpointAndClaim([_account,_forwardTo]);
+        _checkpointAndClaim([_account, _forwardTo]);
     }
 
     //deposit vanilla crv
@@ -1377,7 +1699,11 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
             //deposit
             _mint(_to, _amount);
             IERC20(crv).safeTransferFrom(msg.sender, address(this), _amount);
-            IConvexDeposits(crvDepositor).deposit(_amount, false, cvxCrvStaking);
+            IConvexDeposits(crvDepositor).deposit(
+                _amount,
+                false,
+                cvxCrvStaking
+            );
         }
 
         emit Deposited(msg.sender, _to, _amount, true);
@@ -1406,7 +1732,6 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
 
     //withdraw to convex deposit token
     function withdraw(uint256 _amount) external {
-
         //dont need to call checkpoint since _burn() will
 
         if (_amount > 0) {
@@ -1419,18 +1744,30 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
         emit Withdrawn(msg.sender, _amount);
     }
 
-    function _beforeTokenTransfer(address _from, address _to, uint256 _amount) internal override {
+    function _beforeTokenTransfer(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) internal override {
         _checkpoint([_from, _to]);
 
         //adjust supply weight assuming post transfer balances
         uint256 sweight = supplyWeight;
-        if(_from != address(0)){
-            sweight -= balanceOf(_from) * userRewardWeight[_from] / WEIGHT_PRECISION;
-            sweight += balanceOf(_from).sub(_amount) * userRewardWeight[_from] / WEIGHT_PRECISION;
+        if (_from != address(0)) {
+            sweight -=
+                (balanceOf(_from) * userRewardWeight[_from]) /
+                WEIGHT_PRECISION;
+            sweight +=
+                (balanceOf(_from).sub(_amount) * userRewardWeight[_from]) /
+                WEIGHT_PRECISION;
         }
-        if(_to != address(0)){
-            sweight -= balanceOf(_to) * userRewardWeight[_to] / WEIGHT_PRECISION;
-            sweight += balanceOf(_to).add(_amount) * userRewardWeight[_to] / WEIGHT_PRECISION;
+        if (_to != address(0)) {
+            sweight -=
+                (balanceOf(_to) * userRewardWeight[_to]) /
+                WEIGHT_PRECISION;
+            sweight +=
+                (balanceOf(_to).add(_amount) * userRewardWeight[_to]) /
+                WEIGHT_PRECISION;
         }
 
         //write new supply weight
