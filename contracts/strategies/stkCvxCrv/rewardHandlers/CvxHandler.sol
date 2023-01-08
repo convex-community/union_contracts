@@ -14,6 +14,8 @@ contract CvxHandler is stkCvxCrvHandlerBase {
 
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
 
+    constructor(address _strategy) stkCvxCrvHandlerBase(_strategy) {}
+
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, 0);
@@ -41,7 +43,7 @@ contract CvxHandler is stkCvxCrvHandlerBase {
 
     /// @notice Swap CVX for ETH on Curve
     /// @param _amount - amount to swap
-    function sell(uint256 _amount) external override {
+    function sell(uint256 _amount) external override onlyStrategy {
         IERC20(CVX_TOKEN).transferFrom(msg.sender, address(this), _amount);
         _cvxToEth(_amount);
         (bool success, ) = (msg.sender).call{value: address(this).balance}("");

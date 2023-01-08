@@ -27,11 +27,32 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
     }
 
     /// @notice Set approvals for the contracts used when swapping & staking
-    function setApprovals() external {}
+    function setApprovals() external {
+        address[] memory _rewardTokens = rewardTokens;
+        for (uint256 i; i < _rewardTokens.length; ++i) {
+            address _tokenHandler = rewardHandlers[_rewardTokens[i]];
+            if (_tokenHandler == address(0)) {
+                continue;
+            }
+            IERC20(_rewardTokens[i]).safeApprove(_tokenHandler, 0);
+            IERC20(_rewardTokens[i]).safeApprove(
+                _tokenHandler,
+                type(uint256).max
+            );
+        }
+    }
 
     /// @notice update the token to handler mapping
-    function _updateRewardToken(address _token, address _handler) internal {
+    function _updateRewardToken(
+        address _token,
+        address _handler,
+        bool _approve
+    ) internal {
         rewardHandlers[_token] = _handler;
+        if (_approve) {
+            IERC20(_token).safeApprove(_handler, 0);
+            IERC20(_token).safeApprove(_handler, type(uint256).max);
+        }
     }
 
     /// @notice Add a reward token and its handler
@@ -39,14 +60,16 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
     ///      use address as zero handler
     /// @param _token the reward token to add
     /// @param _handler address of the contract that will sell for BAL or ETH
-    function addRewardToken(address _token, address _handler)
-        external
-        onlyOwner
-    {
+    /// @param _approve whether to approve token spending for handler contract
+    function addRewardToken(
+        address _token,
+        address _handler,
+        bool _approve
+    ) external onlyOwner {
         // avoid adding the same token twice
         require(rewardHandlers[_token] != address(0), "already exists");
         rewardTokens.push(_token);
-        _updateRewardToken(_token, _handler);
+        _updateRewardToken(_token, _handler, _approve);
     }
 
     /// @notice Update the handler of a reward token
@@ -54,11 +77,13 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
     /// @dev Handler contracts sell for ETH or the token
     /// @param _token the reward token to add
     /// @param _handler address of the contract that will sell the token or ETH (or vice versa)
-    function updateRewardToken(address _token, address _handler)
-        external
-        onlyOwner
-    {
-        _updateRewardToken(_token, _handler);
+    /// @param _approve whether to approve token spending for handler contract
+    function updateRewardToken(
+        address _token,
+        address _handler,
+        bool _approve
+    ) external onlyOwner {
+        _updateRewardToken(_token, _handler, _approve);
     }
 
     /// @notice Reset all registered reward tokens
@@ -111,6 +136,7 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
 
         // process rewards
         address[] memory _rewardTokens = rewardTokens;
+        // swap all reward tokens for ETH through their respective handlers
         for (uint256 i; i < _rewardTokens.length; ++i) {
             address _tokenHandler = rewardHandlers[_rewardTokens[i]];
             if (_tokenHandler == address(0)) {

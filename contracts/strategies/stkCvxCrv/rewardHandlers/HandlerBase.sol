@@ -7,6 +7,7 @@ import "../../../../interfaces/IVaultRewardHandler.sol";
 contract stkCvxCrvHandlerBase is IVaultRewardHandler {
     using SafeERC20 for IERC20;
     address public owner;
+    address public immutable strategy;
     uint256 public allowedSlippage = 9500;
     uint256 public constant DECIMALS = 10000;
     address public pendingOwner;
@@ -14,7 +15,8 @@ contract stkCvxCrvHandlerBase is IVaultRewardHandler {
     address public constant WETH_TOKEN =
         0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
-    constructor() {
+    constructor(address _strategy) {
+        strategy = _strategy;
         owner = msg.sender;
     }
 
@@ -41,6 +43,11 @@ contract stkCvxCrvHandlerBase is IVaultRewardHandler {
 
     modifier onlyOwner() {
         require((msg.sender == owner), "owner only");
+        _;
+    }
+
+    modifier onlyStrategy() {
+        require((msg.sender == strategy), "strategy only");
         _;
     }
 

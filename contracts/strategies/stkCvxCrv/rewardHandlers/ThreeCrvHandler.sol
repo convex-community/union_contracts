@@ -22,6 +22,8 @@ contract ThreeCrvHandler is stkCvxCrvHandlerBase {
     ICurvePool private tripool = ICurvePool(TRIPOOL);
     ICurveTriCrypto private tricrypto = ICurveTriCrypto(TRICRYPTO);
 
+    constructor(address _strategy) stkCvxCrvHandlerBase(_strategy) {}
+
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
         IERC20(USDT_TOKEN).safeApprove(TRICRYPTO, 0);
@@ -60,7 +62,7 @@ contract ThreeCrvHandler is stkCvxCrvHandlerBase {
 
     /// @notice Swap 3CRV for ETH on Curve
     /// @param _amount - amount to swap
-    function sell(uint256 _amount) external override {
+    function sell(uint256 _amount) external override onlyStrategy {
         IERC20(THREECRV_TOKEN).transferFrom(msg.sender, address(this), _amount);
         _threeCrvToEth(_amount);
         (bool success, ) = (msg.sender).call{value: address(this).balance}("");
