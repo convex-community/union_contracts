@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 interface IVaultRewardHandler {
-    function sell(uint256 _amount) external returns (uint256);
+    function sell(uint256 _amount) external;
 
     function setPendingOwner(address _po) external;
 

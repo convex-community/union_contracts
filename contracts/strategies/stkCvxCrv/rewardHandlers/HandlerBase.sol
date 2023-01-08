@@ -37,9 +37,7 @@ contract stkCvxCrvHandlerBase is IVaultRewardHandler {
         allowedSlippage = _slippage;
     }
 
-    function sell(uint256 _amount) external virtual returns (uint256) {
-        return 0;
-    }
+    function sell(uint256 _amount) external virtual {}
 
     modifier onlyOwner() {
         require((msg.sender == owner), "owner only");

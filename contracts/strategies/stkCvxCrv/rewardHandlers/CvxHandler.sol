@@ -34,25 +34,17 @@ contract CvxHandler is stkCvxCrvHandlerBase {
         useOracle = !useOracle;
     }
 
-    function _cvxToEth(uint256 _amount) internal returns (uint256) {
+    function _cvxToEth(uint256 _amount) internal {
         uint256 _minAmountOut = useOracle ? _calcMinAmountOut(_amount) : 0;
-        return
-            cvxEthSwap.exchange_underlying{value: 0}(
-                1,
-                0,
-                _amount,
-                _minAmountOut
-            );
+        cvxEthSwap.exchange_underlying{value: 0}(1, 0, _amount, _minAmountOut);
     }
 
-    /// @notice Swap native CVX for ETH on Curve
+    /// @notice Swap CVX for ETH on Curve
     /// @param _amount - amount to swap
-    /// @return amount of ETH obtained after the swap
-    function sell(uint256 _amount) external override returns (uint256) {
+    function sell(uint256 _amount) external override {
         IERC20(CVX_TOKEN).transferFrom(msg.sender, address(this), _amount);
-        uint256 _ethAmount = _cvxToEth(_amount);
-        (bool success, ) = (msg.sender).call{value: _ethAmount}("");
+        _cvxToEth(_amount);
+        (bool success, ) = (msg.sender).call{value: address(this).balance}("");
         require(success, "ETH transfer failed");
-        return _ethAmount;
     }
 }
