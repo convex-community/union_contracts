@@ -8,16 +8,15 @@ import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/IStrategy.sol";
 import "../../../interfaces/IRewards.sol";
 import "../../../interfaces/ICvxCrvStaking.sol";
-import "../../../interfaces/IVaultRewardHandler.sol";
+import "../../../interfaces/IHarvester.sol";
 import "./StrategyBase.sol";
 
 contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
+    address public harvester;
     ICvxCrvStaking public immutable cvxCrvStaking;
-    address[] public rewardTokens;
-    mapping(address => address) public rewardHandlers;
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
@@ -28,77 +27,13 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
 
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
-        address[] memory _rewardTokens = rewardTokens;
-        for (uint256 i; i < _rewardTokens.length; ++i) {
-            address _tokenHandler = rewardHandlers[_rewardTokens[i]];
-            if (_tokenHandler == address(0)) {
-                continue;
-            }
-            IERC20(_rewardTokens[i]).safeApprove(_tokenHandler, 0);
-            IERC20(_rewardTokens[i]).safeApprove(
-                _tokenHandler,
-                type(uint256).max
-            );
-        }
+
     }
 
-    /// @notice update the token to handler mapping
-    function _updateRewardToken(
-        address _token,
-        address _handler,
-        bool _approve
-    ) internal {
-        rewardHandlers[_token] = _handler;
-        if (_approve) {
-            IERC20(_token).safeApprove(_handler, 0);
-            IERC20(_token).safeApprove(_handler, type(uint256).max);
-        }
-    }
-
-    /// @notice Add a reward token and its handler
-    /// @dev For tokens that should not be swapped (i.e. BAL rewards)
-    ///      use address as zero handler
-    /// @param _token the reward token to add
-    /// @param _handler address of the contract that will sell for BAL or ETH
-    /// @param _approve whether to approve token spending for handler contract
-    function addRewardToken(
-        address _token,
-        address _handler,
-        bool _approve
-    ) external onlyOwner {
-        // avoid adding the same token twice
-        require(rewardHandlers[_token] != address(0), "already exists");
-        rewardTokens.push(_token);
-        _updateRewardToken(_token, _handler, _approve);
-    }
-
-    /// @notice Update the handler of a reward token
-    /// @dev Used to update a handler or retire a token (set handler to address 0)
-    /// @dev Handler contracts sell for ETH or the token
-    /// @param _token the reward token to add
-    /// @param _handler address of the contract that will sell the token or ETH (or vice versa)
-    /// @param _approve whether to approve token spending for handler contract
-    function updateRewardToken(
-        address _token,
-        address _handler,
-        bool _approve
-    ) external onlyOwner {
-        _updateRewardToken(_token, _handler, _approve);
-    }
-
-    /// @notice Reset all registered reward tokens
-    function clearRewardTokens() external onlyOwner {
-        address[] memory _rewardTokens = rewardTokens;
-        for (uint256 i; i < _rewardTokens.length; i++) {
-            rewardHandlers[_rewardTokens[i]] = address(0);
-        }
-        delete (rewardTokens);
-    }
-
-    /// @notice returns the number of reward tokens
-    /// @return the number of reward tokens
-    function totalRewardTokens() external view returns (uint256) {
-        return rewardTokens.length;
+    /// @notice Update the harvester contract
+    /// @param _harvester address of the new contract
+    function updateHarvester(address _harvester) external onlyOwner {
+        require(_harvester != address(0));
     }
 
     /// @notice Query the amount currently staked
@@ -131,24 +66,11 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
         uint256 _minAmountOut,
         bool _lock
     ) public onlyVault returns (uint256 harvested) {
-        // claim rewards
-        cvxCrvStaking.getReward(address(this));
+        // claim rewards to harvester
+        cvxCrvStaking.getReward(address(this), harvester);
 
-        // process rewards
-        address[] memory _rewardTokens = rewardTokens;
-        // swap all reward tokens for ETH through their respective handlers
-        for (uint256 i; i < _rewardTokens.length; ++i) {
-            address _tokenHandler = rewardHandlers[_rewardTokens[i]];
-            if (_tokenHandler == address(0)) {
-                continue;
-            }
-            uint256 _tokenBalance = IERC20(_rewardTokens[i]).balanceOf(
-                address(this)
-            );
-            if (_tokenBalance > 0) {
-                IVaultRewardHandler(_tokenHandler).sell(_tokenBalance);
-            }
-        }
+        // process rewards via harvester
+        IHarvester(harvester).processRewards(_minAmountOut, _lock);
 
         return 0;
     }
