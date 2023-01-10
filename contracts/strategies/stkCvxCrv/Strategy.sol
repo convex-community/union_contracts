@@ -30,6 +30,12 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
 
     }
 
+    /// @notice set the strategy's reward weight
+    /// @param _weight the desired weight: 0 = full group 0, 10k = full group 1
+    function setRewardWeight(uint256 _weight) public onlyVault {
+        cvxCrvStaking.setRewardWeight(_weight);
+    }
+
     /// @notice Update the harvester contract
     /// @param _harvester address of the new contract
     function updateHarvester(address _harvester) external onlyOwner {

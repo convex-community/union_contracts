@@ -9,11 +9,14 @@ interface stkCvxCrvStrategy {
         uint256 _minAmountOut,
         bool _lock
     ) external returns (uint256 harvested);
+    function setRewardWeight(uint256 _weight) external;
 }
 
 contract stkCvxCrvVault is GenericUnionVault {
     bool public isHarvestPermissioned = false;
+    uint256 public weight;
     mapping(address => bool) public authorizedHarvesters;
+    uint256 public constant WEIGHT_PRECISION = 10000;
 
     constructor(address _token) GenericUnionVault(_token) {}
 
@@ -31,6 +34,26 @@ contract stkCvxCrvVault is GenericUnionVault {
         onlyOwner
     {
         authorizedHarvesters[_harvester] = _authorized;
+    }
+
+    /// @notice set the strategy's reward weight
+    /// @dev Always only available to owner or authorized harvesters
+    /// @param _weight the desired weight: 0 = full group 0, 10k = full group 1
+    function setRewardWeight(uint256 _weight) public {
+        require(_weight <= WEIGHT_PRECISION, "!invalid");
+        require(authorizedHarvesters[msg.sender] || msg.sender == owner());
+        stkCvxCrvStrategy(strategy).setRewardWeight(_weight);
+    }
+
+
+    /// @notice Updates the strategy's reward weight before harvesting
+    /// @dev Always only available to owner or authorized harvesters
+    /// @param _minAmountOut - min amount of cvxCrv to receive for harvest
+    /// @param _lock - whether to lock or swap lp tokens for cvxCrv
+    /// @param _weight the desired weight: 0 = full group 0, 10k = full group 1
+    function harvestAndSetRewardWeight(uint256 _minAmountOut, bool _lock, uint256 _weight) public {
+        setRewardWeight(_weight);
+        harvest(_minAmountOut, _lock);
     }
 
     /// @notice Claim rewards and swaps them to cvxCrv for restaking
