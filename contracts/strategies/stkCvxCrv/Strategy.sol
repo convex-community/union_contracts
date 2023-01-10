@@ -70,9 +70,34 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
         cvxCrvStaking.getReward(address(this), harvester);
 
         // process rewards via harvester
-        IHarvester(harvester).processRewards(_minAmountOut, _lock);
+        uint256 _cvxCrvBalance = IHarvester(harvester).processRewards(_minAmountOut, _lock);
 
-        return 0;
+        // if this is the last call or no CRV
+        // no restake & no fees
+        if (IGenericVault(vault).totalSupply() == 0 || _cvxCrvBalance == 0) {
+            return 0;
+        }
+
+        uint256 _stakingAmount = _cvxCrvBalance;
+        uint256 _callIncentive = IGenericVault(vault).callIncentive();
+        // Deduce and pay out incentive to caller (not needed for final exit)
+        if (_callIncentive > 0) {
+            uint256 incentiveAmount = (_cvxCrvBalance * _callIncentive) /
+            FEE_DENOMINATOR;
+            IERC20(CVXCRV_TOKEN).safeTransfer(msg.sender, incentiveAmount);
+            _stakingAmount = _stakingAmount - incentiveAmount;
+        }
+        // Deduce and pay platform fee
+        uint256 _platformFee = IGenericVault(vault).platformFee();
+        if (_platformFee > 0) {
+            uint256 feeAmount = (_cvxCrvBalance * _platformFee) /
+            FEE_DENOMINATOR;
+            IERC20(CVXCRV_TOKEN).safeTransfer(IGenericVault(vault).platform(), feeAmount);
+            _stakingAmount = _stakingAmount - feeAmount;
+        }
+        cvxCrvStaking.stake(_stakingAmount, address(this));
+
+        return _stakingAmount;
     }
 
     modifier onlyVault() {

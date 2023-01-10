@@ -162,7 +162,8 @@ contract stkCvxCrvHarvester {
         );
     }
 
-    function processRewards(uint256 _minAmountOut, bool _lock) external onlyStrategy {
+    function processRewards(uint256 _minAmountOut, bool _lock) external onlyStrategy
+    returns (uint256) {
         _cvxToEth(IERC20(CVX_TOKEN).balanceOf(address(this)));
         _threeCrvToEth(IERC20(THREECRV_TOKEN).balanceOf(address(this)));
         _ethToCrv(address(this).balance);
@@ -186,7 +187,9 @@ contract stkCvxCrvHarvester {
             }
             uint256 _cvxCrvBalance = IERC20(CVXCRV_TOKEN).balanceOf(address(this));
             IERC20(CVXCRV_TOKEN).safeTransfer(msg.sender, _cvxCrvBalance);
+            return _cvxCrvBalance;
         }
+        return 0;
     }
 
     modifier onlyOwner() {
