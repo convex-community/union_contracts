@@ -26,8 +26,9 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
     }
 
     /// @notice Set approvals for the contracts used when swapping & staking
-    function setApprovals() external {
-
+    function setApprovals() public {
+        IERC20(CVXCRV_TOKEN).safeApprove(address(cvxCrvStaking), 0);
+        IERC20(CVXCRV_TOKEN).safeApprove(address(cvxCrvStaking), type(uint256).max);
     }
 
     /// @notice set the strategy's reward weight
@@ -38,8 +39,9 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
 
     /// @notice Update the harvester contract
     /// @param _harvester address of the new contract
-    function updateHarvester(address _harvester) external onlyOwner {
+    function setHarvester(address _harvester) external onlyOwner {
         require(_harvester != address(0));
+        harvester = _harvester;
     }
 
     /// @notice Query the amount currently staked
