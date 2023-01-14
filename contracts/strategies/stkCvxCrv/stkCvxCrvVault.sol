@@ -40,8 +40,8 @@ contract stkCvxCrvVault is GenericUnionVault {
     /// @dev Always only available to owner or authorized harvesters
     /// @param _weight the desired weight: 0 = full group 0, 10k = full group 1
     function setRewardWeight(uint256 _weight) public {
-        require(_weight <= WEIGHT_PRECISION, "!invalid");
-        require(authorizedHarvesters[msg.sender] || msg.sender == owner());
+        require(_weight <= WEIGHT_PRECISION, "invalid weight");
+        require(authorizedHarvesters[msg.sender] || msg.sender == owner(), "authorized only");
         stkCvxCrvStrategy(strategy).setRewardWeight(_weight);
     }
 
