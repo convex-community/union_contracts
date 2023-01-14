@@ -87,7 +87,14 @@ contract stkCvxCrvHarvester {
         pendingOwner = address(0);
     }
 
+    /// @notice Rescue tokens wrongly sent to the contracts or claimed extra
+    /// rewards that the contract is not equipped to handle
+    /// @dev Unhandled rewards can be redirected to new harvester contract
     function rescueToken(address _token, address _to) external onlyOwner {
+        /// Only allow to rescue non-supported tokens
+        require(_token != CRV_TOKEN, "not allowed");
+        require(_token != CVX_TOKEN, "not allowed");
+        require(_token != THREECRV_TOKEN, "not allowed");
         uint256 _balance = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(_to, _balance);
     }
