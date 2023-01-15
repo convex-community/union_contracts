@@ -1,5 +1,5 @@
 import brownie
-from brownie import interface
+from brownie import interface, chain
 from .constants import (
     CLAIM_AMOUNT,
     TOKENS,
@@ -56,14 +56,15 @@ def calc_harvest_amount_in_cvxcrv(vault):
         )
         if quote > crv_balance:
             cvxcrv_amount = quote
+
     return cvxcrv_amount
 
 
 def calc_staked_cvxcrv_harvest(strategy, wrapper):
-
-    reward_amounts = [r[1] for r in wrapper.earned(strategy).return_value]
-
-    three_crv_balance, cvx_balance, crv_balance = reward_amounts
+    earned = wrapper.earned(strategy).return_value
+    reward_amounts = [r[1] for r in earned]
+    print("Rewards: ", earned)
+    crv_balance, cvx_balance, three_crv_balance = reward_amounts
 
     cvxEthSwap = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL)
     tripool = interface.ICurvePool(TRIPOOL)
@@ -89,6 +90,7 @@ def calc_staked_cvxcrv_harvest(strategy, wrapper):
         )
         if quote > crv_balance:
             cvxcrv_amount = quote
+
     return cvxcrv_amount
 
 
