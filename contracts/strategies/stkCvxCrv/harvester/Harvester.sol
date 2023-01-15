@@ -171,8 +171,15 @@ contract stkCvxCrvHarvester {
 
     function processRewards(uint256 _minAmountOut, bool _lock) external onlyStrategy
     returns (uint256) {
-        _cvxToEth(IERC20(CVX_TOKEN).balanceOf(address(this)));
-        _threeCrvToEth(IERC20(THREECRV_TOKEN).balanceOf(address(this)));
+        uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
+        if (_cvxBalance > 0) {
+            _cvxToEth(_cvxBalance);
+
+        }
+        uint256 _threeCrvBalance = IERC20(THREECRV_TOKEN).balanceOf(address(this));
+        if (_threeCrvBalance > 0) {
+            _threeCrvToEth(_threeCrvBalance);
+        }
         _ethToCrv(address(this).balance);
         uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
         if (_crvBalance > 0) {
