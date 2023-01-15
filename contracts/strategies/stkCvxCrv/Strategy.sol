@@ -92,7 +92,7 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
         if (_callIncentive > 0) {
             uint256 incentiveAmount = (_cvxCrvBalance * _callIncentive) /
             FEE_DENOMINATOR;
-            IERC20(CVXCRV_TOKEN).safeTransfer(msg.sender, incentiveAmount);
+            IERC20(CVXCRV_TOKEN).safeTransfer(_caller, incentiveAmount);
             _stakingAmount = _stakingAmount - incentiveAmount;
         }
         // Deduce and pay platform fee

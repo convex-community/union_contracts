@@ -174,7 +174,6 @@ contract stkCvxCrvHarvester {
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
         if (_cvxBalance > 0) {
             _cvxToEth(_cvxBalance);
-
         }
         uint256 _threeCrvBalance = IERC20(THREECRV_TOKEN).balanceOf(address(this));
         if (_threeCrvBalance > 0) {
