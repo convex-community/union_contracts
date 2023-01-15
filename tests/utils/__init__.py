@@ -59,6 +59,39 @@ def calc_harvest_amount_in_cvxcrv(vault):
     return cvxcrv_amount
 
 
+def calc_staked_cvxcrv_harvest(strategy, wrapper):
+
+    reward_amounts = [r[1] for r in wrapper.earned(strategy).return_value]
+
+    three_crv_balance, cvx_balance, crv_balance = reward_amounts
+
+    cvxEthSwap = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL)
+    tripool = interface.ICurvePool(TRIPOOL)
+    tricrypto = interface.ICurveTriCrypto(TRICRYPTO)
+
+    eth_balance = cvxEthSwap.get_dy(1, 0, cvx_balance) if cvx_balance > 0 else 0
+    usdt_balance = (
+        tripool.calc_withdraw_one_coin(three_crv_balance, 2)
+        if three_crv_balance > 0
+        else 0
+    )
+    eth_balance += tricrypto.get_dy(0, 2, usdt_balance) if usdt_balance > 0 else 0
+    crv_balance += (
+        interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, eth_balance)
+        if eth_balance > 0
+        else 0
+    )
+
+    cvxcrv_amount = crv_balance
+    if crv_balance > 0:
+        quote = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+            0, 1, crv_balance
+        )
+        if quote > crv_balance:
+            cvxcrv_amount = quote
+    return cvxcrv_amount
+
+
 def aurabal_balance(address):
     return interface.IERC20(AURA_BAL_TOKEN).balanceOf(address)
 

@@ -35,13 +35,17 @@ def strategy(owner, vault, wrapper):
 def harvester(owner, strategy):
     harvester = stkCvxCrvHarvester.deploy(strategy, {"from": owner})
     harvester.setApprovals({"from": owner})
-    strategy.setHarvester(harvester, {"from": owner})
     yield harvester
 
 
 @pytest.fixture(scope="module")
 def zaps(owner, vault):
     pass
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_harvester(owner, strategy, harvester):
+    strategy.setHarvester(harvester, {"from": owner})
 
 
 @pytest.fixture(scope="module", autouse=True)
