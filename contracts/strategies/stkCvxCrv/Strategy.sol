@@ -28,7 +28,10 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() public {
         IERC20(CVXCRV_TOKEN).safeApprove(address(cvxCrvStaking), 0);
-        IERC20(CVXCRV_TOKEN).safeApprove(address(cvxCrvStaking), type(uint256).max);
+        IERC20(CVXCRV_TOKEN).safeApprove(
+            address(cvxCrvStaking),
+            type(uint256).max
+        );
     }
 
     /// @notice set the strategy's reward weight
@@ -78,7 +81,10 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
         cvxCrvStaking.getReward(address(this), harvester);
 
         // process rewards via harvester
-        uint256 _cvxCrvBalance = IHarvester(harvester).processRewards(_minAmountOut, _lock);
+        uint256 _cvxCrvBalance = IHarvester(harvester).processRewards(
+            _minAmountOut,
+            _lock
+        );
 
         // if this is the last call or no CRV
         // no restake & no fees
@@ -91,7 +97,7 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
         // Deduce and pay out incentive to caller (not needed for final exit)
         if (_callIncentive > 0) {
             uint256 incentiveAmount = (_cvxCrvBalance * _callIncentive) /
-            FEE_DENOMINATOR;
+                FEE_DENOMINATOR;
             IERC20(CVXCRV_TOKEN).safeTransfer(_caller, incentiveAmount);
             _stakingAmount = _stakingAmount - incentiveAmount;
         }
@@ -99,8 +105,11 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
         uint256 _platformFee = IGenericVault(vault).platformFee();
         if (_platformFee > 0) {
             uint256 feeAmount = (_cvxCrvBalance * _platformFee) /
-            FEE_DENOMINATOR;
-            IERC20(CVXCRV_TOKEN).safeTransfer(IGenericVault(vault).platform(), feeAmount);
+                FEE_DENOMINATOR;
+            IERC20(CVXCRV_TOKEN).safeTransfer(
+                IGenericVault(vault).platform(),
+                feeAmount
+            );
             _stakingAmount = _stakingAmount - feeAmount;
         }
         cvxCrvStaking.stake(_stakingAmount, address(this));
