@@ -118,7 +118,6 @@ contract stkCvxCrvHarvester {
         cvxEthSwap.exchange_underlying{value: 0}(1, 0, _amount, _minAmountOut);
     }
 
-
     /// @notice Compute a min amount of ETH based on pool oracle / vprice for 3crv
     /// @param _amount - amount to swap
     /// @return min acceptable amount of ETH
@@ -128,7 +127,7 @@ contract stkCvxCrvHarvester {
         uint256 _usdtAmount = (_amount * _virtualPrice) / 1e18;
         /// get ETH price in USDT from tricrypto
         uint256 _ethUsdPrice = tricrypto.price_oracle(1);
-        uint256 _amountEth = (_usdtAmount * _ethUsdPrice) / 1e18;
+        uint256 _amountEth = ((_usdtAmount * 1e18) / _ethUsdPrice);
         return ((_amountEth * allowedSlippage) / DECIMALS);
     }
 
@@ -137,7 +136,7 @@ contract stkCvxCrvHarvester {
         tripool.remove_liquidity_one_coin(_amount, 2, 0);
         uint256 _usdtBalance = IERC20(USDT_TOKEN).balanceOf(address(this));
         if (_usdtBalance > 0) {
-            tricrypto.exchange(0, 2, _usdtBalance, 0, true);
+            tricrypto.exchange(0, 2, _usdtBalance, _minAmountOut, true);
         }
     }
 
