@@ -80,8 +80,8 @@ contract stkCvxCrvHarvester {
         pendingOwner = _po;
     }
 
-    function applyPendingOwner() external onlyOwner {
-        require(pendingOwner != address(0), "invalid owner");
+    function acceptOwnership() external {
+        require(pendingOwner == msg.sender, "only new owner");
         owner = pendingOwner;
         pendingOwner = address(0);
     }

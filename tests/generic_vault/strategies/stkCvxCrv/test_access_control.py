@@ -83,12 +83,21 @@ def test_harvester_set_pending_owner(fn_isolation, alice, harvester):
         harvester.setPendingOwner(alice, {"from": alice})
 
 
-def test_apply_pending_owner(fn_isolation, alice, owner, harvester):
-    with brownie.reverts("invalid owner"):
-        harvester.applyPendingOwner({"from": owner})
-    harvester.setPendingOwner(owner, {"from": owner})
+def test_accept_pending_owner(fn_isolation, alice, bob, owner, harvester):
+    with brownie.reverts("only new owner"):
+        harvester.acceptOwnership({"from": owner})
+    harvester.setPendingOwner(alice, {"from": owner})
+    with brownie.reverts("only new owner"):
+        harvester.acceptOwnership({"from": owner})
+    with brownie.reverts("only new owner"):
+        harvester.acceptOwnership({"from": bob})
+    harvester.setPendingOwner(alice, {"from": owner})
+    harvester.acceptOwnership({"from": alice})
     with brownie.reverts("owner only"):
-        harvester.applyPendingOwner({"from": alice})
+        harvester.setPendingOwner(alice, {"from": owner})
+    harvester.setPendingOwner(owner, {"from": alice})
+    harvester.acceptOwnership({"from": owner})
+    assert harvester.owner() == owner
 
 
 def test_process_rewards(fn_isolation, alice, harvester):
