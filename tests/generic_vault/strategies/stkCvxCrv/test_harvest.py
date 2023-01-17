@@ -7,7 +7,7 @@ from ....utils.constants import (
     CRV,
     CURVE_CVXCRV_CRV_POOL,
     CURVE_VOTING_ESCROW, CVX, CURVE_CVX_ETH_POOL, CVX_STAKING_CONTRACT, USDT_TOKEN, TRICRYPTO,
-    UNISWAP_ETH_USDT_POOL,
+    UNISWAP_ETH_USDT_POOL, CURVE_CRV_ETH_POOL,
 )
 from ....utils import approx, calc_staked_cvxcrv_harvest, cvxcrv_balance, calc_harvest_amount_in_cvxcrv
 
@@ -52,6 +52,25 @@ def test_harvest_cvx_oracle_failure(fn_isolation, alice, bob, owner, vault, stra
         0,
         False,
         {"from": CVX_STAKING_CONTRACT},
+    )
+
+    vault.depositAll(alice, {"from": alice})
+    chain.sleep(100000)
+    chain.mine(1)
+    with brownie.reverts():
+        tx = vault.harvest({"from": alice})
+
+
+def test_harvest_crv_oracle_failure(fn_isolation, alice, bob, owner, vault, strategy, wrapper):
+    vault.setRewardWeight(10000, {'from': owner})
+    interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).exchange_underlying(
+        0,
+        1,
+        interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).balance(),
+        0,
+        {"from": CURVE_CVX_ETH_POOL,
+         "value": interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).balance()
+         },
     )
 
     vault.depositAll(alice, {"from": alice})
