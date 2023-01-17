@@ -102,7 +102,7 @@ def test_accept_pending_owner(fn_isolation, alice, bob, owner, harvester):
 
 def test_process_rewards(fn_isolation, alice, harvester):
     with brownie.reverts("strategy only"):
-        harvester.processRewards(0, False, {"from": alice})
+        harvester.processRewards(False, {"from": alice})
 
 
 # VAULT ACCESS TESTS

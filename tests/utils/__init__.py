@@ -60,7 +60,7 @@ def calc_harvest_amount_in_cvxcrv(vault):
     return cvxcrv_amount
 
 
-def calc_staked_cvxcrv_harvest(strategy, wrapper):
+def calc_staked_cvxcrv_harvest(strategy, wrapper, force_lock=False):
     earned = wrapper.earned(strategy).return_value
     reward_amounts = [r[1] for r in earned]
     print("Rewards: ", earned)
@@ -88,7 +88,7 @@ def calc_staked_cvxcrv_harvest(strategy, wrapper):
         quote = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
             0, 1, crv_balance
         )
-        if quote > crv_balance:
+        if quote > crv_balance and not force_lock:
             cvxcrv_amount = quote
 
     return cvxcrv_amount

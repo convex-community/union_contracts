@@ -41,6 +41,35 @@ def test_harvest_single_staker(fn_isolation, alice, bob, owner, vault, strategy,
     )
 
 
+def test_harvest_force_lock(fn_isolation, alice, bob, owner, vault, strategy, wrapper):
+    alice_initial_balance = cvxcrv_balance(alice)
+    bob_initial_balance = cvxcrv_balance(bob)
+    platform_initial_balance = cvxcrv_balance(vault.platform())
+    vault.depositAll(alice, {"from": alice})
+    chain.sleep(100000)
+    chain.mine(1)
+    estimated_harvest = calc_staked_cvxcrv_harvest(strategy, wrapper, True)
+    estimated_harvest_no_lock = calc_staked_cvxcrv_harvest(strategy, wrapper)
+    assert estimated_harvest != estimated_harvest_no_lock
+    tx = vault.harvest(0, True, {"from": bob})
+
+    actual_harvest = tx.events["Harvest"]["_value"]
+
+    platform_fees = estimated_harvest * vault.platformFee() // 10000
+    caller_incentive = estimated_harvest * vault.callIncentive() // 10000
+
+    assert approx(estimated_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3)
+    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 1e-3)
+    assert approx(
+        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
+    )
+    assert approx(
+        interface.ICvxCrvStaking(wrapper).balanceOf(strategy),
+        alice_initial_balance + actual_harvest,
+        1e-3,
+    )
+
+
 def test_harvest_cvx_oracle_failure(fn_isolation, alice, bob, owner, vault, strategy, wrapper):
 
     cvx = interface.IERC20(CVX)
