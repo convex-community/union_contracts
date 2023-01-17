@@ -156,27 +156,29 @@ contract stkCvxCrvHarvester {
         returns (uint256)
     {
         uint256 _crvEthPrice = crvEthSwap.price_oracle();
-        uint256 _amountCrvPrice = (_amount * 1e18 / _crvEthPrice);
+        uint256 _amountCrvPrice = ((_amount * 1e18) / _crvEthPrice);
         return ((_amountCrvPrice * allowedSlippage) / DECIMALS);
     }
 
     function _ethToCrv(uint256 _amount) internal {
-        uint256 _minAmountOut = useOracle
-            ? _calcMinAmountOutEthCrv(_amount)
-            : 0;
-        crvEthSwap.exchange_underlying{value: _amount}(
-            0,
-            1,
-            _amount,
-            _minAmountOut
-        );
+        if (_amount > 0) {
+            uint256 _minAmountOut = useOracle
+                ? _calcMinAmountOutEthCrv(_amount)
+                : 0;
+            crvEthSwap.exchange_underlying{value: _amount}(
+                0,
+                1,
+                _amount,
+                _minAmountOut
+            );
+        }
     }
 
-    function _crvToCvxCrv(uint256 amount) internal returns (uint256) {
-        return crvCvxCrvSwap.exchange(0, 1, amount, 0, address(this));
+    function _crvToCvxCrv(uint256 _amount) internal returns (uint256) {
+        return crvCvxCrvSwap.exchange(0, 1, _amount, 0, address(this));
     }
 
-    function processRewards(uint256 _minAmountOut, bool _lock)
+    function processRewards(bool _forceLock)
         external
         onlyStrategy
         returns (uint256)
@@ -199,7 +201,8 @@ contract stkCvxCrvHarvester {
             // so worst case scenario, we end up locking instead of swapping
             uint256 _quote = crvCvxCrvSwap.get_dy(0, 1, _crvBalance);
             // swap on Curve if there is a premium for doing so
-            if (_quote > _crvBalance) {
+            // and if we have not been instructed to lock
+            if ((_quote > _crvBalance) && !_forceLock) {
                 _crvToCvxCrv(_crvBalance);
             }
             // otherwise lock

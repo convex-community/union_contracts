@@ -70,22 +70,21 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
     /// @dev Can be called by the vault only
     /// @param _caller - the address calling the harvest on the vault
     /// @param _minAmountOut -  min amount of LP tokens to receive w/o revert
-    /// @param _lock - whether to lock or swap
+    /// @param _forceLock - force a lock even if there is a discount for swapping
     /// @return harvested - the amount harvested
     function harvest(
         address _caller,
         uint256 _minAmountOut,
-        bool _lock
+        bool _forceLock
     ) public onlyVault returns (uint256 harvested) {
         // claim rewards to harvester
         cvxCrvStaking.getReward(address(this), harvester);
-
         // process rewards via harvester
         uint256 _cvxCrvBalance = IHarvester(harvester).processRewards(
-            _minAmountOut,
-            _lock
+            _forceLock
         );
 
+        require(_cvxCrvBalance >= _minAmountOut, "slippage");
         // if this is the last call or no CRV
         // no restake & no fees
         if (IGenericVault(vault).totalSupply() == 0 || _cvxCrvBalance == 0) {

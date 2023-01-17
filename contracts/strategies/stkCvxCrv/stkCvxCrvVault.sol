@@ -7,7 +7,7 @@ interface stkCvxCrvStrategy {
     function harvest(
         address _caller,
         uint256 _minAmountOut,
-        bool _lock
+        bool _forceLock
     ) external returns (uint256 harvested);
 
     function setRewardWeight(uint256 _weight) external;
@@ -65,12 +65,12 @@ contract stkCvxCrvVault is GenericUnionVault {
 
     /// @notice Claim rewards and swaps them to cvxCrv for restaking
     /// @param _minAmountOut - min amount of cvxCrv to receive for harvest
-    /// @param _lock - whether to lock or swap lp tokens for cvxCrv
+    /// @param _forceLock - force locking even if there's a discount for swapping
     /// @dev Can be called by whitelisted account or anyone against an ETH incentive
     /// @dev Harvest logic in the strategy contract
     /// @dev Harvest can be called even if permissioned when last staker is
     ///      withdrawing from the vault.
-    function harvest(uint256 _minAmountOut, bool _lock) public {
+    function harvest(uint256 _minAmountOut, bool _forceLock) public {
         require(
             !isHarvestPermissioned ||
                 authorizedHarvesters[msg.sender] ||
@@ -80,20 +80,20 @@ contract stkCvxCrvVault is GenericUnionVault {
         uint256 _harvested = stkCvxCrvStrategy(strategy).harvest(
             msg.sender,
             _minAmountOut,
-            _lock
+            _forceLock
         );
         emit Harvest(msg.sender, _harvested);
     }
 
-    /// @notice Claim rewards and swaps them to auraBAL for restaking
-    /// @param _minAmountOut - min amount of BPT to receive for harvest
-    /// @dev locking for auraBAL by default
+    /// @notice Claim rewards and swaps them to cvxCRV for restaking
+    /// @param _minAmountOut - min amount of cvxCRV to receive for harvest
+    /// @dev swapping for cvxCRV by default
     function harvest(uint256 _minAmountOut) public {
-        harvest(_minAmountOut, true);
+        harvest(_minAmountOut, false);
     }
 
-    /// @notice Claim rewards and swaps them to auraBAL for restaking
-    /// @dev No slippage protection, swapping for auraBAL
+    /// @notice Claim rewards and swaps them to cvxCRV for restaking
+    /// @dev No slippage protection, swapping for cvxCRV
     function harvest() public override {
         harvest(0);
     }
