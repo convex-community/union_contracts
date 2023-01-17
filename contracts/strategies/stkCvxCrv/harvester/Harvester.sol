@@ -156,7 +156,7 @@ contract stkCvxCrvHarvester {
         returns (uint256)
     {
         uint256 _crvEthPrice = crvEthSwap.price_oracle();
-        uint256 _amountCrvPrice = (_amount / _crvEthPrice) / 1e18;
+        uint256 _amountCrvPrice = (_amount * 1e18 / _crvEthPrice);
         return ((_amountCrvPrice * allowedSlippage) / DECIMALS);
     }
 
