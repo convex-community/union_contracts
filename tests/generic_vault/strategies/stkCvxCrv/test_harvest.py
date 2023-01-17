@@ -101,6 +101,15 @@ def test_harvest_tricrypto_oracle_failure(fn_isolation, alice, bob, owner, vault
         tx = vault.harvest({"from": alice})
 
 
+def test_harvest_min_amount_out(fn_isolation, alice, owner, vault, strategy, wrapper):
+    vault.setRewardWeight(10000, {'from': owner})
+    vault.depositAll(alice, {"from": alice})
+    chain.sleep(100000)
+    chain.mine(1)
+    with brownie.reverts("slippage"):
+        tx = vault.harvest(1e26, {"from": alice})
+
+
 def test_harvest_no_discount(fn_isolation, alice, bob, owner, vault, strategy, wrapper):
     crv = interface.IERC20(CRV)
     vault.setRewardWeight(10000, {'from': owner})
