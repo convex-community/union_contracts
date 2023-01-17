@@ -64,5 +64,5 @@ def distribute_crv_and_cvxcrv(accounts, wrapper, vault):
         wrapper.setRewardWeight(10000 // (i + 1), {'from': account})
         wrapper.stake(1e23, account, {'from': account})
 
-    chain.sleep(60 * 60 * 24 * 2)
+    chain.sleep(60 * 60 * 12)
     chain.mine(1)
