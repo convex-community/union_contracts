@@ -1,10 +1,18 @@
 import brownie
 from brownie import chain, interface
 
-from ....utils.constants import AIRFORCE_SAFE, FXS, CRV_TOKEN, CVX, THREECRV_TOKEN, VE_FXS
+from ....utils.constants import (
+    AIRFORCE_SAFE,
+    FXS,
+    CRV_TOKEN,
+    CVX,
+    THREECRV_TOKEN,
+    VE_FXS,
+)
 
 
 # STRATEGY ACCESS TESTS
+
 
 def test_strategy_harvest_non_vault(fn_isolation, alice, owner, vault, strategy):
     with brownie.reverts("Vault calls only"):

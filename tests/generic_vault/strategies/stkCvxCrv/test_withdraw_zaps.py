@@ -13,7 +13,15 @@ from ....utils.constants import (
     WETH,
     SPELL,
     ADDRESS_ZERO,
-    BAL_TOKEN, CURVE_CVXCRV_CRV_POOL, CRV, CVX, TRICRYPTO, USDT_TOKEN, FXS, CONVEX_LOCKER, TRIPOOL,
+    BAL_TOKEN,
+    CURVE_CVXCRV_CRV_POOL,
+    CRV,
+    CVX,
+    TRICRYPTO,
+    USDT_TOKEN,
+    FXS,
+    CONVEX_LOCKER,
+    TRIPOOL,
     CONVEX_TRIPOOL_REWARDS,
 )
 
@@ -54,7 +62,11 @@ def test_claim_as_crv(fn_isolation, alice, bob, vault, strategy, zaps):
     tx = zaps.claimFromVaultAsCrv(
         vault.balanceOf(alice), 0, alice.address, {"from": alice}
     )
-    assert approx(interface.IERC20(CRV).balanceOf(alice), crv_amount + alice_original_balance, 1e-3)
+    assert approx(
+        interface.IERC20(CRV).balanceOf(alice),
+        crv_amount + alice_original_balance,
+        1e-3,
+    )
 
 
 def test_claim_as_cvx(fn_isolation, alice, bob, vault, strategy, zaps):
@@ -74,7 +86,11 @@ def test_claim_as_cvx(fn_isolation, alice, bob, vault, strategy, zaps):
     tx = zaps.claimFromVaultAsCvx(
         vault.balanceOf(alice), 0, alice.address, False, {"from": alice}
     )
-    assert approx(interface.IERC20(CVX).balanceOf(alice), cvx_amount + alice_original_balance, 1e-3)
+    assert approx(
+        interface.IERC20(CVX).balanceOf(alice),
+        cvx_amount + alice_original_balance,
+        1e-3,
+    )
 
 
 def test_claim_as_cvx_and_lock(fn_isolation, alice, bob, vault, strategy, zaps):
@@ -94,7 +110,11 @@ def test_claim_as_cvx_and_lock(fn_isolation, alice, bob, vault, strategy, zaps):
     tx = zaps.claimFromVaultAsCvx(
         vault.balanceOf(alice), 0, alice.address, True, {"from": alice}
     )
-    assert approx(interface.ICVXLocker(CONVEX_LOCKER).balances(alice)[0], cvx_amount + alice_original_balance, 1e-3)
+    assert approx(
+        interface.ICVXLocker(CONVEX_LOCKER).balances(alice)[0],
+        cvx_amount + alice_original_balance,
+        1e-3,
+    )
 
 
 def test_claim_as_usdt(fn_isolation, alice, bob, vault, strategy, zaps):
@@ -115,7 +135,11 @@ def test_claim_as_usdt(fn_isolation, alice, bob, vault, strategy, zaps):
     tx = zaps.claimFromVaultAsUsdt(
         vault.balanceOf(alice), 0, alice.address, {"from": alice}
     )
-    assert approx(interface.IERC20(USDT_TOKEN).balanceOf(alice), usdt_amount + alice_original_balance, 1e-3)
+    assert approx(
+        interface.IERC20(USDT_TOKEN).balanceOf(alice),
+        usdt_amount + alice_original_balance,
+        1e-3,
+    )
 
 
 def test_claim_as_tripool(fn_isolation, alice, bob, vault, strategy, zaps):
@@ -129,21 +153,21 @@ def test_claim_as_tripool(fn_isolation, alice, bob, vault, strategy, zaps):
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
     usdt_amount = interface.ICurveV2Pool(TRICRYPTO).get_dy(2, 0, eth_amount)
-    tricrv_amount = (
-        usdt_amount * 1e12 / interface.ITriPool(TRIPOOL).get_virtual_price()
-    )
+    tricrv_amount = usdt_amount * 1e12 / interface.ITriPool(TRIPOOL).get_virtual_price()
 
     vault.approve(zaps, 2**256 - 1, {"from": alice})
 
     tx = zaps.claimFromVaultAndStakeIn3PoolConvex(
         vault.balanceOf(alice), 0, alice.address, {"from": alice}
     )
-    assert approx(interface.IRewards(CONVEX_TRIPOOL_REWARDS).balanceOf(alice) * 1e-18, tricrv_amount, 1e-3)
+    assert approx(
+        interface.IRewards(CONVEX_TRIPOOL_REWARDS).balanceOf(alice) * 1e-18,
+        tricrv_amount,
+        1e-3,
+    )
 
 
-def test_claim_as_fxs(
-    fn_isolation, alice, bob, vault, strategy, zaps
-):
+def test_claim_as_fxs(fn_isolation, alice, bob, vault, strategy, zaps):
     amount = int(1e21)
     for i, account in enumerate([alice, bob]):
         vault.deposit(account, amount, {"from": account})

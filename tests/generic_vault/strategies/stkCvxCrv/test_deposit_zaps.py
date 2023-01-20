@@ -14,7 +14,8 @@ from ....utils.constants import (
     PXCVX_TOKEN,
     CRV_TOKEN,
     CURVE_CVXCRV_CRV_POOL,
-    CVXCRV_TOKEN, UNION_CRV,
+    CVXCRV_TOKEN,
+    UNION_CRV,
 )
 
 
@@ -30,9 +31,7 @@ def test_deposit_from_eth(fn_isolation, alice, vault, zaps):
     received_cvxcrv = crv_to_cvxcrv(eth_to_crv(amount))
     zaps.depositFromEth(0, alice, {"value": amount, "from": alice})
     assert vault.balanceOf(alice) > initial_vault_balance
-    assert approx(
-        vault.balanceOfUnderlying(alice), received_cvxcrv, 1e-6
-    )
+    assert approx(vault.balanceOfUnderlying(alice), received_cvxcrv, 1e-6)
 
     before_withdraw_balance = interface.IERC20(CVXCRV_TOKEN).balanceOf(alice)
     vault.withdrawAll(alice, {"from": alice})
@@ -56,9 +55,7 @@ def test_deposit_from_crv(fn_isolation, alice, zaps, vault):
     received_cvxcrv = crv_to_cvxcrv(amount)
     zaps.depositFromCrv(amount, 0, alice, {"from": alice})
     assert vault.balanceOf(alice) > initial_vault_balance
-    assert approx(
-        vault.balanceOfUnderlying(alice), received_cvxcrv, 1e-6
-    )
+    assert approx(vault.balanceOfUnderlying(alice), received_cvxcrv, 1e-6)
 
     before_withdraw_balance = interface.IERC20(CVXCRV_TOKEN).balanceOf(alice)
     vault.withdrawAll(alice, {"from": alice})
@@ -83,9 +80,7 @@ def test_deposit_from_ucrv(fn_isolation, alice, zaps, vault):
     received_cvxcrv = amount * (1 - withdrawal_penalty)
     zaps.depositFromUCrv(ucrv_amount, 0, alice, {"from": alice})
     assert vault.balanceOf(alice) > initial_vault_balance
-    assert approx(
-        vault.balanceOfUnderlying(alice), received_cvxcrv, 1e-3
-    )
+    assert approx(vault.balanceOfUnderlying(alice), received_cvxcrv, 1e-3)
 
 
 def test_deposit_from_sushi(fn_isolation, alice, zaps, vault):
@@ -105,10 +100,6 @@ def test_deposit_from_sushi(fn_isolation, alice, zaps, vault):
         amount, [FXS, WETH]
     )[-1]
     received_pxcvx = crv_to_cvxcrv(eth_to_crv(eth_amount))
-    zaps.depositViaUniV2EthPair(
-        amount, 0, SUSHI_ROUTER, FXS, alice, {"from": alice}
-    )
+    zaps.depositViaUniV2EthPair(amount, 0, SUSHI_ROUTER, FXS, alice, {"from": alice})
     assert vault.balanceOf(alice) > initial_vault_balance
-    assert approx(
-        vault.balanceOfUnderlying(alice), received_pxcvx, 1e-6
-    )
+    assert approx(vault.balanceOfUnderlying(alice), received_pxcvx, 1e-6)

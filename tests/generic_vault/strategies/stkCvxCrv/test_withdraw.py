@@ -8,7 +8,9 @@ from ....utils import approx, cvxcrv_balance, calc_staked_cvxcrv_harvest
 
 
 @pytest.mark.parametrize("amount", [1e20])
-def test_unique_withdrawal(fn_isolation, alice, owner, wrapper, vault, strategy, amount):
+def test_unique_withdrawal(
+    fn_isolation, alice, owner, wrapper, vault, strategy, amount
+):
 
     alice_initial_balance = cvxcrv_balance(alice)
     half_amount = int(Decimal(amount) / 2)

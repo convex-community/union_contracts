@@ -35,9 +35,7 @@ def test_multiple_deposit(accounts, vault, amount, wrapper, strategy):
         vault.deposit(account, amount, {"from": account})
 
         assert cvxcrv_balance(account) == account_initial_balance - amount
-        assert interface.ICvxCrvStaking(wrapper).balanceOf(strategy) == amount * (
-            i + 1
-        )
+        assert interface.ICvxCrvStaking(wrapper).balanceOf(strategy) == amount * (i + 1)
         assert vault.balanceOf(account) == amount
 
     chain.revert()
@@ -50,8 +48,7 @@ def test_deposit_all(alice, vault, wrapper, strategy):
 
     assert cvxcrv_balance(alice) == 0
     assert (
-        interface.ICvxCrvStaking(wrapper).balanceOf(strategy)
-        == alice_initial_balance
+        interface.ICvxCrvStaking(wrapper).balanceOf(strategy) == alice_initial_balance
     )
     assert vault.balanceOf(alice) == alice_initial_balance
     chain.revert()
