@@ -13,7 +13,7 @@ contract stkCvxCrvHarvester {
     using SafeERC20 for IERC20;
     address public owner;
     address public immutable strategy;
-    uint256 public allowedSlippage = 9500;
+    uint256 public allowedSlippage = 9700;
     uint256 public constant DECIMALS = 10000;
     address public pendingOwner;
 
