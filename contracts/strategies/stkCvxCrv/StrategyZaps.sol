@@ -261,11 +261,6 @@ contract stkCvxCrvZaps {
     ) external notToZeroAddress(to) {
         IERC20(UNION_CRV).safeTransferFrom(msg.sender, address(this), amount);
         IUnionVault(UNION_CRV).withdrawAll(address(this));
-        _crvToCvxCrv(
-            IERC20(CVXCRV_TOKEN).balanceOf(address(this)),
-            address(this),
-            minAmountOut
-        );
         IGenericVault(vault).depositAll(to);
     }
 
@@ -335,8 +330,8 @@ contract stkCvxCrvZaps {
     /// @return amount of CRV withdrawn
     function claimFromVaultAsCrv(
         uint256 amount,
-        address to,
-        uint256 minAmountOut
+        uint256 minAmountOut,
+        address to
     ) public returns (uint256) {
         uint256 _cvxCrvAmount = _claimAndWithdraw(amount);
         return _cvxCrvToCrv(_cvxCrvAmount, to, minAmountOut);
@@ -350,7 +345,7 @@ contract stkCvxCrvZaps {
         internal
         returns (uint256)
     {
-        uint256 _crvAmount = claimFromVaultAsCrv(_amount, address(this), 0);
+        uint256 _crvAmount = claimFromVaultAsCrv(_amount, 0, address(this));
         return _crvToEth(_crvAmount, _minAmountOut);
     }
 
@@ -388,7 +383,7 @@ contract stkCvxCrvZaps {
         uint256 minAmountOut,
         address to
     ) public notToZeroAddress(to) returns (uint256) {
-        uint256 _ethAmount = claimFromVaultAsEth(amount, 0, to);
+        uint256 _ethAmount = claimFromVaultAsEth(amount, 0, address(this));
         _swapEthToUsdt(_ethAmount, minAmountOut);
         uint256 _usdtAmount = IERC20(USDT_TOKEN).balanceOf(address(this));
         IERC20(USDT_TOKEN).safeTransfer(to, _usdtAmount);
@@ -456,4 +451,6 @@ contract stkCvxCrvZaps {
         require(_to != address(0), "Invalid address!");
         _;
     }
+
+    receive() external payable {}
 }
