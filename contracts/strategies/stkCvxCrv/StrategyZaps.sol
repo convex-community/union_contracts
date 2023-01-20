@@ -92,6 +92,9 @@ contract stkCvxCrvZaps {
             type(uint256).max
         );
 
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
+
         IERC20(TRICRV).safeApprove(BOOSTER, 0);
         IERC20(TRICRV).safeApprove(BOOSTER, type(uint256).max);
 
@@ -103,9 +106,6 @@ contract stkCvxCrvZaps {
             CONVEX_TRIPOOL_REWARDS,
             type(uint256).max
         );
-
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
 
         IERC20(CVXCRV_TOKEN).safeApprove(vault, 0);
         IERC20(CVXCRV_TOKEN).safeApprove(vault, type(uint256).max);
