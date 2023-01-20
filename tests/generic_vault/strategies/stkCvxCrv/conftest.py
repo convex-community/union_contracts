@@ -15,12 +15,13 @@ from ....utils.constants import (
     CVXCRV,
     CURVE_CVXCRV_CRV_POOL,
     AIRFORCE_SAFE,
+    NEW_CVX_CRV_STAKING,
 )
 
 
 @pytest.fixture(scope="module")
 def wrapper(owner):
-    yield CvxCrvStakingWrapper.deploy({"from": owner})
+    yield interface.ICvxCrvStaking(NEW_CVX_CRV_STAKING)
 
 
 @pytest.fixture(scope="module")
@@ -69,9 +70,3 @@ def distribute_crv_and_cvxcrv(accounts, wrapper, vault):
         )
         interface.IERC20(CVXCRV).approve(wrapper, 2**256 - 1, {"from": account})
         interface.IERC20(CVXCRV).approve(vault, 2**256 - 1, {"from": account})
-    for i, account in enumerate(accounts[6:10]):
-        wrapper.setRewardWeight(10000 // (i + 1), {"from": account})
-        wrapper.stake(1e23, account, {"from": account})
-
-    chain.sleep(60 * 60 * 12)
-    chain.mine(1)

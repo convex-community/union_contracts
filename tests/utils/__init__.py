@@ -61,7 +61,7 @@ def calc_harvest_amount_in_cvxcrv(vault):
 
 
 def calc_staked_cvxcrv_harvest(strategy, wrapper, force_lock=False):
-    earned = wrapper.earned(strategy).return_value
+    earned = wrapper.earned(strategy, {"from": strategy}).return_value
     reward_amounts = [r[1] for r in earned]
     print("Rewards: ", earned)
     crv_balance, cvx_balance, three_crv_balance = reward_amounts
