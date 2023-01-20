@@ -4,6 +4,7 @@ from brownie import (
     stkCvxCrvVault,
     stkCvxCrvStrategy,
     stkCvxCrvHarvester,
+    stkCvxCrvZaps,
     interface,
     chain
 )
@@ -40,7 +41,9 @@ def harvester(owner, strategy):
 
 @pytest.fixture(scope="module")
 def zaps(owner, vault):
-    pass
+    zaps = stkCvxCrvZaps.deploy(vault, {"from": owner})
+    zaps.setApprovals({"from": owner})
+    yield zaps
 
 
 @pytest.fixture(scope="module", autouse=True)
