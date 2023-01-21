@@ -9,14 +9,15 @@ import "../../../interfaces/IStrategy.sol";
 import "../../../interfaces/IRewards.sol";
 import "../../../interfaces/ICvxCrvStaking.sol";
 import "../../../interfaces/IHarvester.sol";
-import "./StrategyBase.sol";
 
-contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
+contract stkCvxCrvStrategy is Ownable {
     using SafeERC20 for IERC20;
 
     address public immutable vault;
     address public harvester;
     ICvxCrvStaking public immutable cvxCrvStaking;
+    address private constant CVXCRV_TOKEN =
+    0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
@@ -120,4 +121,6 @@ contract stkCvxCrvStrategy is Ownable, stkCvxCrvStrategyBase {
         require(vault == msg.sender, "Vault calls only");
         _;
     }
+
+    receive() external payable {}
 }
