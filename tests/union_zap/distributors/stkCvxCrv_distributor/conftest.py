@@ -4,6 +4,7 @@ from brownie import (
     stkCvxCrvMerkleDistributor,
     stkCvxCrvDistributorZaps,
     stkCvxCrvZaps,
+    stkCvxCrvMigration,
     interface,
 )
 from tests.utils.constants import (
@@ -57,6 +58,11 @@ def distributor(owner, vault, alice):
 @pytest.fixture(scope="module")
 def vault_zaps(owner):
     yield stkCvxCrvZaps.at(STAKED_CVXCRV_ZAPS)
+
+
+@pytest.fixture(scope="module")
+def migration(owner):
+    yield stkCvxCrvMigration.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
