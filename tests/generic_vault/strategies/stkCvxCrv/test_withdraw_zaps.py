@@ -1,19 +1,13 @@
 import brownie
-import pytest
 from brownie import interface
 from decimal import Decimal
 
 from ....utils import get_crv_to_eth_amount, approx, eth_to_cvx
-from ....utils.aurabal import (
-    estimate_underlying_received_baleth,
-    get_aurabal_to_lptoken_amount,
-)
 from ....utils.constants import (
     SUSHI_ROUTER,
     WETH,
     SPELL,
     ADDRESS_ZERO,
-    BAL_TOKEN,
     CURVE_CVXCRV_CRV_POOL,
     CRV,
     CVX,
@@ -178,7 +172,7 @@ def test_claim_as_fxs(fn_isolation, alice, bob, vault, strategy, zaps):
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
 
-    spell_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
+    fxs_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
         eth_amount, [WETH, FXS]
     )[-1]
     vault.approve(zaps, 2**256 - 1, {"from": alice})
@@ -186,7 +180,7 @@ def test_claim_as_fxs(fn_isolation, alice, bob, vault, strategy, zaps):
     zaps.claimFromVaultViaUniV2EthPair(
         amount, 0, SUSHI_ROUTER, FXS, alice.address, {"from": alice}
     )
-    assert interface.IERC20(FXS).balanceOf(alice) == spell_amount
+    assert interface.IERC20(FXS).balanceOf(alice) == fxs_amount
 
 
 def test_not_to_zero(alice, vault, strategy, zaps):
