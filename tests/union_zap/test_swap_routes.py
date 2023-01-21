@@ -5,12 +5,6 @@ from pytest_lazyfixture import lazy_fixture
 from brownie import interface, network
 import pytest
 
-from .conftest import (
-    set_mock_claims_regular,
-    set_mock_claims_v3,
-    set_mock_claims_v3_1,
-    set_mock_claims_curve,
-)
 from ..utils import (
     estimate_amounts_after_swap,
 )
