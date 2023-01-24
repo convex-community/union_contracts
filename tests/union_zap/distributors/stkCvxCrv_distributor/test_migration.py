@@ -37,3 +37,5 @@ def test_migration(
                       )
 
     assert vault.balanceOfUnderlying(distributor) - original_distributor_cvxcrv_balance == old_distributor_cvxcrv_balance
+    assert vault.balanceOf(distributor) > 0
+
