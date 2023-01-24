@@ -7,13 +7,6 @@ import "../../interfaces/IGenericVault.sol";
 import "../../interfaces/IUnionVault.sol";
 import "../../interfaces/IGenericDistributor.sol";
 
-interface IStkCvxCrvZaps {
-    function depositFromUCrv(
-        uint256 amount,
-        uint256 minAmountOut,
-        address to
-    ) external;
-}
 
 contract stkCvxCrvMigration is Ownable {
     using SafeERC20 for IERC20;
