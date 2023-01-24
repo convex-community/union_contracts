@@ -53,4 +53,10 @@ interface IStrategyZaps {
         uint256 minAmountOut,
         address to
     ) external returns (uint256);
+
+    function claimFromVaultAndStakeIn3PoolConvex(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) external returns (uint256);
 }

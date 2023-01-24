@@ -50,4 +50,24 @@ contract stkCvxCrvDistributorZaps is DistributorZaps {
         _claim(index, account, amount, merkleProof);
         IStrategyZaps(zaps).claimFromVaultAsCrv(amount, minAmountOut, to);
     }
+
+
+    /// @notice Claim from the distributor, unstake and deposits in 3pool.
+    /// @param index - claimer index
+    /// @param account - claimer account
+    /// @param amount - claim amount
+    /// @param merkleProof - merkle proof for the claim
+    /// @param minAmountOut - minimum amount of 3CRV (NOT USDT!)
+    /// @param to - address on behalf of which to stake
+    function claimFromDistributorAndStakeIn3PoolConvex(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32[] calldata merkleProof,
+        uint256 minAmountOut,
+        address to
+    ) external {
+        _claim(index, account, amount, merkleProof);
+        IStrategyZaps(zaps).claimFromVaultAndStakeIn3PoolConvex(amount, minAmountOut, to);
+    }
 }
