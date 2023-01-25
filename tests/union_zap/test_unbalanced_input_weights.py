@@ -40,7 +40,7 @@ def test_swap_adjust_distribute(
     fxs_vault,
     fxs_swapper,
     claim_tree,
-    merkle_distributor_v2,
+    crv_distributor,
     cvx_distributor,
     fxs_distributor,
     weights,
@@ -54,7 +54,7 @@ def test_swap_adjust_distribute(
     fxs_swapper.updateOption(option, {"from": owner})
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
     vaults = [vault, cvx_vault, fxs_vault]
-    distributors = [merkle_distributor_v2, cvx_distributor, fxs_distributor]
+    distributors = [crv_distributor, cvx_distributor, fxs_distributor]
 
     proofs = claim_tree.get_proof(union_contract.address)
     params = [

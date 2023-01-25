@@ -119,7 +119,7 @@ contract DistributorZaps {
     /// @param account - claimer account
     /// @param amount - claim amount
     /// @param merkleProof - merkle proof for the claim
-    /// @param minAmountOut - min amount of CVX expected
+    /// @param minAmountOut - min amount of ETH expected
     /// @param to - address to lock on behalf of
     function claimFromDistributorAsEth(
         uint256 index,

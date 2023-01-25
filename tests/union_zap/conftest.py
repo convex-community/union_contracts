@@ -13,6 +13,7 @@ from brownie import (
     FXSSwapper,
     UnionVault,
     UnionZap,
+    stkCvxCrvMerkleDistributor,
     interface,
 )
 from ..utils.constants import (
@@ -100,6 +101,13 @@ def merkle_distributor_v2(owner, union_contract, vault):
 
 
 @pytest.fixture(scope="module")
+def crv_distributor(owner, union_contract, vault):
+    merkle = stkCvxCrvMerkleDistributor.deploy(vault, union_contract, CVXCRV, {"from": owner})
+    merkle.setApprovals({"from": owner})
+    yield merkle
+
+
+@pytest.fixture(scope="module")
 def fxs_vault(owner):
     vault = GenericUnionVault.deploy(CURVE_CVXFXS_FXS_LP_TOKEN, {"from": owner})
     vault.setPlatform(AIRFORCE_SAFE, {"from": owner})
@@ -163,7 +171,7 @@ def set_up_ouput_tokens(
     owner,
     vault,
     union_contract,
-    merkle_distributor_v2,
+    crv_distributor,
     fxs_zaps,
     fxs_swapper,
     cvx_vault,
@@ -174,7 +182,7 @@ def set_up_ouput_tokens(
 ):
     # set up all the output tokens since all contracts are deployed
     union_contract.updateOutputToken(
-        CRV, [CURVE_CRV_ETH_POOL, ADDRESS_ZERO, merkle_distributor_v2], {"from": owner}
+        CRV, [CURVE_CRV_ETH_POOL, ADDRESS_ZERO, crv_distributor], {"from": owner}
     )
     union_contract.updateOutputToken(
         CVX, [CURVE_CVX_ETH_POOL, ADDRESS_ZERO, cvx_distributor], {"from": owner}

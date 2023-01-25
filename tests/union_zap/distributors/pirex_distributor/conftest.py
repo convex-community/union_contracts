@@ -7,10 +7,6 @@ from brownie import (
     interface,
 )
 from tests.utils.constants import (
-    CURVE_CVXFXS_FXS_LP_TOKEN,
-    AIRFORCE_SAFE,
-    FXS,
-    CURVE_CVXFXS_FXS_POOL,
     PIREX_CVX_VAULT,
     CVX,
     PIREX_CVX,

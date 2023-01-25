@@ -68,5 +68,7 @@ interface IUnionVault {
 
     function setWithdrawalPenalty(uint256 _penalty) external;
 
+    function withdrawalPenalty() external view returns (uint256);
+
     function setApprovals() external;
 }
