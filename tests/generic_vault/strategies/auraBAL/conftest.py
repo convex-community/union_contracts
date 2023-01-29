@@ -5,7 +5,7 @@ from brownie import (
     AuraBalStrategy,
     AuraBalZaps,
     interface,
-    BBUSDHandler,
+    BBUSDHandlerv2,
     AuraHandler,
 )
 from ....utils.constants import (
@@ -43,7 +43,7 @@ def aura_handler(owner, vault, strategy):
 
 @pytest.fixture(scope="module")
 def bbusd_handler(owner, vault, strategy):
-    handler = BBUSDHandler.deploy(BBUSD_TOKEN, strategy, {"from": owner})
+    handler = BBUSDHandlerv2.deploy(BBUSD_TOKEN, strategy, {"from": owner})
     yield handler
 
 
