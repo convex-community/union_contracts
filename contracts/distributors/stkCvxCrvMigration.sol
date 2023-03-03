@@ -7,7 +7,6 @@ import "../../interfaces/IGenericVault.sol";
 import "../../interfaces/IUnionVault.sol";
 import "../../interfaces/IGenericDistributor.sol";
 
-
 contract stkCvxCrvMigration is Ownable {
     using SafeERC20 for IERC20;
 

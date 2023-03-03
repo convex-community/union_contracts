@@ -17,7 +17,7 @@ contract stkCvxCrvStrategy is Ownable {
     address public harvester;
     ICvxCrvStaking public immutable cvxCrvStaking;
     address private constant CVXCRV_TOKEN =
-    0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;
+        0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
