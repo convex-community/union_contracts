@@ -64,9 +64,10 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
     function _deposit(
         uint256 _amount,
         uint256 _minAmountOut,
-        address _to
+        address _to,
+        bool _lock
     ) internal {
-        if (ICurveV2Pool(CURVE_CVX_PCVX_POOL).price_oracle() < 1 ether) {
+        if (!_lock) {
             uint256 _pxCvxAmount = ICurveV2Pool(CURVE_CVX_PCVX_POOL).exchange(
                 0,
                 1,
@@ -85,47 +86,54 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
     /// @notice Deposit into the pounder from ETH
     /// @param minAmountOut - min amount of pCVX tokens expected
     /// @param to - address to stake on behalf of
-    function depositFromEth(uint256 minAmountOut, address to)
-        external
-        payable
-        notToZeroAddress(to)
-    {
+    /// @param lock - whether to lock or swap cvx to pxcvx
+    function depositFromEth(
+        uint256 minAmountOut,
+        address to,
+        bool lock
+    ) external payable notToZeroAddress(to) {
         require(msg.value > 0, "cheap");
-        _depositFromEth(msg.value, minAmountOut, to);
+        _depositFromEth(msg.value, minAmountOut, to, lock);
     }
 
     /// @notice Deposit into the pounder from CRV
     /// @param minAmountOut - min amount of pCVX tokens expected
     /// @param to - address to stake on behalf of
+    /// @param lock - whether to lock or swap cvx to pxcvx
     function depositFromCrv(
         uint256 amount,
         uint256 minAmountOut,
-        address to
+        address to,
+        bool lock
     ) external notToZeroAddress(to) {
         IERC20(CRV_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
         uint256 _ethBalance = _swapCrvToEth(amount);
-        _depositFromEth(_ethBalance, minAmountOut, to);
+        _depositFromEth(_ethBalance, minAmountOut, to, lock);
     }
 
     /// @notice Deposit into the pounder from CVX
     /// @param minAmountOut - min amount of pCVX tokens expected
     /// @param to - address to stake on behalf of
+    /// @param lock - whether to lock or swap cvx to pxcvx
     function depositFromCvx(
         uint256 amount,
         uint256 minAmountOut,
-        address to
+        address to,
+        bool lock
     ) external notToZeroAddress(to) {
         IERC20(CVX_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
-        _deposit(amount, minAmountOut, to);
+        _deposit(amount, minAmountOut, to, lock);
     }
 
     /// @notice Deposit into the pounder from cvxCRV
     /// @param minAmountOut - min amount of pCVX tokens expected
     /// @param to - address to stake on behalf of
+    /// @param lock - whether to lock or swap cvx to pxcvx
     function depositFromCvxCrv(
         uint256 amount,
         uint256 minAmountOut,
-        address to
+        address to,
+        bool lock
     ) external notToZeroAddress(to) {
         IERC20(CVXCRV_TOKEN).safeTransferFrom(
             msg.sender,
@@ -134,20 +142,22 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         );
         uint256 _crvBalance = _swapCvxCrvToCrv(amount, address(this));
         uint256 _ethBalance = _swapCrvToEth(_crvBalance);
-        _depositFromEth(_ethBalance, minAmountOut, to);
+        _depositFromEth(_ethBalance, minAmountOut, to, lock);
     }
 
     /// @notice Internal function to deposit ETH to the pounder
     /// @param _amount - amount of ETH
     /// @param _minAmountOut - min amount of tokens expected
     /// @param _to - address to stake on behalf of
+    /// @param _lock - whether to lock or swap cvx to pxcvx
     function _depositFromEth(
         uint256 _amount,
         uint256 _minAmountOut,
-        address _to
+        address _to,
+        bool _lock
     ) internal {
         uint256 _cvxBalance = _swapEthToCvx(_amount);
-        _deposit(_cvxBalance, _minAmountOut, _to);
+        _deposit(_cvxBalance, _minAmountOut, _to, _lock);
     }
 
     /// @notice Deposit into the pounder from any token via Uni interface
@@ -158,12 +168,14 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
     /// @param router - address of the router to use. e.g. 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F for Sushi
     /// @param inputToken - address of the token to swap from, needs to have an ETH pair on router used
     /// @param to - address to stake on behalf of
+    /// @param lock - whether to lock or swap cvx to pxcvx
     function depositViaUniV2EthPair(
         uint256 amount,
         uint256 minAmountOut,
         address router,
         address inputToken,
-        address to
+        address to,
+        bool lock
     ) external notToZeroAddress(to) {
         require(router != address(0));
 
@@ -182,7 +194,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
             address(this),
             block.timestamp + 1
         );
-        _depositFromEth(address(this).balance, minAmountOut, to);
+        _depositFromEth(address(this).balance, minAmountOut, to, lock);
     }
 
     /// @notice Unstake and converts pxCVX to CVX
