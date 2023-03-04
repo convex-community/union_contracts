@@ -1,17 +1,12 @@
-from decimal import Decimal
-
 import brownie
 from brownie import interface
 
-from ....utils import approx, eth_to_cvx, cvxcrv_to_crv, eth_to_crv, crv_to_cvxcrv
-from ....utils.cvxfxs import get_crv_to_eth_amount
-from ....utils.pirex import get_cvx_to_pxcvx
+from ....utils import approx, eth_to_crv, crv_to_cvxcrv
 from ....utils.constants import (
     ADDRESS_ZERO,
     FXS,
     SUSHI_ROUTER,
     WETH,
-    PXCVX_TOKEN,
     CRV_TOKEN,
     CURVE_CVXCRV_CRV_POOL,
     CVXCRV_TOKEN,
