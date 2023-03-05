@@ -37,6 +37,12 @@ contract StkCvxFxsStrategy is Ownable, StkCvxFxsStrategyBase, IStrategyOracle {
             type(uint256).max
         );
 
+        IERC20(CVXFXS_TOKEN).safeApprove(address(cvxFxsStaking), 0);
+        IERC20(CVXFXS_TOKEN).safeApprove(
+            address(cvxFxsStaking),
+            type(uint256).max
+        );
+
         IERC20(FXS_TOKEN).safeApprove(FXS_DEPOSIT, 0);
         IERC20(FXS_TOKEN).safeApprove(FXS_DEPOSIT, type(uint256).max);
 
