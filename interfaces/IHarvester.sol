@@ -6,7 +6,5 @@ interface IHarvester {
 
     function applyPendingOwner() external;
 
-    function processRewards(bool _forceLock)
-        external
-        returns (uint256);
+    function processRewards(bool _forceLock) external returns (uint256);
 }

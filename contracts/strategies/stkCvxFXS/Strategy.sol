@@ -1,0 +1,169 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.9;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./StrategyBase.sol";
+import "../../../interfaces/IBooster.sol";
+import "../../../interfaces/IStrategyOracle.sol";
+import "../../../interfaces/IGenericVault.sol";
+import "../../../interfaces/ICvxFxsStaking.sol";
+
+contract StkCvxFxsStrategy is Ownable, StkCvxFxsStrategyBase, IStrategyOracle {
+    using SafeERC20 for IERC20;
+
+    address public immutable vault;
+    ICvxFxsStaking cvxFxsStaking;
+
+    uint256 public constant FEE_DENOMINATOR = 10000;
+
+    constructor(address _vault, address _staking) {
+        vault = _vault;
+        cvxFxsStaking = ICvxFxsStaking(_staking);
+    }
+
+    /// @notice Set approvals for the contracts used when swapping & staking
+    function setApprovals() external {
+        IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, 0);
+        IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, type(uint256).max);
+
+        IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
+        IERC20(FXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, type(uint256).max);
+
+        IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
+        IERC20(CVXFXS_TOKEN).safeApprove(
+            CURVE_CVXFXS_FXS_POOL,
+            type(uint256).max
+        );
+
+        IERC20(FXS_TOKEN).safeApprove(FXS_DEPOSIT, 0);
+        IERC20(FXS_TOKEN).safeApprove(FXS_DEPOSIT, type(uint256).max);
+
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
+    }
+
+    /// @notice Query the amount currently staked
+    /// @return total - the total amount of tokens staked
+    function totalUnderlying() public view returns (uint256 total) {
+        return cvxFxsStaking.balanceOf(address(this));
+    }
+
+    /// @notice Deposits all underlying tokens in the staking contract
+    function stake(uint256 _amount) external onlyVault {
+        cvxFxsStaking.stake(_amount);
+    }
+
+    /// @notice Change the default swap option for eth -> fxs
+    /// @param _newOption - the new option to use
+    function setSwapOption(SwapOption _newOption) external onlyOwner {
+        SwapOption _oldOption = swapOption;
+        swapOption = _newOption;
+        emit OptionChanged(_oldOption, swapOption);
+    }
+
+    /// @notice Withdraw a certain amount from the staking contract
+    /// @param _amount - the amount to withdraw
+    /// @dev Can only be called by the vault
+    function withdraw(uint256 _amount) external onlyVault {
+        cvxFxsStaking.withdraw(_amount);
+        IERC20(CVXFXS_TOKEN).safeTransfer(vault, _amount);
+    }
+
+    /// @notice Claim rewards and swaps them to cvxFXS for restaking
+    /// @dev Can be called by the vault only
+    /// @param _caller - the address calling the harvest on the vault
+    /// @return harvested - the amount harvested
+    function harvest(address _caller)
+        external
+        onlyVault
+        returns (uint256 harvested)
+    {
+        // claim rewards
+        cvxFxsStaking.getReward();
+
+        // sell CVX rewards for ETH
+        uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
+        if (_cvxBalance > 0) {
+            _swapCvxToEth(_cvxBalance);
+        }
+
+        // sell CRV rewards for ETH
+        uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
+        if (_crvBalance > 0) {
+            _swapCrvToEth(_crvBalance);
+        }
+        uint256 _ethBalance = address(this).balance;
+
+        if (_ethBalance > 0) {
+            _swapEthForFxs(_ethBalance, swapOption);
+        }
+        uint256 _fxsBalance = IERC20(FXS_TOKEN).balanceOf(address(this));
+
+        uint256 _stakingAmount = _fxsBalance;
+        uint256 _staked;
+
+        if (_fxsBalance > 0) {
+            // if this is the last call, no fees
+            if (IGenericVault(vault).totalSupply() != 0) {
+                // Deduce and pay out incentive to caller (not needed for final exit)
+                if (IGenericVault(vault).callIncentive() > 0) {
+                    uint256 incentiveAmount = (_fxsBalance *
+                        IGenericVault(vault).callIncentive()) / FEE_DENOMINATOR;
+                    IERC20(FXS_TOKEN).safeTransfer(_caller, incentiveAmount);
+                    _stakingAmount = _stakingAmount - incentiveAmount;
+                }
+                // Deduce and pay platform fee
+                if (IGenericVault(vault).platformFee() > 0) {
+                    uint256 feeAmount = (_fxsBalance *
+                        IGenericVault(vault).platformFee()) / FEE_DENOMINATOR;
+                    IERC20(FXS_TOKEN).safeTransfer(
+                        IGenericVault(vault).platform(),
+                        feeAmount
+                    );
+                    _stakingAmount = _stakingAmount - feeAmount;
+                }
+            }
+            // check if there is a premium on cvxFXS
+            if (cvxFxsFxsSwap.price_oracle() > 1 ether) {
+                // lock and deposit as cvxFxs
+                cvxFxsDeposit.deposit(_stakingAmount, true);
+                _staked = _stakingAmount;
+            }
+            // If not swap on Curve
+            else {
+                _staked = cvxFxsFxsSwap.exchange_underlying(
+                    0,
+                    1,
+                    _stakingAmount,
+                    _stakingAmount
+                );
+            }
+            // Stake on Convex
+            require(cvxFxsStaking.stakeAll());
+        }
+
+        return _staked;
+    }
+
+    modifier onlyVault() {
+        require(vault == msg.sender, "Vault calls only");
+        _;
+    }
+}
