@@ -102,7 +102,7 @@ contract StkCvxFxsStrategy is Ownable, StkCvxFxsStrategyBase, IStrategyOracle {
         returns (uint256 harvested)
     {
         // claim rewards
-        cvxFxsStaking.getReward();
+        cvxFxsStaking.getReward(address(this));
 
         // sell CVX rewards for ETH
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
@@ -162,7 +162,7 @@ contract StkCvxFxsStrategy is Ownable, StkCvxFxsStrategyBase, IStrategyOracle {
                 );
             }
             // Stake on Convex
-            require(cvxFxsStaking.stakeAll());
+            cvxFxsStaking.stakeAll();
         }
 
         return _staked;

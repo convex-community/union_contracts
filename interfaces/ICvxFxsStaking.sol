@@ -6,13 +6,13 @@ interface ICvxFxsStaking {
 
     function withdraw(uint256) external;
 
-    function getReward() external returns (bool);
+    function getReward(address _address) external;
 
     function stake(uint256) external;
 
-    function stakeFor(address, uint256) external returns (bool);
+    function stakeFor(address, uint256) external;
 
-    function stakeAll() external returns (bool);
+    function stakeAll() external;
 
     function addReward(address _rewardsToken, address _distributor) external;
 
