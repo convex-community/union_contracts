@@ -1,6 +1,5 @@
 import brownie
 import pytest
-from brownie import chain, interface
 
 from ....utils import cvxfxs_balance
 from ....utils.constants import CVXCRV

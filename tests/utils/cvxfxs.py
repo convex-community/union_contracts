@@ -179,6 +179,28 @@ def calc_harvest_amount_curve(strategy):
     return fxs_balance
 
 
+
+def calc_staking_harvest_amount_curve(strategy):
+
+    def calc_rewards(strategy):
+        staking = interface.IBasicRewards(CVXFXS_STAKING_CONTRACT)
+        crv_rewards = staking.earned(strategy)
+        cvx_rewards = interface.ICvxMining(CVX_MINING_LIB).ConvertCrvToCvx(crv_rewards)
+        cvx_rewards += interface.IBasicRewards(staking.extraRewards(0)).earned(strategy)
+        fxs_rewards = interface.IBasicRewards(staking.extraRewards(1)).earned(strategy)
+
+        eth_balance = get_cvx_to_eth_amount(cvx_rewards)
+        eth_balance += get_crv_to_eth_amount(crv_rewards)
+
+        return fxs_rewards, eth_balance
+
+    fxs_balance, eth_balance = calc_staking_rewards(strategy)
+    if eth_balance > 0:
+        fxs_balance += eth_fxs_curve(eth_balance)
+
+    return fxs_balance
+
+
 def eth_to_fxs(amount, option):
     if option == 0:
         return eth_fxs_curve(amount)
