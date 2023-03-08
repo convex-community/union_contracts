@@ -1,16 +1,55 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity 0.8.9;
 
-import "./interfaces/MathUtil.sol";
-import "./interfaces/IBooster.sol";
-import "./interfaces/IVoterProxy.sol";
-import "./interfaces/IFxsDepositor.sol";
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+interface IBooster {
+    function addPool(
+        address _implementation,
+        address _stakingAddress,
+        address _stakingToken
+    ) external;
 
+    function deactivatePool(uint256 _pid) external;
+
+    function voteGaugeWeight(
+        address _controller,
+        address _gauge,
+        uint256 _weight
+    ) external;
+
+    function setDelegate(
+        address _delegateContract,
+        address _delegate,
+        bytes32 _space
+    ) external;
+
+    function owner() external returns (address);
+
+    function rewardManager() external returns (address);
+
+    function isShutdown() external returns (bool);
+}
+
+interface IFxsDepositor {
+    function deposit(uint256 _amount, bool _lock) external;
+}
+
+interface IVoterProxy {
+    function operator() external view returns (address);
+}
+
+library MathUtil {
+    /**
+     * @dev Returns the smallest of two numbers.
+     */
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+}
 contract cvxFxsStaking is ERC20, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
