@@ -65,12 +65,12 @@ contract stkCvxCrvVault is GenericUnionVault {
 
     /// @notice Claim rewards and swaps them to cvxCrv for restaking
     /// @param _minAmountOut - min amount of cvxCrv to receive for harvest
-    /// @param _forceLock - force locking even if there's a discount for swapping
+    /// @param _sweep - whether to retrieve token rewards in strategy contract
     /// @dev Can be called by whitelisted account or anyone against an ETH incentive
     /// @dev Harvest logic in the strategy contract
     /// @dev Harvest can be called even if permissioned when last staker is
     ///      withdrawing from the vault.
-    function harvest(uint256 _minAmountOut, bool _forceLock) public {
+    function harvest(uint256 _minAmountOut, bool _sweep) public {
         require(
             !isHarvestPermissioned ||
                 authorizedHarvesters[msg.sender] ||
@@ -80,7 +80,7 @@ contract stkCvxCrvVault is GenericUnionVault {
         uint256 _harvested = stkCvxCrvStrategy(strategy).harvest(
             msg.sender,
             _minAmountOut,
-            _forceLock
+            _sweep
         );
         emit Harvest(msg.sender, _harvested);
     }
