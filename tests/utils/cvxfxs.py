@@ -18,7 +18,7 @@ from .constants import (
     CVXFXS,
     CVXFXS_FXS_GAUGE_DEPOSIT,
     CVX_MINING_LIB,
-    CURVE_FRAX_USDC_POOL,
+    CURVE_FRAX_USDC_POOL, CRV_TOKEN, CVX,
 )
 
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
@@ -179,26 +179,30 @@ def calc_harvest_amount_curve(strategy):
     return fxs_balance
 
 
+def calc_staking_harvest_amount(strategy, staking, option):
 
-def calc_staking_harvest_amount_curve(strategy):
-
-    def calc_rewards(strategy):
-        staking = interface.IBasicRewards(CVXFXS_STAKING_CONTRACT)
-        crv_rewards = staking.earned(strategy)
-        cvx_rewards = interface.ICvxMining(CVX_MINING_LIB).ConvertCrvToCvx(crv_rewards)
-        cvx_rewards += interface.IBasicRewards(staking.extraRewards(0)).earned(strategy)
-        fxs_rewards = interface.IBasicRewards(staking.extraRewards(1)).earned(strategy)
-
-        eth_balance = get_cvx_to_eth_amount(cvx_rewards)
-        eth_balance += get_crv_to_eth_amount(crv_rewards)
-
-        return fxs_rewards, eth_balance
-
-    fxs_balance, eth_balance = calc_staking_rewards(strategy)
+    fxs_balance, eth_balance = calc_staking_rewards(strategy, staking)
     if eth_balance > 0:
-        fxs_balance += eth_fxs_curve(eth_balance)
+        fxs_balance += eth_to_fxs(eth_balance, option)
 
     return fxs_balance
+
+
+def calc_staking_rewards(strategy, staking):
+    staking_rewards = staking.claimableRewards(strategy)
+    eth_balance = 0
+    fxs_rewards = 0
+    for rewards in staking_rewards:
+        token, amount = rewards
+        token = token.lower()
+        if token == CRV_TOKEN:
+            eth_balance += get_crv_to_eth_amount(amount)
+        elif token == CVX:
+            eth_balance += get_cvx_to_eth_amount(amount)
+        elif token == FXS:
+            fxs_rewards += amount
+
+    return fxs_rewards, eth_balance
 
 
 def eth_to_fxs(amount, option):
