@@ -41,7 +41,10 @@ contract stkCvxCrvStrategy is Ownable {
     /// @notice update the list and status of reward tokens
     /// @param _token - token address
     /// @param _status - 1 for active, else inactive
-    function updateRewardToken(address _token, uint256 _status) public onlyOwner {
+    function updateRewardToken(address _token, uint256 _status)
+        public
+        onlyOwner
+    {
         require(_status > 0, "can't delete");
         if (rewardTokenStatus[_token] == 0) {
             rewardTokens.push(_token);
@@ -141,8 +144,15 @@ contract stkCvxCrvStrategy is Ownable {
         return _stakingAmount;
     }
 
-    function _rescueToken(address _token, address _to, uint256 _amount) internal {
-        require(_token != address(cvxCrvStaking), "Cannot rescue staking token");
+    function _rescueToken(
+        address _token,
+        address _to,
+        uint256 _amount
+    ) internal {
+        require(
+            _token != address(cvxCrvStaking),
+            "Cannot rescue staking token"
+        );
         IERC20(_token).safeTransfer(_to, _amount);
     }
 
@@ -150,7 +160,11 @@ contract stkCvxCrvStrategy is Ownable {
     /// @param _token - token address (can not be staking token)
     /// @param _to - address to send token to
     /// @param _amount - amount to transfer
-    function rescueToken(address _token, address _to, uint256 _amount) external onlyOwner {
+    function rescueToken(
+        address _token,
+        address _to,
+        uint256 _amount
+    ) external onlyOwner {
         _rescueToken(_token, _to, _amount);
     }
 

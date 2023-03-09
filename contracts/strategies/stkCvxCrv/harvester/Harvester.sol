@@ -218,6 +218,24 @@ contract stkCvxCrvHarvester {
         return 0;
     }
 
+    /// @notice Transfers an ERC20 stuck in the contract to designated address
+    /// @param _token - token address (can not be staking token)
+    /// @param _to - address to send token to
+    /// @param _amount - amount to transfer
+    function rescueToken(
+        address _token,
+        address _to,
+        uint256 _amount
+    ) external onlyOwner {
+        require(
+            _token != CVXCRV_TOKEN &&
+                _token != CVX_TOKEN &&
+                _token != THREECRV_TOKEN,
+            "Cannot rescue reward token"
+        );
+        IERC20(_token).safeTransfer(_to, _amount);
+    }
+
     modifier onlyOwner() {
         require((msg.sender == owner), "owner only");
         _;
