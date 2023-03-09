@@ -65,12 +65,10 @@ def test_harvest_sweep(fn_isolation, alice, bob, owner, vault, strategy, wrapper
     chain.mine(1)
     estimated_harvest = calc_staked_cvxcrv_harvest(strategy, wrapper)
     crv_balance = 1e23
-    interface.IERC20(CRV).transfer(
-        strategy, crv_balance, {"from": CURVE_VOTING_ESCROW}
-    )
-    estimated_sweep_harvest = estimated_harvest + interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
-            0, 1, crv_balance
-        )
+    interface.IERC20(CRV).transfer(strategy, crv_balance, {"from": CURVE_VOTING_ESCROW})
+    estimated_sweep_harvest = estimated_harvest + interface.ICurveFactoryPool(
+        CURVE_CVXCRV_CRV_POOL
+    ).get_dy(0, 1, crv_balance)
     tx = vault.harvest(0, True, {"from": bob})
 
     actual_harvest = tx.events["Harvest"]["_value"]

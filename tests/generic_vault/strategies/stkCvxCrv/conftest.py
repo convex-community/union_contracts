@@ -15,7 +15,9 @@ from ....utils.constants import (
     CVXCRV,
     CURVE_CVXCRV_CRV_POOL,
     AIRFORCE_SAFE,
-    NEW_CVX_CRV_STAKING, CVX, THREECRV_TOKEN,
+    NEW_CVX_CRV_STAKING,
+    CVX,
+    THREECRV_TOKEN,
 )
 
 
