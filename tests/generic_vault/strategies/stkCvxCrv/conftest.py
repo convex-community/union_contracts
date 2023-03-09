@@ -15,7 +15,7 @@ from ....utils.constants import (
     CVXCRV,
     CURVE_CVXCRV_CRV_POOL,
     AIRFORCE_SAFE,
-    NEW_CVX_CRV_STAKING,
+    NEW_CVX_CRV_STAKING, CVX, THREECRV_TOKEN,
 )
 
 
@@ -36,6 +36,9 @@ def strategy(owner, vault, wrapper):
     strategy = stkCvxCrvStrategy.deploy(vault, wrapper, {"from": owner})
     vault.setStrategy(strategy, {"from": owner})
     strategy.setApprovals({"from": owner})
+    strategy.updateRewardToken(CRV, 1)
+    strategy.updateRewardToken(CVX, 1)
+    strategy.updateRewardToken(THREECRV_TOKEN, 1)
     yield strategy
 
 

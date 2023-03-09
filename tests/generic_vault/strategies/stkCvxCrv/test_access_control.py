@@ -47,6 +47,26 @@ def test_strategy_set_reward_weights(fn_isolation, alice, vault, strategy):
         strategy.setRewardWeight(2000, {"from": alice})
 
 
+def test_strategy_rescue_non_owner(fn_isolation, alice, owner, vault, strategy):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        strategy.rescueToken(CRV_TOKEN, owner, 0, {"from": alice})
+
+
+def test_strategy_rescue_staking_token(fn_isolation, alice, owner, vault, strategy, wrapper):
+    with brownie.reverts("Cannot rescue staking token"):
+        strategy.rescueToken(wrapper, owner, 0, {"from": owner})
+
+
+def test_strategy_update_rewards_non_owner(fn_isolation, alice, owner, vault, strategy):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        strategy.updateRewardToken(CRV_TOKEN, 1, {"from": alice})
+
+
+def test_set_force_lock_non_owner(fn_isolation, alice, owner, vault, strategy):
+    with brownie.reverts("Ownable: caller is not the owner"):
+        strategy.setForceLock({"from": alice})
+
+
 # HARVESTER ACCESS TESTS
 
 
