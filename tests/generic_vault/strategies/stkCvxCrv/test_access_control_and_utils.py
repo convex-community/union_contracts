@@ -48,8 +48,10 @@ def test_strategy_set_reward_weights(fn_isolation, alice, vault, strategy):
 
 
 def test_strategy_rescue_non_owner(fn_isolation, alice, owner, vault, strategy):
-    with brownie.reverts("Ownable: caller is not the owner"):
-        strategy.rescueToken(CRV_TOKEN, owner, 0, {"from": alice})
+    original_owner_balance = interface.IERC20(FXS).balanceOf(owner)
+    interface.IERC20(FXS).transfer(strategy, 1e24, {"from": VE_FXS})
+    strategy.rescueToken(FXS, owner, 1e24, {"from": owner})
+    assert interface.IERC20(FXS).balanceOf(owner) > original_owner_balance
 
 
 def test_strategy_rescue_staking_token(
@@ -59,17 +61,37 @@ def test_strategy_rescue_staking_token(
         strategy.rescueToken(wrapper, owner, 0, {"from": owner})
 
 
+def test_strategy_rescue_tokens_access(fn_isolation, alice, harvester):
+    with brownie.reverts("owner only"):
+        harvester.rescueToken(FXS, alice, {"from": alice})
+
+
 def test_strategy_update_rewards_non_owner(fn_isolation, alice, owner, vault, strategy):
     with brownie.reverts("Ownable: caller is not the owner"):
         strategy.updateRewardToken(CRV_TOKEN, 1, {"from": alice})
 
 
-def test_set_force_lock_non_owner(fn_isolation, alice, owner, vault, strategy):
-    with brownie.reverts("Ownable: caller is not the owner"):
-        strategy.setForceLock({"from": alice})
+def test_strategy_update_rewards(fn_isolation, alice, owner, vault, strategy):
+    # from conftest
+    assert strategy.rewardTokenStatus(CRV_TOKEN) == 1
+
+    with brownie.reverts("can't delete"):
+        strategy.updateRewardToken(CRV_TOKEN, 0, {"from": owner})
+
+    strategy.updateRewardToken(CRV_TOKEN, 2, {"from": owner})
+    assert strategy.rewardTokenStatus(CRV_TOKEN) == 2
+
+    strategy.updateRewardToken(FXS, 1)
+    assert strategy.rewardTokenStatus(FXS) == 1
+    assert strategy.rewardTokens(3) == FXS
 
 
 # HARVESTER ACCESS TESTS
+
+
+def test_harvester_set_force_lock_non_owner(fn_isolation, alice, owner, harvester):
+    with brownie.reverts("owner only"):
+        harvester.setForceLock({"from": alice})
 
 
 def test_harvester_rescue_tokens_access(fn_isolation, alice, harvester):
@@ -94,6 +116,21 @@ def test_harvester_rescue_tokens(fn_isolation, owner, vault, harvester):
 
 
 def test_harvester_set_slippage(fn_isolation, alice, owner, harvester):
+    with brownie.reverts("owner only"):
+        harvester.setSlippage(9500, {"from": alice})
+    harvester.setSlippage(1000, {"from": owner})
+    assert harvester.allowedSlippage() == 1000
+
+
+def test_harvester_set_force_lock(fn_isolation, owner, harvester):
+    assert harvester.forceLock() == False
+    harvester.setForceLock({"from": owner})
+    assert harvester.forceLock() == True
+    harvester.setForceLock({"from": owner})
+    assert harvester.forceLock() == False
+
+
+def test_harvester_rescue_reward_tokens(fn_isolation, alice, owner, harvester):
     with brownie.reverts("owner only"):
         harvester.setSlippage(9500, {"from": alice})
     harvester.setSlippage(1000, {"from": owner})
@@ -132,7 +169,7 @@ def test_accept_pending_owner(fn_isolation, alice, bob, owner, harvester):
 
 def test_process_rewards(fn_isolation, alice, harvester):
     with brownie.reverts("strategy only"):
-        harvester.processRewards(False, {"from": alice})
+        harvester.processRewards({"from": alice})
 
 
 # VAULT ACCESS TESTS
