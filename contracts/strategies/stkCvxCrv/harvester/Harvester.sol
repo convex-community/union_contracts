@@ -175,7 +175,8 @@ contract stkCvxCrvHarvester {
     }
 
     function _crvToCvxCrv(uint256 _amount) internal returns (uint256) {
-        return crvCvxCrvSwap.exchange(0, 1, _amount, 0, address(this));
+        // if swapping, we want at least as much cvxCrv out as crv in
+        return crvCvxCrvSwap.exchange(0, 1, _amount, _amount, address(this));
     }
 
     function processRewards(bool _forceLock)
@@ -228,7 +229,7 @@ contract stkCvxCrvHarvester {
         uint256 _amount
     ) external onlyOwner {
         require(
-            _token != CVXCRV_TOKEN &&
+            _token != CRV_TOKEN &&
                 _token != CVX_TOKEN &&
                 _token != THREECRV_TOKEN,
             "Cannot rescue reward token"

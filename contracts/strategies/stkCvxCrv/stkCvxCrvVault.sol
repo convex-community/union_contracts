@@ -93,7 +93,7 @@ contract stkCvxCrvVault is GenericUnionVault {
     }
 
     /// @notice Claim rewards and swaps them to cvxCRV for restaking
-    /// @dev No slippage protection, swapping for cvxCRV
+    /// @dev No slippage protection (harvester will use oracles), swapping for cvxCRV
     function harvest() public override {
         harvest(0);
     }
