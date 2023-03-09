@@ -17,7 +17,6 @@ contract stkCvxCrvStrategy is Ownable {
     address public harvester;
     address[] public rewardTokens;
     mapping(address => uint256) public rewardTokenStatus;
-    bool public forceLock;
     ICvxCrvStaking public immutable cvxCrvStaking;
     address private constant CVXCRV_TOKEN =
         0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;
@@ -56,12 +55,6 @@ contract stkCvxCrvStrategy is Ownable {
     /// @param _weight the desired weight: 0 = full group 0, 10k = full group 1
     function setRewardWeight(uint256 _weight) public onlyVault {
         cvxCrvStaking.setRewardWeight(_weight);
-    }
-
-    /// @notice switch the forceLock option to force harvester to lock
-    /// @dev the harvester will lock even if there is a discount if forceLock is true
-    function setForceLock() external onlyOwner {
-        forceLock = !forceLock;
     }
 
     /// @notice Update the harvester contract
@@ -108,9 +101,7 @@ contract stkCvxCrvStrategy is Ownable {
             _sweepRewards();
         }
         // process rewards via harvester
-        uint256 _cvxCrvBalance = IHarvester(harvester).processRewards(
-            forceLock
-        );
+        uint256 _cvxCrvBalance = IHarvester(harvester).processRewards();
 
         require(_cvxCrvBalance >= _minAmountOut, "slippage");
         // if this is the last call or no CRV

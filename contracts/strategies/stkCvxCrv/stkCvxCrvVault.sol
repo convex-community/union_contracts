@@ -7,7 +7,7 @@ interface stkCvxCrvStrategy {
     function harvest(
         address _caller,
         uint256 _minAmountOut,
-        bool _forceLock
+        bool _sweep
     ) external returns (uint256 harvested);
 
     function setRewardWeight(uint256 _weight) external;
