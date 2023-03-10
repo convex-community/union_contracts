@@ -10,7 +10,7 @@ import "../../../interfaces/IUniV3Router.sol";
 import "../../../interfaces/IUniV2Router.sol";
 import "../../../interfaces/ICvxFxsDeposit.sol";
 
-contract StkCvxFxsStrategyBase {
+contract stkCvxFxsStrategyBase {
     address public constant FXS_DEPOSIT =
         0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e;
 

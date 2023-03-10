@@ -10,7 +10,7 @@ import "../../../interfaces/IUniV2Router.sol";
 import "../../../interfaces/ICurveTriCrypto.sol";
 import "../../../interfaces/ICVXLocker.sol";
 
-contract StkCvxFxsZaps is Ownable, StkCvxFxsStrategyBase {
+contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     using SafeERC20 for IERC20;
 
     address public immutable vault;

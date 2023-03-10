@@ -10,7 +10,7 @@ import "../../../../interfaces/ICvxCrvDeposit.sol";
 import "../../../../interfaces/ICurveFactoryPool.sol";
 import "../StrategyBase.sol";
 
-contract stkCvxFxsHarvester is StkCvxFxsStrategyBase {
+contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
     using SafeERC20 for IERC20;
     address public owner;
     address public immutable strategy;

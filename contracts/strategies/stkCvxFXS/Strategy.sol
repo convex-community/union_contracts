@@ -9,7 +9,7 @@ import "../../../interfaces/IStrategyOracle.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/ICvxFxsStaking.sol";
 
-contract stkCvxFxsStrategy is Ownable, IStrategyOracle {
+contract stkCvxFxsStrategy is Ownable {
     using SafeERC20 for IERC20;
     address public constant CVXFXS_TOKEN =
         0xFEEf77d3f69374f66429C91d732A244f074bdf74;
@@ -66,8 +66,9 @@ contract stkCvxFxsStrategy is Ownable, IStrategyOracle {
     /// @notice Claim rewards and swaps them to cvxFXS for restaking
     /// @dev Can be called by the vault only
     /// @param _caller - the address calling the harvest on the vault
+    /// @param _minAmountOut - min amount of cvxFxs expected
     /// @return harvested - the amount harvested
-    function harvest(address _caller)
+    function harvest(address _caller, uint256 _minAmountOut)
         external
         onlyVault
         returns (uint256 harvested)
@@ -76,6 +77,7 @@ contract stkCvxFxsStrategy is Ownable, IStrategyOracle {
         cvxFxsStaking.getReward(address(this), harvester);
 
         uint256 _cvxFxsBalance = IERC20(CVXFXS_TOKEN).balanceOf(address(this));
+        require(_cvxFxsBalance >= _minAmountOut, "slippage");
 
         uint256 _stakingAmount = _cvxFxsBalance;
 

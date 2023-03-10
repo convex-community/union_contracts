@@ -66,7 +66,7 @@ contract stkCvxCrvVault is GenericUnionVault {
     /// @notice Claim rewards and swaps them to cvxCrv for restaking
     /// @param _minAmountOut - min amount of cvxCrv to receive for harvest
     /// @param _sweep - whether to retrieve token rewards in strategy contract
-    /// @dev Can be called by whitelisted account or anyone against an ETH incentive
+    /// @dev Can be called by whitelisted account or anyone against a cvxCrv incentive
     /// @dev Harvest logic in the strategy contract
     /// @dev Harvest can be called even if permissioned when last staker is
     ///      withdrawing from the vault.
