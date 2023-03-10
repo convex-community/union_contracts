@@ -8,6 +8,7 @@ import "../../../interfaces/IBooster.sol";
 import "../../../interfaces/IStrategyOracle.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/ICvxFxsStaking.sol";
+import "../../../interfaces/IHarvester.sol";
 
 contract stkCvxFxsStrategy is Ownable {
     using SafeERC20 for IERC20;
@@ -76,7 +77,7 @@ contract stkCvxFxsStrategy is Ownable {
         // claim rewards
         cvxFxsStaking.getReward(address(this), harvester);
 
-        uint256 _cvxFxsBalance = IERC20(CVXFXS_TOKEN).balanceOf(address(this));
+        uint256 _cvxFxsBalance = IHarvester(harvester).processRewards();
         require(_cvxFxsBalance >= _minAmountOut, "slippage");
 
         uint256 _stakingAmount = _cvxFxsBalance;
