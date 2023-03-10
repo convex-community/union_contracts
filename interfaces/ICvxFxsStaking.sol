@@ -8,6 +8,8 @@ interface ICvxFxsStaking {
 
     function getReward(address _address) external;
 
+    function getReward(address _address, address _forwardTo) external;
+
     function stake(uint256) external;
 
     function stakeFor(address, uint256) external;
@@ -21,6 +23,8 @@ interface ICvxFxsStaking {
         address _distributor,
         bool _approved
     ) external;
+
+    function setRewardRedirect(address _to) external;
 
     function notifyRewardAmount(address _rewardsToken, uint256 _reward)
         external;

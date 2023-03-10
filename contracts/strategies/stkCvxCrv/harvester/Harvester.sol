@@ -87,7 +87,6 @@ contract stkCvxCrvHarvester {
         pendingOwner = address(0);
     }
 
-
     /// @notice switch the forceLock option to force harvester to lock
     /// @dev the harvester will lock even if there is a discount if forceLock is true
     function setForceLock() external onlyOwner {
@@ -99,9 +98,12 @@ contract stkCvxCrvHarvester {
     /// @dev Unhandled rewards can be redirected to new harvester contract
     function rescueToken(address _token, address _to) external onlyOwner {
         /// Only allow to rescue non-supported tokens
-        require(_token != CRV_TOKEN &&
-            _token != CVX_TOKEN &&
-            _token != THREECRV_TOKEN, "not allowed");
+        require(
+            _token != CRV_TOKEN &&
+                _token != CVX_TOKEN &&
+                _token != THREECRV_TOKEN,
+            "not allowed"
+        );
         uint256 _balance = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(_to, _balance);
     }
@@ -187,11 +189,7 @@ contract stkCvxCrvHarvester {
         return crvCvxCrvSwap.exchange(0, 1, _amount, _amount, address(this));
     }
 
-    function processRewards()
-        external
-        onlyStrategy
-        returns (uint256)
-    {
+    function processRewards() external onlyStrategy returns (uint256) {
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
         if (_cvxBalance > 0) {
             _cvxToEth(_cvxBalance);
@@ -226,7 +224,6 @@ contract stkCvxCrvHarvester {
         }
         return 0;
     }
-
 
     modifier onlyOwner() {
         require((msg.sender == owner), "owner only");
