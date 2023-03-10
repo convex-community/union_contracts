@@ -18,7 +18,9 @@ from .constants import (
     CVXFXS,
     CVXFXS_FXS_GAUGE_DEPOSIT,
     CVX_MINING_LIB,
-    CURVE_FRAX_USDC_POOL, CRV_TOKEN, CVX,
+    CURVE_FRAX_USDC_POOL,
+    CRV_TOKEN,
+    CVX,
 )
 
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
@@ -179,13 +181,16 @@ def calc_harvest_amount_curve(strategy):
     return fxs_balance
 
 
+def fxs_to_cvxfxs(amount):
+    return interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).get_dy(0, 1, amount)
+
+
 def calc_staking_harvest_amount(strategy, staking, option):
 
     fxs_balance, eth_balance = calc_staking_rewards(strategy, staking)
     if eth_balance > 0:
         fxs_balance += eth_to_fxs(eth_balance, option)
-
-    return fxs_balance
+    return fxs_to_cvxfxs(fxs_balance)
 
 
 def calc_staking_rewards(strategy, staking):
@@ -194,7 +199,6 @@ def calc_staking_rewards(strategy, staking):
     fxs_rewards = 0
     for rewards in staking_rewards:
         token, amount = rewards
-        token = token.lower()
         if token == CRV_TOKEN:
             eth_balance += get_crv_to_eth_amount(amount)
         elif token == CVX:

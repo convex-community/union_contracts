@@ -15,9 +15,7 @@ def test_deposit(fn_isolation, alice, owner, vault, strategy, staking):
     assert cvxfxs_balance(alice) == alice_initial_cvxfxs_balance - amount
     assert vault.balanceOf(alice) == amount
     assert vault.totalUnderlying() == amount
-    assert (
-        staking.balanceOf(strategy) == amount
-    )
+    assert staking.balanceOf(strategy) == amount
 
 
 def test_deposit_null_value(alice, strategy, vault):
@@ -32,9 +30,7 @@ def test_multiple_deposit(fn_isolation, accounts, vault, strategy, amount, staki
         vault.deposit(account, amount, {"from": account})
 
         assert cvxfxs_balance(account) == account_initial_balance - amount
-        assert staking.balanceOf(
-            strategy
-        ) == amount * (i + 1)
+        assert staking.balanceOf(strategy) == amount * (i + 1)
         assert vault.balanceOf(account) == amount
 
 
@@ -43,10 +39,7 @@ def test_deposit_all(fn_isolation, alice, vault, strategy, staking):
     vault.depositAll(alice, {"from": alice})
 
     assert cvxfxs_balance(alice) == 0
-    assert (
-        staking.balanceOf(strategy)
-        == alice_initial_balance
-    )
+    assert staking.balanceOf(strategy) == alice_initial_balance
     assert vault.balanceOf(alice) == alice_initial_balance
 
 

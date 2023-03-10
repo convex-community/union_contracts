@@ -22,7 +22,8 @@ from .constants import (
     CVX,
     CURVE_CVX_PCVX_POOL,
     AURA_BAL_TOKEN,
-    BAL_ETH_POOL_TOKEN, CVXFXS,
+    BAL_ETH_POOL_TOKEN,
+    CVXFXS,
 )
 from .cvxfxs import get_crv_to_eth_amount
 

@@ -5,11 +5,17 @@ from decimal import Decimal
 
 from ....utils.constants import CVXFXS_STAKING_CONTRACT, ADDRESS_ZERO
 from ....utils import approx, cvxfxs_lp_balance, cvxfxs_balance
-from ....utils.cvxfxs import calc_harvest_amount_curve, estimate_lp_tokens_received, calc_staking_harvest_amount
+from ....utils.cvxfxs import (
+    calc_harvest_amount_curve,
+    estimate_lp_tokens_received,
+    calc_staking_harvest_amount,
+)
 
 
 @pytest.mark.parametrize("amount", [1e20])
-def test_unique_partial_withdrawal(fn_isolation, alice, owner, vault, strategy, amount, staking):
+def test_unique_partial_withdrawal(
+    fn_isolation, alice, owner, vault, strategy, amount, staking
+):
     alice_initial_balance = cvxfxs_balance(alice)
     half_amount = int(Decimal(amount) / 2)
     vault.deposit(alice, amount, {"from": alice})
@@ -46,8 +52,8 @@ def test_withdraw_address_zero(fn_isolation, alice, owner, vault):
         vault.withdraw(ADDRESS_ZERO, 10, {"from": alice})
 
 
-def test_withdraw_all(fn_isolation, alice, owner, vault, strategy, staking):
-    strategy.setSwapOption(0, {"from": owner})
+def test_withdraw_all(fn_isolation, alice, owner, vault, strategy, staking, harvester):
+    harvester.setSwapOption(0, {"from": owner})
     alice_initial_balance = cvxfxs_balance(alice)
     vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
@@ -58,7 +64,5 @@ def test_withdraw_all(fn_isolation, alice, owner, vault, strategy, staking):
     assert approx(
         cvxfxs_balance(alice), alice_initial_balance + harvested, 1e-3
     )  # harvest as last to clai
-    assert (
-        staking.balanceOf(strategy) == 0
-    )  # last to claim == all withdrawn
+    assert staking.balanceOf(strategy) == 0  # last to claim == all withdrawn
     assert vault.balanceOf(alice) == 0
