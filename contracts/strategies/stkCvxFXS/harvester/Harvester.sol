@@ -66,10 +66,13 @@ contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
         useOracle = !useOracle;
     }
 
+    /// @notice Sets the contract's future owner
+    /// @param _po - pending owner's address
     function setPendingOwner(address _po) external onlyOwner {
         pendingOwner = _po;
     }
 
+    /// @notice Allows a pending owner to accept ownership
     function acceptOwnership() external {
         require(pendingOwner == msg.sender, "only new owner");
         owner = pendingOwner;
@@ -92,6 +95,7 @@ contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
         IERC20(_token).safeTransfer(_to, _balance);
     }
 
+    /// @notice Sets the range of acceptable slippage & price impact
     function setSlippage(uint256 _slippage) external onlyOwner {
         allowedSlippage = _slippage;
     }

@@ -5,8 +5,7 @@ from ....utils.constants import (
     FXS,
     CRV_TOKEN,
     CVX,
-    THREECRV_TOKEN,
-    VE_FXS, CVXFXS, ADDRESS_ZERO, CURVE_CVXCRV_CRV_POOL,
+    CURVE_CVXCRV_CRV_POOL,
 )
 
 # HARVESTER ACCESS TESTS
@@ -84,3 +83,20 @@ def test_process_rewards(fn_isolation, alice, harvester):
     with brownie.reverts("strategy only"):
         harvester.processRewards({"from": alice})
 
+
+
+def test_set_swap_option_non_owner(fn_isolation, alice, harvester):
+    with brownie.reverts("owner only"):
+        harvester.setSwapOption(0, {"from": alice})
+
+
+def test_set_swap_option(fn_isolation, owner, harvester):
+    chain.snapshot()
+    for i in range(3):
+        tx = harvester.setSwapOption(i, {"from": owner})
+        assert harvester.swapOption() == i
+        assert tx.events["OptionChanged"]["newOption"] == i
+
+    with brownie.reverts():
+        harvester.setSwapOption(4, {"from": owner})
+    chain.revert()
