@@ -185,12 +185,12 @@ def fxs_to_cvxfxs(amount):
     return interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).get_dy(0, 1, amount)
 
 
-def calc_staking_harvest_amount(strategy, staking, option):
+def calc_staking_harvest_amount(strategy, staking, option, lock=False):
 
     fxs_balance, eth_balance = calc_staking_rewards(strategy, staking)
     if eth_balance > 0:
         fxs_balance += eth_to_fxs(eth_balance, option)
-    return fxs_to_cvxfxs(fxs_balance)
+    return fxs_balance if lock else fxs_to_cvxfxs(fxs_balance)
 
 
 def calc_staking_rewards(strategy, staking):

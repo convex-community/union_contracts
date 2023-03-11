@@ -10,6 +10,7 @@ from ....utils.constants import (
 
 # HARVESTER ACCESS TESTS
 
+
 def test_harvester_set_force_lock_non_owner(fn_isolation, alice, owner, harvester):
     with brownie.reverts("owner only"):
         harvester.setForceLock({"from": alice})
@@ -29,7 +30,9 @@ def test_harvester_rescue_reward_tokens(fn_isolation, owner, harvester):
 
 def test_harvester_rescue_tokens(fn_isolation, owner, vault, harvester):
     original_owner_balance = interface.IERC20(CRV_TOKEN).balanceOf(owner)
-    interface.IERC20(CRV_TOKEN).transfer(harvester, 1e24, {"from": CURVE_CVXCRV_CRV_POOL})
+    interface.IERC20(CRV_TOKEN).transfer(
+        harvester, 1e24, {"from": CURVE_CVXCRV_CRV_POOL}
+    )
     harvester.rescueToken(CRV_TOKEN, owner, {"from": owner})
     assert interface.IERC20(CRV_TOKEN).balanceOf(owner) > original_owner_balance
 
@@ -82,7 +85,6 @@ def test_accept_pending_owner(fn_isolation, alice, bob, owner, harvester):
 def test_process_rewards(fn_isolation, alice, harvester):
     with brownie.reverts("strategy only"):
         harvester.processRewards({"from": alice})
-
 
 
 def test_set_swap_option_non_owner(fn_isolation, alice, harvester):

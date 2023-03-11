@@ -1,9 +1,7 @@
 import brownie
 from brownie import chain, interface
 
-from ....utils.constants import (
-    AIRFORCE_SAFE, CVX, FXS
-)
+from ....utils.constants import AIRFORCE_SAFE, CVX, FXS
 
 
 def test_vault_set_harvest_permissions_non_owner(fn_isolation, alice, vault):
@@ -48,4 +46,3 @@ def test_vault_get_pending_rewards(fn_isolation, alice, vault):
     rewards = vault.claimableRewards({"from": alice})
     assert rewards[0][0] == FXS
     assert rewards[1][0] == CVX
-

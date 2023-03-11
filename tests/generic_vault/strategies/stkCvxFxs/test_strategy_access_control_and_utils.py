@@ -4,11 +4,14 @@ from brownie import chain, interface
 from ....utils.constants import (
     AIRFORCE_SAFE,
     FXS,
-    VE_FXS, CVXFXS, ADDRESS_ZERO,
+    VE_FXS,
+    CVXFXS,
+    ADDRESS_ZERO,
 )
 
 
 # STRATEGY ACCESS TESTS
+
 
 def test_strategy_set_approvals(fn_isolation, alice, owner, vault, strategy, staking):
     interface.IERC20(CVXFXS).approve(staking, 0, {"from": strategy})
@@ -21,7 +24,9 @@ def test_strategy_set_harvester_non_owner(fn_isolation, alice, owner, vault, str
         strategy.setHarvester(owner, {"from": alice})
 
 
-def test_strategy_set_harvester_address_zero(fn_isolation, alice, owner, vault, strategy):
+def test_strategy_set_harvester_address_zero(
+    fn_isolation, alice, owner, vault, strategy
+):
     with brownie.reverts():
         strategy.setHarvester(ADDRESS_ZERO, {"from": alice})
 
@@ -32,7 +37,9 @@ def test_strategy_set_harvester(fn_isolation, alice, owner, vault, strategy, sta
     assert staking.rewardRedirect(strategy) == alice
 
 
-def test_strategy_total_underlying(fn_isolation, alice, owner, vault, strategy, staking):
+def test_strategy_total_underlying(
+    fn_isolation, alice, owner, vault, strategy, staking
+):
     assert strategy.totalUnderlying() == staking.balanceOf(strategy)
 
 
@@ -74,4 +81,3 @@ def test_strategy_rescue_staking_token(
 def test_strategy_rescue_tokens_non_owner(fn_isolation, alice, harvester):
     with brownie.reverts("owner only"):
         harvester.rescueToken(FXS, alice, {"from": alice})
-
