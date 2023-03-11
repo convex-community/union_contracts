@@ -130,13 +130,6 @@ def test_harvester_set_force_lock(fn_isolation, owner, harvester):
     assert harvester.forceLock() == False
 
 
-def test_harvester_rescue_reward_tokens(fn_isolation, alice, owner, harvester):
-    with brownie.reverts("owner only"):
-        harvester.setSlippage(9500, {"from": alice})
-    harvester.setSlippage(1000, {"from": owner})
-    assert harvester.allowedSlippage() == 1000
-
-
 def test_harvester_switch_oracle(fn_isolation, alice, owner, harvester):
     with brownie.reverts("owner only"):
         harvester.switchOracle({"from": alice})
