@@ -36,6 +36,21 @@ contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
 
         IERC20(FXS_TOKEN).safeApprove(FXS_DEPOSIT, 0);
         IERC20(FXS_TOKEN).safeApprove(FXS_DEPOSIT, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
+        IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
+
+        IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
     }
 
     /// @notice Change the default swap option for eth -> fxs
