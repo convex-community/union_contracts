@@ -36,8 +36,6 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
 
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
-        IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(vault, 0);
-        IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).safeApprove(vault, type(uint256).max);
 
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, 0);
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, type(uint256).max);
@@ -53,6 +51,9 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
 
         IERC20(FXS_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
         IERC20(FXS_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
+
+        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
+        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
 
         IERC20(FXS_TOKEN).safeApprove(UNIV3_ROUTER, 0);
         IERC20(FXS_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
@@ -72,9 +73,6 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
         IERC20(CVX_TOKEN).safeApprove(CONVEX_LOCKER, 0);
         IERC20(CVX_TOKEN).safeApprove(CONVEX_LOCKER, type(uint256).max);
 
-        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, 0);
-        IERC20(FRAX_TOKEN).safeApprove(UNISWAP_ROUTER, type(uint256).max);
-
         IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
         IERC20(FRAX_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
 
@@ -90,7 +88,7 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     /// @param minAmountOut - min amount of cvxFXS tokens expected
     /// @param to - address to stake on behalf of
     /// @param lock - whether to lock or swap to cvxFXS
-    function depositFromUnderlyingAsset(
+    function depositFromFxs(
         uint256 amount,
         uint256 minAmountOut,
         address to,
@@ -178,15 +176,13 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
         _depositFromEth(address(this).balance, minAmountOut, to, lock);
     }
 
-    /// @notice Claim and swap cvxFXS to FXS
+    /// @notice Swap cvxFXS to FXS
     /// @param amount - amount to withdraw
     /// @param minAmountOut - minimum amount of LP tokens expected
-    /// @param to - address to send withdrawn underlying to
     /// @return amount of underlying withdrawn
-    function _claimAsFxs(
+    function _cvxFxsToFxs(
         uint256 amount,
-        uint256 minAmountOut,
-        address to
+        uint256 minAmountOut
     ) internal returns (uint256) {
         return cvxFxsFxsSwap.exchange_underlying(1, 0, amount, minAmountOut);
     }
@@ -194,9 +190,10 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     /// @notice Retrieves a user's vault shares and withdraw all
     /// @param amount - amount of shares to retrieve
     /// @return amount of underlying withdrawn
-    function _claimAndWithdraw(uint256 amount) internal returns (uint256) {
+    function _claimAndWithdraw(uint256 amount, uint256 minAmountOut) internal returns (uint256) {
         IERC20(vault).safeTransferFrom(msg.sender, address(this), amount);
-        return IGenericVault(vault).withdrawAll(address(this));
+        uint256 _cvxFxsAmount = IGenericVault(vault).withdrawAll(address(this));
+        return _cvxFxsToFxs(_cvxFxsAmount, minAmountOut);
     }
 
     /// @notice Claim as FXS
@@ -210,9 +207,9 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
         uint256 minAmountOut,
         address to
     ) public notToZeroAddress(to) returns (uint256) {
-        uint256 fxsAmount = _claimAndWithdraw(amount);
-        IERC20(FXS_TOKEN).safeTransfer(to, fxsAmount);
-        return fxsAmount;
+        uint256 _fxsAmount = _claimAndWithdraw(amount, minAmountOut);
+        IERC20(FXS_TOKEN).safeTransfer(to, _fxsAmount);
+        return _fxsAmount;
     }
 
     /// @notice Claim as native ETH
@@ -236,7 +233,7 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     /// @param amount - amount to withdraw
     /// @return amount of ETH withdrawn
     function _claimAsEth(uint256 amount) public returns (uint256) {
-        uint256 _fxsAmount = _claimAndWithdraw(amount);
+        uint256 _fxsAmount = _claimAndWithdraw(amount, 0);
         return _swapFxsForEth(_fxsAmount, swapOption);
     }
 
@@ -282,14 +279,14 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     }
 
     /// @notice swap ETH to USDT via Curve's tricrypto
-    /// @param _amount - the amount of ETH to swap
-    /// @param _minAmountOut - the minimum amount expected
-    function _swapEthToUsdt(uint256 _amount, uint256 _minAmountOut) internal {
-        triCryptoSwap.exchange{value: _amount}(
+    /// @param amount - the amount of ETH to swap
+    /// @param minAmountOut - the minimum amount expected
+    function _swapEthToUsdt(uint256 amount, uint256 minAmountOut) internal {
+        triCryptoSwap.exchange{value: amount}(
             2, // ETH
             0, // USDT
-            _amount,
-            _minAmountOut,
+            amount,
+            minAmountOut,
             true
         );
     }
