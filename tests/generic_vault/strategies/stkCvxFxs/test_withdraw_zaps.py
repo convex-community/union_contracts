@@ -54,7 +54,7 @@ def test_claim_as_usdt(
     assert interface.IERC20(USDT_TOKEN).balanceOf(alice) == usdt_amount
 
 
-@pytest.mark.parametrize("option", [0, 1, 2])
+@pytest.mark.parametrize("option", [0, 1, 2, 3])
 def test_claim_as_cvx(
     fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option
 ):
@@ -65,16 +65,10 @@ def test_claim_as_cvx(
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
-    fxs_amount = estimate_underlying_received(amount * (1 - withdrawal_penalty), 0)
-    if option == 0:
-        eth_amount = fxs_eth_curve(fxs_amount)
-        print(f"Harvested Curve: {eth_amount} ETH")
-    elif option == 1:
-        eth_amount = fxs_eth_uniswap(fxs_amount)
-        print(f"Harvested Uniswap: {eth_amount} ETH")
-    elif option == 2:
-        eth_amount = fxs_eth_unistable(fxs_amount)
-        print(f"Harvested UniStable: {eth_amount} ETH")
+    cvxfxs_amount = amount * (1 - withdrawal_penalty)
+    fxs_amount = cvxfxs_to_fxs(cvxfxs_amount)
+    eth_amount = fxs_to_eth(fxs_amount, option)
+    print("\033[95m" + f"Harvested {OPTIONS[option]}: {eth_amount * 1e-18} ETH")
 
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
     vault.approve(zaps, 2**256 - 1, {"from": alice})
@@ -85,7 +79,7 @@ def test_claim_as_cvx(
     assert interface.IERC20(CVX).balanceOf(alice) == cvx_amount
 
 
-@pytest.mark.parametrize("option", [0, 1, 2])
+@pytest.mark.parametrize("option", [0, 1, 2, 3])
 def test_claim_as_cvx_and_lock(
     fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option
 ):
@@ -96,13 +90,10 @@ def test_claim_as_cvx_and_lock(
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
-    fxs_amount = estimate_underlying_received(amount * (1 - withdrawal_penalty), 0)
-    if option == 0:
-        eth_amount = fxs_eth_curve(fxs_amount)
-    elif option == 1:
-        eth_amount = fxs_eth_uniswap(fxs_amount)
-    elif option == 2:
-        eth_amount = fxs_eth_unistable(fxs_amount)
+    cvxfxs_amount = amount * (1 - withdrawal_penalty)
+    fxs_amount = cvxfxs_to_fxs(cvxfxs_amount)
+    eth_amount = fxs_to_eth(fxs_amount, option)
+    print("\033[95m" + f"Harvested {OPTIONS[option]}: {eth_amount * 1e-18} ETH")
 
     cvx_amount = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, eth_amount)
     vault.approve(zaps, 2**256 - 1, {"from": alice})
@@ -125,19 +116,10 @@ def test_claim_as_eth(
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
-    fxs_amount = estimate_underlying_received(amount * (1 - withdrawal_penalty), 0)
-    if option == 0:
-        eth_amount = fxs_eth_curve(fxs_amount)
-        print(f"Harvested Curve: {eth_amount} ETH")
-    elif option == 1:
-        eth_amount = fxs_eth_uniswap(fxs_amount)
-        print(f"Harvested Uniswap: {eth_amount} ETH")
-    elif option == 2:
-        eth_amount = fxs_eth_unistable(fxs_amount)
-        print(f"Harvested UniStable: {eth_amount} ETH")
-    else:
-        eth_amount = fxs_eth_unicurve1(fxs_amount)
-        print(f"Harvested UniCurve1: {eth_amount} ETH")
+    cvxfxs_amount = amount * (1 - withdrawal_penalty)
+    fxs_amount = cvxfxs_to_fxs(cvxfxs_amount)
+    eth_amount = fxs_to_eth(fxs_amount, option)
+    print("\033[95m" + f"Harvested {OPTIONS[option]}: {eth_amount * 1e-18} ETH")
 
     vault.approve(zaps, 2**256 - 1, {"from": alice})
 
@@ -145,35 +127,23 @@ def test_claim_as_eth(
     assert alice.balance() == eth_amount + alice_original_balance
 
 
-@pytest.mark.parametrize("asset_index", [0, 1])
-def test_claim_as_underlying(
-    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, asset_index
-):
+def test_claim_as_fxs(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps):
     amount = int(1e21)
     for i, account in enumerate([alice, bob, charlie]):
         vault.deposit(account, amount, {"from": account})
-
+    initial_balance = interface.IERC20(FXS).balanceOf(alice)
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
-    fxs_amount = estimate_underlying_received(
-        amount * (1 - withdrawal_penalty), asset_index
-    )
-
-    asset = [FXS, CVXFXS]
-    initial_balance = interface.IERC20(asset[asset_index]).balanceOf(alice)
+    cvxfxs_amount = amount * (1 - withdrawal_penalty)
+    fxs_amount = cvxfxs_to_fxs(cvxfxs_amount)
 
     vault.approve(zaps, 2**256 - 1, {"from": alice})
 
-    zaps.claimFromVaultAsUnderlying(
-        vault.balanceOf(alice), asset_index, 0, alice.address, {"from": alice}
-    )
-    assert (
-        interface.IERC20(asset[asset_index]).balanceOf(alice)
-        == fxs_amount + initial_balance
-    )
+    zaps.claimFromVaultAsFxs(vault.balanceOf(alice), 0, alice.address, {"from": alice})
+    assert interface.IERC20(FXS).balanceOf(alice) == fxs_amount + initial_balance
 
 
-@pytest.mark.parametrize("option", [0, 1, 2])
+@pytest.mark.parametrize("option", [0, 1, 2, 3])
 def test_claim_as_spell(
     fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps, option
 ):
@@ -184,16 +154,10 @@ def test_claim_as_spell(
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
 
-    fxs_amount = estimate_underlying_received(amount * (1 - withdrawal_penalty), 0)
-    if option == 0:
-        eth_amount = fxs_eth_curve(fxs_amount)
-        print(f"Harvested Curve: {eth_amount} ETH")
-    elif option == 1:
-        eth_amount = fxs_eth_uniswap(fxs_amount)
-        print(f"Harvested Uniswap: {eth_amount} ETH")
-    elif option == 2:
-        eth_amount = fxs_eth_unistable(fxs_amount)
-        print(f"Harvested UniStable: {eth_amount} ETH")
+    cvxfxs_amount = amount * (1 - withdrawal_penalty)
+    fxs_amount = cvxfxs_to_fxs(cvxfxs_amount)
+    eth_amount = fxs_to_eth(fxs_amount, option)
+    print("\033[95m" + f"Harvested {OPTIONS[option]}: {eth_amount * 1e-18} ETH")
 
     spell_amount = interface.IUniV2Router(SUSHI_ROUTER).getAmountsOut(
         eth_amount, [WETH, SPELL]
@@ -224,8 +188,8 @@ def test_not_to_zero(alice, vault, strategy, zaps):
         )
 
     with brownie.reverts("Invalid address!"):
-        zaps.claimFromVaultAsUnderlying(
-            vault.balanceOf(alice), 0, 0, ADDRESS_ZERO, {"from": alice}
+        zaps.claimFromVaultAsFxs(
+            vault.balanceOf(alice), 0, ADDRESS_ZERO, {"from": alice}
         )
 
     with brownie.reverts("Invalid address!"):

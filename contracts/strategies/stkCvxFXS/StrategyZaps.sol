@@ -201,9 +201,8 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     /// @param minAmountOut - minimum amount of underlying tokens expected
     /// @param to - address to send withdrawn underlying to
     /// @return amount of underlying withdrawn
-    function claimFromVaultAsFXS(
+    function claimFromVaultAsFxs(
         uint256 amount,
-        uint256 assetIndex,
         uint256 minAmountOut,
         address to
     ) public notToZeroAddress(to) returns (uint256) {
