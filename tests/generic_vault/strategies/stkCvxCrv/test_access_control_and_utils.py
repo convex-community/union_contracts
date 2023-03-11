@@ -201,7 +201,7 @@ def test_vault_update_authorized_harvesters(fn_isolation, owner, alice, bob, vau
     assert not vault.authorizedHarvesters(bob)
 
 
-def test_vault_update_authorized_harvesters(fn_isolation, alice, vault):
+def test_vault_update_authorized_harvesters_non_owner(fn_isolation, alice, vault):
     with brownie.reverts("Ownable: caller is not the owner"):
         vault.updateAuthorizedHarvesters(AIRFORCE_SAFE, True, {"from": alice})
 

@@ -10,10 +10,7 @@ from brownie import (
     interface,
 )
 from ....utils.constants import (
-    VE_FXS,
-    FXS,
     CURVE_CVXFXS_FXS_POOL,
-    CURVE_CVXFXS_FXS_LP_TOKEN,
     AIRFORCE_SAFE,
     CVXFXS,
     CVXFXS_SINGLE_STAKING_CONTRACT,
