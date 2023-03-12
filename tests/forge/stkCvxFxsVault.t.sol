@@ -15,6 +15,8 @@ interface ICvxFxs {
 contract stkCvxFxsVaultTest is Test {
     bytes public constant NOT_OWNER_ERROR =
         bytes("Ownable: caller is not the owner");
+    address private constant CVX_FXS_OPERATOR =
+        0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e;
     ERC20 private constant CVX_FXS =
         ERC20(0xFEEf77d3f69374f66429C91d732A244f074bdf74);
     ERC20 private constant STK_CVX_FXS =
@@ -49,11 +51,9 @@ contract stkCvxFxsVaultTest is Test {
         uint256 balanceBefore = CVX_FXS.balanceOf(receiver);
 
         // cvxFXS operator (has permission to mint)
-        vm.prank(0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e);
+        vm.prank(CVX_FXS_OPERATOR);
 
         ICvxFxs(address(CVX_FXS)).mint(address(this), amount);
-
-        vm.prank(receiver);
 
         assertEq(balanceBefore + amount, CVX_FXS.balanceOf(receiver));
     }
@@ -69,10 +69,7 @@ contract stkCvxFxsVaultTest is Test {
         }
     }
 
-    function _deposit(
-        address to,
-        uint256 amount
-    ) private returns (uint256) {
+    function _deposit(address to, uint256 amount) private returns (uint256) {
         _mintAssets(to, amount);
 
         CVX_FXS.approve(address(vault), amount);
