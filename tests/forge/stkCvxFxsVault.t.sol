@@ -6,13 +6,10 @@ import "forge-std/Test.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {stkCvxFxsVault} from "contracts/strategies/stkCvxFXS/stkCvxFxsVault.sol";
 import {stkCvxFxsStrategy} from "contracts/strategies/stkCvxFXS/Strategy.sol";
+import {stkCvxFxsHarvester} from "contracts/strategies/stkCvxFXS/harvester/Harvester.sol";
 
 interface ICvxFxs {
     function mint(address _receiver, uint256 _amount) external;
-}
-
-interface IStkCvxFxs {
-    function deposit(uint256 _amount, bool _lock) external;
 }
 
 contract stkCvxFxsVaultTest is Test {
@@ -25,15 +22,23 @@ contract stkCvxFxsVaultTest is Test {
 
     stkCvxFxsVault private immutable vault;
     stkCvxFxsStrategy private immutable strategy;
+    stkCvxFxsHarvester private immutable harvester;
 
     constructor() {
         vault = new stkCvxFxsVault(address(CVX_FXS));
         strategy = new stkCvxFxsStrategy(address(vault));
+        harvester = new stkCvxFxsHarvester(address(strategy));
 
-        // Configure vault and strategy
+        // Configure vault
         vault.setPlatform(address(this));
         vault.setStrategy(address(strategy));
+
+        // Configure strategy
         strategy.setApprovals();
+        strategy.setHarvester(address(harvester));
+
+        // Configure harvester
+        harvester.setApprovals();
     }
 
     function _mintAssets(address receiver, uint256 amount) private {
