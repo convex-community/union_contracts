@@ -26,12 +26,12 @@ from .constants import (
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
 
 
-def estimate_underlying_received(amount, token):
+def estimate_underlying_received(amount, token_index):
     interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(
         CURVE_CVXFXS_FXS_POOL, 2**256 - 1, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
     )
     tx = interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).remove_liquidity_one_coin(
-        amount, token, 0, False, random_wallet, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
+        amount, token_index, 0, False, random_wallet, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
     )
     value = tx.return_value
     # older version of brownie bork the return value

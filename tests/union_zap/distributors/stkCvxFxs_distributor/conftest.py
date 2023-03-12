@@ -8,6 +8,7 @@ from brownie import (
     stkCvxFxsHarvester,
     StakingRewards,
     stkCvxFxsMerkleDistributor,
+    stkCvxFxsMigration,
     interface,
 )
 from tests.utils.constants import AIRFORCE_SAFE, CURVE_CVXFXS_FXS_POOL, CVXFXS, FXS
@@ -68,3 +69,8 @@ def distribute_cvx_fxs(fxs_distributor, owner):
         fxs_distributor, amount, {"from": CURVE_CVXFXS_FXS_POOL}
     )
     fxs_distributor.stake({"from": owner})
+
+
+@pytest.fixture(scope="module")
+def migration(owner):
+    yield stkCvxFxsMigration.deploy({"from": owner})
