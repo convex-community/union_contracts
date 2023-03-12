@@ -64,6 +64,7 @@ contract stkCvxFxsVaultTest is Test {
         if (vault.totalSupply() == 0) {
             shares = amount;
         } else {
+            // This method should be called BEFORE the deposit
             shares = (amount * vault.totalSupply()) / vault.totalUnderlying();
         }
     }
@@ -71,7 +72,7 @@ contract stkCvxFxsVaultTest is Test {
     function _deposit(
         address to,
         uint256 amount
-    ) private returns (uint256 shares) {
+    ) private returns (uint256) {
         _mintAssets(to, amount);
 
         CVX_FXS.approve(address(vault), amount);
@@ -80,17 +81,21 @@ contract stkCvxFxsVaultTest is Test {
     }
 
     function testCannotSetHarvestPermissionsNotOwner() external {
+        bool status = false;
+
         vm.prank(address(0));
         vm.expectRevert(NOT_OWNER_ERROR);
 
-        vault.setHarvestPermissions(false);
+        vault.setHarvestPermissions(status);
     }
 
     function testSetHarvestPermissions() external {
+        bool status = true;
+
         assertEq(address(this), vault.owner());
         assertFalse(vault.isHarvestPermissioned());
 
-        vault.setHarvestPermissions(true);
+        vault.setHarvestPermissions(status);
 
         assertTrue(vault.isHarvestPermissioned());
     }
@@ -104,29 +109,37 @@ contract stkCvxFxsVaultTest is Test {
     }
 
     function testCannotUpdateAuthorizedHarvesters() external {
+        address invalidHarvester = address(0);
+        bool authorized = true;
+
         vm.prank(address(0));
         vm.expectRevert(NOT_OWNER_ERROR);
 
-        vault.updateAuthorizedHarvesters(address(0), true);
+        vault.updateAuthorizedHarvesters(invalidHarvester, authorized);
     }
 
     function testUpdateAuthorizedHarvesters() external {
-        assertFalse(vault.authorizedHarvesters(address(0)));
+        address _harvester = address(this);
+        bool authorized = true;
+
+        assertFalse(vault.authorizedHarvesters(_harvester));
         assertEq(address(this), vault.owner());
 
-        vault.updateAuthorizedHarvesters(address(0), true);
+        vault.updateAuthorizedHarvesters(_harvester, authorized);
+
+        assertTrue(vault.authorizedHarvesters(_harvester));
     }
 
     function testUpdateAuthorizedHarvestersFuzz(
         address _harvester,
-        bool _authorized
+        bool authorized
     ) external {
         assertFalse(vault.authorizedHarvesters(_harvester));
         assertEq(address(this), vault.owner());
 
-        vault.updateAuthorizedHarvesters(_harvester, _authorized);
+        vault.updateAuthorizedHarvesters(_harvester, authorized);
 
-        assertEq(_authorized, vault.authorizedHarvesters(_harvester));
+        assertEq(authorized, vault.authorizedHarvesters(_harvester));
     }
 
     function testCannotDepositZeroAddress() external {
@@ -298,6 +311,8 @@ contract stkCvxFxsVaultTest is Test {
     }
 
     function testCannotHarvestNotAuthorizedHarvester() external {
+        uint256 minAmountOut = 0;
+
         _deposit(address(this), 1);
 
         vault.setHarvestPermissions(true);
@@ -308,27 +323,29 @@ contract stkCvxFxsVaultTest is Test {
 
         vm.expectRevert(bytes("permissioned harvest"));
 
-        vault.harvest(0);
+        vault.harvest(minAmountOut);
     }
 
     function testHarvestNotPermissioned() external {
-        uint256 _minAmountOut = 0;
+        address caller = address(this);
+        uint256 minAmountOut = 0;
 
         _deposit(address(this), 1);
 
         assertFalse(vault.isHarvestPermissioned());
-        assertFalse(vault.authorizedHarvesters(address(this)));
+        assertFalse(vault.authorizedHarvesters(caller));
         assertGt(vault.totalSupply(), 0);
 
         vm.expectEmit(true, false, false, true, address(vault));
 
-        emit Harvest(address(this), _minAmountOut);
+        emit Harvest(caller, minAmountOut);
 
-        vault.harvest(_minAmountOut);
+        vault.harvest(minAmountOut);
     }
 
     function testHarvestAuthorizedHarvester() external {
-        uint256 _minAmountOut = 0;
+        address caller = address(this);
+        uint256 minAmountOut = 0;
 
         _deposit(address(this), 1);
 
@@ -336,29 +353,30 @@ contract stkCvxFxsVaultTest is Test {
         vault.updateAuthorizedHarvesters(address(this), true);
 
         assertTrue(vault.isHarvestPermissioned());
-        assertTrue(vault.authorizedHarvesters(address(this)));
+        assertTrue(vault.authorizedHarvesters(caller));
         assertGt(vault.totalSupply(), 0);
 
         vm.expectEmit(true, false, false, true, address(vault));
 
-        emit Harvest(address(this), _minAmountOut);
+        emit Harvest(caller, minAmountOut);
 
-        vault.harvest(_minAmountOut);
+        vault.harvest(minAmountOut);
     }
 
     function testHarvestTotalSupplyZero() external {
-        uint256 _minAmountOut = 0;
+        address caller = address(this);
+        uint256 minAmountOut = 0;
 
         vault.setHarvestPermissions(true);
 
         assertTrue(vault.isHarvestPermissioned());
-        assertFalse(vault.authorizedHarvesters(address(this)));
+        assertFalse(vault.authorizedHarvesters(caller));
         assertEq(vault.totalSupply(), 0);
 
         vm.expectEmit(true, false, false, true, address(vault));
 
-        emit Harvest(address(this), _minAmountOut);
+        emit Harvest(caller, minAmountOut);
 
-        vault.harvest(_minAmountOut);
+        vault.harvest(minAmountOut);
     }
 }
