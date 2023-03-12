@@ -9,6 +9,12 @@ interface IStrategyZaps {
         address to
     ) external returns (uint256);
 
+    function claimFromVaultAsFxs(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) external returns (uint256);
+
     function claimFromVaultAsEth(
         uint256 amount,
         uint256 minAmountOut,
