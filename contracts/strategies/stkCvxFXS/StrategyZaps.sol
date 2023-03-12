@@ -36,7 +36,6 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
 
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
-
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, 0);
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, type(uint256).max);
 
@@ -66,6 +65,9 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
             CURVE_CVXFXS_FXS_POOL,
             type(uint256).max
         );
+
+        IERC20(CVXFXS_TOKEN).safeApprove(vault, 0);
+        IERC20(CVXFXS_TOKEN).safeApprove(vault, type(uint256).max);
 
         IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, 0);
         IERC20(USDC_TOKEN).safeApprove(UNIV3_ROUTER, type(uint256).max);
@@ -103,6 +105,7 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
         address to,
         bool lock
     ) internal {
+        IERC20(FXS_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
         if (lock) {
             ICvxFxsDeposit(FXS_DEPOSIT).deposit(amount, true);
         } else {
@@ -180,17 +183,20 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     /// @param amount - amount to withdraw
     /// @param minAmountOut - minimum amount of LP tokens expected
     /// @return amount of underlying withdrawn
-    function _cvxFxsToFxs(
-        uint256 amount,
-        uint256 minAmountOut
-    ) internal returns (uint256) {
+    function _cvxFxsToFxs(uint256 amount, uint256 minAmountOut)
+        internal
+        returns (uint256)
+    {
         return cvxFxsFxsSwap.exchange_underlying(1, 0, amount, minAmountOut);
     }
 
     /// @notice Retrieves a user's vault shares and withdraw all
     /// @param amount - amount of shares to retrieve
     /// @return amount of underlying withdrawn
-    function _claimAndWithdraw(uint256 amount, uint256 minAmountOut) internal returns (uint256) {
+    function _claimAndWithdraw(uint256 amount, uint256 minAmountOut)
+        internal
+        returns (uint256)
+    {
         IERC20(vault).safeTransferFrom(msg.sender, address(this), amount);
         uint256 _cvxFxsAmount = IGenericVault(vault).withdrawAll(address(this));
         return _cvxFxsToFxs(_cvxFxsAmount, minAmountOut);
