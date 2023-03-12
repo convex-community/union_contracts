@@ -5,17 +5,48 @@ import "forge-std/Test.sol";
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {stkCvxFxsVault} from "contracts/strategies/stkCvxFXS/stkCvxFxsVault.sol";
+import {stkCvxFxsStrategy} from "contracts/strategies/stkCvxFXS/Strategy.sol";
+
+interface ICvxFxs {
+    function mint(address _receiver, uint256 _amount) external;
+}
+
+interface IStkCvxFxs {
+    function deposit(uint256 _amount, bool _lock) external;
+}
 
 contract stkCvxFxsVaultTest is Test {
     bytes public constant NOT_OWNER_ERROR =
         bytes("Ownable: caller is not the owner");
     ERC20 private constant CVX_FXS =
         ERC20(0xFEEf77d3f69374f66429C91d732A244f074bdf74);
+    ERC20 private constant STK_CVX_FXS =
+        ERC20(0x49b4d1dF40442f0C31b1BbAEA3EDE7c38e37E31a);
 
     stkCvxFxsVault private immutable vault;
+    stkCvxFxsStrategy private immutable strategy;
 
     constructor() {
         vault = new stkCvxFxsVault(address(CVX_FXS));
+        strategy = new stkCvxFxsStrategy(address(vault));
+
+        // Configure vault and strategy
+        vault.setPlatform(address(this));
+        vault.setStrategy(address(strategy));
+        strategy.setApprovals();
+    }
+
+    function _mintAssets(address receiver, uint256 amount) private {
+        uint256 balanceBefore = CVX_FXS.balanceOf(receiver);
+
+        // cvxFXS operator (has permission to mint)
+        vm.prank(0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e);
+
+        ICvxFxs(address(CVX_FXS)).mint(address(this), amount);
+
+        vm.prank(receiver);
+
+        assertEq(balanceBefore + amount, CVX_FXS.balanceOf(receiver));
     }
 
     function testCannotSetHarvestPermissionsNotOwner() external {
