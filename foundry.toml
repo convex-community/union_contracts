@@ -1,4 +1,6 @@
 [profile.default]
 src = 'contracts'
+test = 'tests/forge/'
 out = 'out'
 libs = ['lib']
+verbosity = 3
