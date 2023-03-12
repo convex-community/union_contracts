@@ -24,6 +24,9 @@ contract stkCvxFxsVaultTest is Test {
     stkCvxFxsStrategy private immutable strategy;
     stkCvxFxsHarvester private immutable harvester;
 
+    event Deposit(address indexed _from, address indexed _to, uint256 _value);
+    event Withdraw(address indexed _from, address indexed _to, uint256 _value);
+
     constructor() {
         vault = new stkCvxFxsVault(address(CVX_FXS));
         strategy = new stkCvxFxsStrategy(address(vault));
@@ -52,6 +55,16 @@ contract stkCvxFxsVaultTest is Test {
         vm.prank(receiver);
 
         assertEq(balanceBefore + amount, CVX_FXS.balanceOf(receiver));
+    }
+
+    function _calculateShares(
+        uint256 amount
+    ) private view returns (uint256 shares) {
+        if (vault.totalSupply() == 0) {
+            shares = amount;
+        } else {
+            shares = (amount * vault.totalSupply()) / vault.totalUnderlying();
+        }
     }
 
     function testCannotSetHarvestPermissionsNotOwner() external {
@@ -102,5 +115,76 @@ contract stkCvxFxsVaultTest is Test {
         vault.updateAuthorizedHarvesters(_harvester, _authorized);
 
         assertEq(_authorized, vault.authorizedHarvesters(_harvester));
+    }
+
+    function testCannotDepositZeroAddress() external {
+        address invalidTo = address(0);
+        uint256 amount = 1e18;
+
+        vm.expectRevert(bytes("Invalid address!"));
+
+        vault.deposit(invalidTo, amount);
+    }
+
+    function testCannotDepositZeroAmount() external {
+        address to = address(this);
+        uint256 invalidAmount = 0;
+
+        vm.expectRevert(bytes("Deposit too small"));
+
+        vault.deposit(to, invalidAmount);
+    }
+
+    function testDeposit() external {
+        address to = address(this);
+        uint256 amount = 1e18;
+
+        _mintAssets(to, amount);
+
+        uint256 strategyStkCvxFxsBalanceBeforeDeposit = STK_CVX_FXS.balanceOf(
+            address(strategy)
+        );
+        uint256 expectedSharesReceived = _calculateShares(amount);
+
+        CVX_FXS.approve(address(vault), amount);
+
+        vm.expectEmit(true, true, false, true, address(vault));
+
+        emit Deposit(address(this), to, amount);
+
+        vault.deposit(to, amount);
+
+        assertEq(
+            strategyStkCvxFxsBalanceBeforeDeposit + amount,
+            STK_CVX_FXS.balanceOf(address(strategy))
+        );
+        assertEq(expectedSharesReceived, vault.balanceOf(to));
+    }
+
+    function testDepositFuzz(address to, uint80 amount) external {
+        vm.assume(to != address(0));
+        vm.assume(amount != 0);
+        vm.assume(amount < 10_000e18);
+
+        _mintAssets(address(this), amount);
+
+        uint256 strategyStkCvxFxsBalanceBeforeDeposit = STK_CVX_FXS.balanceOf(
+            address(strategy)
+        );
+        uint256 expectedSharesReceived = _calculateShares(amount);
+
+        CVX_FXS.approve(address(vault), amount);
+
+        vm.expectEmit(true, true, false, true, address(vault));
+
+        emit Deposit(address(this), to, amount);
+
+        vault.deposit(to, amount);
+
+        assertEq(
+            strategyStkCvxFxsBalanceBeforeDeposit + amount,
+            STK_CVX_FXS.balanceOf(address(strategy))
+        );
+        assertEq(expectedSharesReceived, vault.balanceOf(to));
     }
 }
