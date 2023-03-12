@@ -67,6 +67,17 @@ contract stkCvxFxsVaultTest is Test {
         }
     }
 
+    function _deposit(
+        address to,
+        uint256 amount
+    ) private returns (uint256 shares) {
+        _mintAssets(to, amount);
+
+        CVX_FXS.approve(address(vault), amount);
+
+        return vault.deposit(to, amount);
+    }
+
     function testCannotSetHarvestPermissionsNotOwner() external {
         vm.prank(address(0));
         vm.expectRevert(NOT_OWNER_ERROR);
@@ -136,14 +147,16 @@ contract stkCvxFxsVaultTest is Test {
     }
 
     function testDeposit() external {
+        address caller = address(this);
         address to = address(this);
         uint256 amount = 1e18;
 
-        _mintAssets(to, amount);
+        _mintAssets(caller, amount);
 
         uint256 strategyStkCvxFxsBalanceBeforeDeposit = STK_CVX_FXS.balanceOf(
             address(strategy)
         );
+        uint256 callerCvxFxsBalanceBeforeDeposit = CVX_FXS.balanceOf(caller);
         uint256 expectedSharesReceived = _calculateShares(amount);
 
         CVX_FXS.approve(address(vault), amount);
@@ -152,13 +165,18 @@ contract stkCvxFxsVaultTest is Test {
 
         emit Deposit(address(this), to, amount);
 
-        vault.deposit(to, amount);
+        uint256 shares = vault.deposit(to, amount);
 
         assertEq(
             strategyStkCvxFxsBalanceBeforeDeposit + amount,
             STK_CVX_FXS.balanceOf(address(strategy))
         );
+        assertEq(
+            callerCvxFxsBalanceBeforeDeposit - amount,
+            CVX_FXS.balanceOf(caller)
+        );
         assertEq(expectedSharesReceived, vault.balanceOf(to));
+        assertEq(expectedSharesReceived, shares);
     }
 
     function testDepositFuzz(address to, uint80 amount) external {
@@ -166,25 +184,114 @@ contract stkCvxFxsVaultTest is Test {
         vm.assume(amount != 0);
         vm.assume(amount < 10_000e18);
 
-        _mintAssets(address(this), amount);
+        address caller = address(this);
+
+        _mintAssets(caller, amount);
 
         uint256 strategyStkCvxFxsBalanceBeforeDeposit = STK_CVX_FXS.balanceOf(
             address(strategy)
         );
+        uint256 callerCvxFxsBalanceBeforeDeposit = CVX_FXS.balanceOf(caller);
         uint256 expectedSharesReceived = _calculateShares(amount);
 
         CVX_FXS.approve(address(vault), amount);
 
         vm.expectEmit(true, true, false, true, address(vault));
 
-        emit Deposit(address(this), to, amount);
+        emit Deposit(caller, to, amount);
 
-        vault.deposit(to, amount);
+        uint256 shares = vault.deposit(to, amount);
 
         assertEq(
             strategyStkCvxFxsBalanceBeforeDeposit + amount,
             STK_CVX_FXS.balanceOf(address(strategy))
         );
+        assertEq(
+            callerCvxFxsBalanceBeforeDeposit - amount,
+            CVX_FXS.balanceOf(caller)
+        );
         assertEq(expectedSharesReceived, vault.balanceOf(to));
+        assertEq(expectedSharesReceived, shares);
+    }
+
+    function testCannotWithdrawZeroAddress() external {
+        address invalidTo = address(0);
+        uint256 amount = 1e18;
+
+        vm.expectRevert(bytes("Invalid address!"));
+
+        vault.withdraw(invalidTo, amount);
+    }
+
+    function testWithdraw() external {
+        address caller = address(this);
+        address to = address(this);
+        uint256 amount = 1e18;
+
+        _deposit(caller, amount);
+
+        uint256 strategyStkCvxFxsBalanceBeforeWithdraw = STK_CVX_FXS.balanceOf(
+            address(strategy)
+        );
+        uint256 callerSharesBalanceBeforeWithdraw = vault.balanceOf(caller);
+        uint256 receiverCvxFxsBalanceBeforeWithdraw = CVX_FXS.balanceOf(to);
+
+        vm.expectEmit(true, true, false, true, address(vault));
+
+        emit Withdraw(caller, to, amount);
+
+        uint256 withdrawn = vault.withdraw(to, amount);
+
+        // NOTE: Does NOT take into account rewards
+        assertEq(
+            strategyStkCvxFxsBalanceBeforeWithdraw - amount,
+            STK_CVX_FXS.balanceOf(address(strategy))
+        );
+        assertEq(
+            callerSharesBalanceBeforeWithdraw - amount,
+            vault.balanceOf(caller)
+        );
+        assertEq(
+            receiverCvxFxsBalanceBeforeWithdraw + amount,
+            CVX_FXS.balanceOf(to)
+        );
+        assertEq(amount, withdrawn);
+    }
+
+    function testWithdrawFuzz(address to, uint80 amount) external {
+        vm.assume(to != address(0));
+        vm.assume(amount != 0);
+        vm.assume(amount < 10_000e18);
+
+        address caller = address(this);
+
+        _deposit(caller, amount);
+
+        uint256 strategyStkCvxFxsBalanceBeforeWithdraw = STK_CVX_FXS.balanceOf(
+            address(strategy)
+        );
+        uint256 callerSharesBalanceBeforeWithdraw = vault.balanceOf(caller);
+        uint256 receiverCvxFxsBalanceBeforeWithdraw = CVX_FXS.balanceOf(to);
+
+        vm.expectEmit(true, true, false, true, address(vault));
+
+        emit Withdraw(caller, to, amount);
+
+        uint256 withdrawn = vault.withdraw(to, amount);
+
+        // NOTE: Does NOT take into account rewards - consider different methods
+        // of introducing entropy to improve testing effectiveness
+        assertEq(
+            strategyStkCvxFxsBalanceBeforeWithdraw - amount,
+            STK_CVX_FXS.balanceOf(address(strategy))
+        );
+        assertEq(
+            callerSharesBalanceBeforeWithdraw - amount, vault.balanceOf(caller)
+        );
+        assertEq(
+            receiverCvxFxsBalanceBeforeWithdraw + amount,
+            CVX_FXS.balanceOf(to)
+        );
+        assertEq(amount, withdrawn);
     }
 }
