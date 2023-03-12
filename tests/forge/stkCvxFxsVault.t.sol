@@ -24,6 +24,7 @@ contract stkCvxFxsVaultTest is Test {
     stkCvxFxsStrategy private immutable strategy;
     stkCvxFxsHarvester private immutable harvester;
 
+    event Harvest(address indexed _caller, uint256 _value);
     event Deposit(address indexed _from, address indexed _to, uint256 _value);
     event Withdraw(address indexed _from, address indexed _to, uint256 _value);
 
@@ -286,12 +287,78 @@ contract stkCvxFxsVaultTest is Test {
             STK_CVX_FXS.balanceOf(address(strategy))
         );
         assertEq(
-            callerSharesBalanceBeforeWithdraw - amount, vault.balanceOf(caller)
+            callerSharesBalanceBeforeWithdraw - amount,
+            vault.balanceOf(caller)
         );
         assertEq(
             receiverCvxFxsBalanceBeforeWithdraw + amount,
             CVX_FXS.balanceOf(to)
         );
         assertEq(amount, withdrawn);
+    }
+
+    function testCannotHarvestNotAuthorizedHarvester() external {
+        _deposit(address(this), 1);
+
+        vault.setHarvestPermissions(true);
+
+        assertTrue(vault.isHarvestPermissioned());
+        assertFalse(vault.authorizedHarvesters(address(this)));
+        assertGt(vault.totalSupply(), 0);
+
+        vm.expectRevert(bytes("permissioned harvest"));
+
+        vault.harvest(0);
+    }
+
+    function testHarvestNotPermissioned() external {
+        uint256 _minAmountOut = 0;
+
+        _deposit(address(this), 1);
+
+        assertFalse(vault.isHarvestPermissioned());
+        assertFalse(vault.authorizedHarvesters(address(this)));
+        assertGt(vault.totalSupply(), 0);
+
+        vm.expectEmit(true, false, false, true, address(vault));
+
+        emit Harvest(address(this), _minAmountOut);
+
+        vault.harvest(_minAmountOut);
+    }
+
+    function testHarvestAuthorizedHarvester() external {
+        uint256 _minAmountOut = 0;
+
+        _deposit(address(this), 1);
+
+        vault.setHarvestPermissions(true);
+        vault.updateAuthorizedHarvesters(address(this), true);
+
+        assertTrue(vault.isHarvestPermissioned());
+        assertTrue(vault.authorizedHarvesters(address(this)));
+        assertGt(vault.totalSupply(), 0);
+
+        vm.expectEmit(true, false, false, true, address(vault));
+
+        emit Harvest(address(this), _minAmountOut);
+
+        vault.harvest(_minAmountOut);
+    }
+
+    function testHarvestTotalSupplyZero() external {
+        uint256 _minAmountOut = 0;
+
+        vault.setHarvestPermissions(true);
+
+        assertTrue(vault.isHarvestPermissioned());
+        assertFalse(vault.authorizedHarvesters(address(this)));
+        assertEq(vault.totalSupply(), 0);
+
+        vm.expectEmit(true, false, false, true, address(vault));
+
+        emit Harvest(address(this), _minAmountOut);
+
+        vault.harvest(_minAmountOut);
     }
 }
