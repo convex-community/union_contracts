@@ -13,7 +13,7 @@ from ....utils.constants import (
     CURVE_CVXFXS_FXS_POOL,
     AIRFORCE_SAFE,
     CVXFXS,
-    CVXFXS_SINGLE_STAKING_CONTRACT,
+    CVXFXS_SINGLE_STAKING_CONTRACT, FXS_COMMUNITY, FXS,
 )
 
 
@@ -50,6 +50,13 @@ def zaps(owner, vault):
     zaps = stkCvxFxsZaps.deploy(vault, {"from": owner})
     zaps.setApprovals({"from": owner})
     yield zaps
+
+
+@pytest.fixture(scope="module", autouse=True)
+def distribute_fxs(alice, zaps):
+
+    interface.IERC20(FXS).transfer(alice, 2e23, {"from": FXS_COMMUNITY})
+    interface.IERC20(FXS).approve(zaps, 2**256 - 1, {"from": alice})
 
 
 @pytest.fixture(scope="module", autouse=True)

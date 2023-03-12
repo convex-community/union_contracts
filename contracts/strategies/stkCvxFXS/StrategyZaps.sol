@@ -96,6 +96,7 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
         address to,
         bool lock
     ) external notToZeroAddress(to) {
+        IERC20(FXS_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
         _deposit(amount, minAmountOut, to, lock);
     }
 
@@ -105,7 +106,6 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
         address to,
         bool lock
     ) internal {
-        IERC20(FXS_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
         if (lock) {
             ICvxFxsDeposit(FXS_DEPOSIT).deposit(amount, true);
         } else {
