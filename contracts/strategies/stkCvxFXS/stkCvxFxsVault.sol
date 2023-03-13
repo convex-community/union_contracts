@@ -3,12 +3,9 @@ pragma solidity 0.8.9;
 
 import "../../GenericVault.sol";
 
-struct EarnedData {
-    address token;
-    uint256 amount;
-}
+error ZeroAddress();
 
-interface stkCvxFxsStrategy {
+interface IstkCvxFxsStrategy {
     function harvest(address _caller, uint256 _minAmountOut)
         external
         returns (uint256 harvested);
@@ -19,11 +16,18 @@ interface ICvxFxsStaking {
         external
         view
         returns (EarnedData[] memory userRewards);
+
+    struct EarnedData {
+        address token;
+        uint256 amount;
+    }
 }
 
 contract stkCvxFxsVault is GenericUnionVault {
-    bool public isHarvestPermissioned = false;
+    bool public isHarvestPermissioned;
     mapping(address => bool) public authorizedHarvesters;
+    ICvxFxsStaking constant cvxFxsStaking =
+        ICvxFxsStaking(0x49b4d1dF40442f0C31b1BbAEA3EDE7c38e37E31a);
 
     constructor(address _token) GenericUnionVault(_token) {}
 
@@ -40,6 +44,7 @@ contract stkCvxFxsVault is GenericUnionVault {
         external
         onlyOwner
     {
+        if (_harvester == address(0)) revert ZeroAddress();
         authorizedHarvesters[_harvester] = _authorized;
     }
 
@@ -56,7 +61,7 @@ contract stkCvxFxsVault is GenericUnionVault {
                 totalSupply() == 0,
             "permissioned harvest"
         );
-        uint256 _harvested = stkCvxFxsStrategy(strategy).harvest(
+        uint256 _harvested = IstkCvxFxsStrategy(strategy).harvest(
             msg.sender,
             _minAmountOut
         );
@@ -64,10 +69,12 @@ contract stkCvxFxsVault is GenericUnionVault {
     }
 
     /// @notice View function to get pending staking rewards
-    function claimableRewards() external view returns (EarnedData[] memory) {
-        return
-            ICvxFxsStaking(0x49b4d1dF40442f0C31b1BbAEA3EDE7c38e37E31a)
-                .claimableRewards(strategy);
+    function claimableRewards()
+        external
+        view
+        returns (ICvxFxsStaking.EarnedData[] memory)
+    {
+        return cvxFxsStaking.claimableRewards(strategy);
     }
 
     /// @notice Claim rewards and swaps them to cvxFXS for restaking

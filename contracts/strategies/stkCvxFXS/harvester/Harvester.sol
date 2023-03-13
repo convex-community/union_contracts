@@ -91,8 +91,9 @@ contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
     function rescueToken(address _token, address _to) external onlyOwner {
         /// Only allow to rescue non-supported tokens
         require(_token != FXS_TOKEN && _token != CVX_TOKEN, "not allowed");
-        uint256 _balance = IERC20(_token).balanceOf(address(this));
-        IERC20(_token).safeTransfer(_to, _balance);
+        IERC20 _t = IERC20(_token);
+        uint256 _balance = _t.balanceOf(address(this));
+        _t.safeTransfer(_to, _balance);
     }
 
     /// @notice Sets the range of acceptable slippage & price impact
@@ -112,16 +113,20 @@ contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
         return ((_amountEthPrice * allowedSlippage) / DECIMALS);
     }
 
-    function processRewards() external onlyStrategy returns (uint256) {
+    function processRewards()
+        external
+        onlyStrategy
+        returns (uint256 _harvested)
+    {
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
         if (_cvxBalance > 0) {
-            uint256 _minAmountOut = useOracle
-                ? _calcMinAmountOutCvxEth(_cvxBalance)
-                : 0;
-            _cvxToEth(_cvxBalance, _minAmountOut);
+            _cvxToEth(
+                _cvxBalance,
+                useOracle ? _calcMinAmountOutCvxEth(_cvxBalance) : 0
+            );
         }
         uint256 _ethBalance = address(this).balance;
-        uint256 _harvested = 0;
+        _harvested = 0;
 
         if (_ethBalance > 0) {
             _swapEthForFxs(_ethBalance, swapOption);
@@ -140,7 +145,6 @@ contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
             else {
                 uint256 _minCvxFxsAmountOut = 0;
                 if (useOracle) {
-                    uint256 _cvxEthPrice = cvxEthSwap.price_oracle();
                     _minCvxFxsAmountOut = (_fxsBalance * _oraclePrice) / 1e18;
                     _minCvxFxsAmountOut = ((_minCvxFxsAmountOut *
                         allowedSlippage) / DECIMALS);
@@ -153,9 +157,8 @@ contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
                 );
             }
             IERC20(CVXFXS_TOKEN).safeTransfer(msg.sender, _harvested);
-            return _harvested;
         }
-        return 0;
+        return _harvested;
     }
 
     modifier onlyOwner() {
