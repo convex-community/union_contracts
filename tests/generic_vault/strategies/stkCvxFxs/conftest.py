@@ -46,6 +46,13 @@ def harvester(owner, strategy):
 
 
 @pytest.fixture(scope="module")
+def second_harvester(owner, strategy):
+    harvester = stkCvxFxsHarvester.deploy(strategy, {"from": owner})
+    harvester.setApprovals({"from": owner})
+    yield harvester
+
+
+@pytest.fixture(scope="module")
 def zaps(owner, vault):
     zaps = stkCvxFxsZaps.deploy(vault, {"from": owner})
     zaps.setApprovals({"from": owner})

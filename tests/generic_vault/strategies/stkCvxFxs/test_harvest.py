@@ -110,6 +110,67 @@ def test_harvest_multiple_stakers(
     )
 
 
+
+@pytest.mark.parametrize("option", [0, 1, 2, 3])
+def test_harvest_with_harvester_change(
+    fn_isolation,
+    alice,
+    bob,
+    charlie,
+    dave,
+    erin,
+    owner,
+    vault,
+    strategy,
+    staking,
+    option,
+    second_harvester,
+):
+    second_harvester.setSwapOption(option, {"from": owner})
+    strategy.setHarvester(second_harvester, {"from": owner})
+    initial_balances = {}
+    accounts = [alice, bob, charlie, dave, erin]
+
+    for account in accounts:
+        initial_balances[account.address] = cvxfxs_balance(account)
+        vault.depositAll(account, {"from": account})
+
+    bob_initial_balance = cvxfxs_balance(bob)
+    initial_vault_balance = vault.totalUnderlying()
+    platform_initial_balance = cvxfxs_balance(vault.platform())
+    chain.sleep(60 * 60 * 24 * 30)
+    chain.mine(1)
+    gross_estimated_harvest = calc_staking_harvest_amount(strategy, staking, option)
+    print(
+        "\033[95m"
+        + f"Harvested {OPTIONS[option]}: {gross_estimated_harvest * 1e-18} FXS"
+    )
+    print("=" * 32 + "\033[0m")
+    platform_fees = gross_estimated_harvest * vault.platformFee() // 10000
+    caller_incentive = gross_estimated_harvest * vault.callIncentive() // 10000
+
+    net_harvest = gross_estimated_harvest - platform_fees - caller_incentive
+
+    tx = vault.harvest({"from": bob})
+
+    actual_harvest = tx.events["Harvest"]["_value"]
+
+    assert approx(net_harvest, actual_harvest, 1e-3)
+    assert approx(cvxfxs_balance(bob), bob_initial_balance + caller_incentive, 1e-5)
+    assert approx(
+        cvxfxs_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-5
+    )
+    assert approx(
+        vault.totalUnderlying(),
+        initial_vault_balance + net_harvest,
+        1e-5,
+    )
+    assert approx(
+        vault.balanceOfUnderlying(account) - initial_balances[account.address],
+        (net_harvest) // len(accounts),
+        1e-5,
+    )
+
 @pytest.mark.parametrize("option", [0, 1, 2, 3])
 def test_harvest_with_discount(
     fn_isolation,
