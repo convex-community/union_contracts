@@ -15,6 +15,8 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
 
     address public immutable vault;
 
+    address private constant UNION_FXS =
+        0xF964b0E3FfdeA659c44a5a52bc0B82A24b89CE0E;
     address private constant CONVEX_LOCKER =
         0x72a19342e8F1838460eBFCCEf09F6585e32db86E;
     address private constant TRICRYPTO =
@@ -83,6 +85,12 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
 
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
+
+        IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
+        IERC20(CVXFXS_TOKEN).safeApprove(
+            CURVE_CVXFXS_FXS_POOL,
+            type(uint256).max
+        );
     }
 
     /// @notice Deposit from FXS
@@ -98,6 +106,28 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     ) external notToZeroAddress(to) {
         IERC20(FXS_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
         _deposit(amount, minAmountOut, to, lock);
+    }
+
+    /// @notice Deposit from legacy uFXS
+    /// @param amount - the amount of uFXS to deposit
+    /// @param minAmountOut - min amount of cvxFXS tokens expected
+    /// @param to - address to stake on behalf of
+    function depositFromUFxs(
+        uint256 amount,
+        uint256 minAmountOut,
+        address to
+    ) external notToZeroAddress(to) {
+        address uFxs = UNION_FXS;
+        IERC20(uFxs).safeTransferFrom(msg.sender, address(this), amount);
+        IGenericVault(uFxs).withdrawAll(address(this));
+        cvxFxsFxsSwap.remove_liquidity_one_coin(
+            IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).balanceOf(address(this)),
+            1,
+            minAmountOut,
+            false,
+            address(this)
+        );
+        IGenericVault(vault).depositAll(to);
     }
 
     function _deposit(

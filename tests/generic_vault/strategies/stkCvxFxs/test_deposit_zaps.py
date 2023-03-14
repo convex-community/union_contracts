@@ -1,18 +1,24 @@
 import brownie
 import pytest
-from brownie import interface
+from brownie import interface, CvxFxsZaps, GenericUnionVault
 from decimal import Decimal
 
-from ....utils import cvxfxs_balance
+from ....utils import cvxfxs_balance, approx
 from ....utils.constants import (
     ADDRESS_ZERO,
     SPELL,
     SUSHI_ROUTER,
     WETH,
+    FXS,
+    CVXFXS,
+    UNION_FXS_ZAPS,
+    UNION_FXS,
+    AIRFORCE_SAFE,
 )
 from ....utils.cvxfxs import (
     eth_to_fxs,
     fxs_to_cvxfxs,
+    estimate_underlying_received,
 )
 
 
@@ -35,6 +41,29 @@ def test_deposit_from_fxs(fn_isolation, lock, alice, zaps, vault, strategy):
     retrievable = amount * (1 - withdrawal_penalty)
     vault.withdrawAll(alice, {"from": alice})
     assert cvxfxs_balance(alice) > alice_initial_balance
+
+
+def test_deposit_from_ufxs(fn_isolation, alice, zaps, vault, strategy):
+
+    alice_initial_balance = cvxfxs_balance(alice)
+    old_zap = CvxFxsZaps.at(UNION_FXS_ZAPS)
+    old_vault = GenericUnionVault.at(UNION_FXS)
+    interface.IERC20(CVXFXS).approve(old_zap, 2**256 - 1, {"from": alice})
+    old_zap.depositFromUnderlyingAssets(
+        [0, alice_initial_balance], 0, alice, {"from": alice}
+    )
+    old_vault.setWithdrawalPenalty(0, {"from": AIRFORCE_SAFE})
+
+    interface.IERC20(UNION_FXS).approve(zaps, 2**256 - 1, {"from": alice})
+    ufxs_balance = interface.IERC20(UNION_FXS).balanceOf(alice)
+    cvxfxs_from_ufxs = estimate_underlying_received(
+        old_vault.balanceOfUnderlying(alice), 1
+    )
+    tx = zaps.depositFromUFxs(ufxs_balance, 0, alice, {"from": alice})
+
+    assert approx(vault.balanceOfUnderlying(alice), cvxfxs_from_ufxs, 1e-3)
+
+    vault.withdrawAll(alice, {"from": alice})
 
 
 @pytest.mark.parametrize("option", [0, 1, 2, 3])
