@@ -8,3 +8,7 @@ reports/
 node_modules/
 migrations/
 *.sqlite
+
+# forge
+cache/
+out/
