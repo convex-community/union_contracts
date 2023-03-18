@@ -15,9 +15,11 @@ contract stkCvxCrvStrategy is Ownable {
 
     address public immutable vault;
     address public harvester;
+    address[] public rewardTokens;
+    mapping(address => uint256) public rewardTokenStatus;
     ICvxCrvStaking public immutable cvxCrvStaking;
     address private constant CVXCRV_TOKEN =
-    0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;
+        0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
@@ -33,6 +35,20 @@ contract stkCvxCrvStrategy is Ownable {
             address(cvxCrvStaking),
             type(uint256).max
         );
+    }
+
+    /// @notice update the list and status of reward tokens
+    /// @param _token - token address
+    /// @param _status - 1 for active, else inactive
+    function updateRewardToken(address _token, uint256 _status)
+        public
+        onlyOwner
+    {
+        require(_status > 0, "can't delete");
+        if (rewardTokenStatus[_token] == 0) {
+            rewardTokens.push(_token);
+        }
+        rewardTokenStatus[_token] = _status;
     }
 
     /// @notice set the strategy's reward weight
@@ -71,19 +87,21 @@ contract stkCvxCrvStrategy is Ownable {
     /// @dev Can be called by the vault only
     /// @param _caller - the address calling the harvest on the vault
     /// @param _minAmountOut -  min amount of LP tokens to receive w/o revert
-    /// @param _forceLock - force a lock even if there is a discount for swapping
+    /// @param _sweep - whether to retrieve token rewards in strategy contract
     /// @return harvested - the amount harvested
     function harvest(
         address _caller,
         uint256 _minAmountOut,
-        bool _forceLock
+        bool _sweep
     ) public onlyVault returns (uint256 harvested) {
         // claim rewards to harvester
         cvxCrvStaking.getReward(address(this), harvester);
+        // sweep rewards to harvester if needed
+        if (_sweep) {
+            _sweepRewards();
+        }
         // process rewards via harvester
-        uint256 _cvxCrvBalance = IHarvester(harvester).processRewards(
-            _forceLock
-        );
+        uint256 _cvxCrvBalance = IHarvester(harvester).processRewards();
 
         require(_cvxCrvBalance >= _minAmountOut, "slippage");
         // if this is the last call or no CRV
@@ -115,6 +133,43 @@ contract stkCvxCrvStrategy is Ownable {
         cvxCrvStaking.stake(_stakingAmount, address(this));
 
         return _stakingAmount;
+    }
+
+    function _rescueToken(
+        address _token,
+        address _to,
+        uint256 _amount
+    ) internal {
+        require(
+            _token != address(cvxCrvStaking),
+            "Cannot rescue staking token"
+        );
+        IERC20(_token).safeTransfer(_to, _amount);
+    }
+
+    /// @notice Transfers an ERC20 stuck in the contract to designated address
+    /// @param _token - token address (can not be staking token)
+    /// @param _to - address to send token to
+    /// @param _amount - amount to transfer
+    function rescueToken(
+        address _token,
+        address _to,
+        uint256 _amount
+    ) external onlyOwner {
+        _rescueToken(_token, _to, _amount);
+    }
+
+    /// @notice Retrieves all reward tokens in strategy contract and sends to harvester
+    function _sweepRewards() internal {
+        for (uint256 i = 0; i < rewardTokens.length; ++i) {
+            address _token = rewardTokens[i];
+            if (rewardTokenStatus[_token] == 1) {
+                uint256 _amount = IERC20(_token).balanceOf(address(this));
+                if (_amount > 0) {
+                    _rescueToken(_token, harvester, _amount);
+                }
+            }
+        }
     }
 
     modifier onlyVault() {

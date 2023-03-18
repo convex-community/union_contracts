@@ -7,7 +7,7 @@ interface stkCvxCrvStrategy {
     function harvest(
         address _caller,
         uint256 _minAmountOut,
-        bool _forceLock
+        bool _sweep
     ) external returns (uint256 harvested);
 
     function setRewardWeight(uint256 _weight) external;
@@ -65,12 +65,12 @@ contract stkCvxCrvVault is GenericUnionVault {
 
     /// @notice Claim rewards and swaps them to cvxCrv for restaking
     /// @param _minAmountOut - min amount of cvxCrv to receive for harvest
-    /// @param _forceLock - force locking even if there's a discount for swapping
-    /// @dev Can be called by whitelisted account or anyone against an ETH incentive
+    /// @param _sweep - whether to retrieve token rewards in strategy contract
+    /// @dev Can be called by whitelisted account or anyone against a cvxCrv incentive
     /// @dev Harvest logic in the strategy contract
     /// @dev Harvest can be called even if permissioned when last staker is
     ///      withdrawing from the vault.
-    function harvest(uint256 _minAmountOut, bool _forceLock) public {
+    function harvest(uint256 _minAmountOut, bool _sweep) public {
         require(
             !isHarvestPermissioned ||
                 authorizedHarvesters[msg.sender] ||
@@ -80,7 +80,7 @@ contract stkCvxCrvVault is GenericUnionVault {
         uint256 _harvested = stkCvxCrvStrategy(strategy).harvest(
             msg.sender,
             _minAmountOut,
-            _forceLock
+            _sweep
         );
         emit Harvest(msg.sender, _harvested);
     }
@@ -93,7 +93,7 @@ contract stkCvxCrvVault is GenericUnionVault {
     }
 
     /// @notice Claim rewards and swaps them to cvxCRV for restaking
-    /// @dev No slippage protection, swapping for cvxCRV
+    /// @dev No slippage protection (harvester will use oracles), swapping for cvxCRV
     function harvest() public override {
         harvest(0);
     }

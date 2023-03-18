@@ -17,12 +17,7 @@ from tests.utils.constants import (
 
 
 def get_cvx_to_pxcvx(amount):
-    swap_amount = interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).get_dy(0, 1, amount)
-    return (
-        swap_amount
-        if interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).price_oracle() < 1e18
-        else amount
-    )
+    return interface.ICurveV2Pool(CURVE_CVX_PCVX_POOL).get_dy(0, 1, amount)
 
 
 def get_pcvx_to_cvx(amount):

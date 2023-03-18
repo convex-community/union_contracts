@@ -19,17 +19,19 @@ from .constants import (
     CVXFXS_FXS_GAUGE_DEPOSIT,
     CVX_MINING_LIB,
     CURVE_FRAX_USDC_POOL,
+    CRV_TOKEN,
+    CVX,
 )
 
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
 
 
-def estimate_underlying_received(amount, token):
+def estimate_underlying_received(amount, token_index):
     interface.IERC20(CURVE_CVXFXS_FXS_LP_TOKEN).approve(
         CURVE_CVXFXS_FXS_POOL, 2**256 - 1, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
     )
     tx = interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).remove_liquidity_one_coin(
-        amount, token, 0, False, random_wallet, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
+        amount, token_index, 0, False, random_wallet, {"from": CVXFXS_FXS_GAUGE_DEPOSIT}
     )
     value = tx.return_value
     # older version of brownie bork the return value
@@ -177,6 +179,38 @@ def calc_harvest_amount_curve(strategy):
         fxs_balance += eth_fxs_curve(eth_balance)
 
     return fxs_balance
+
+
+def fxs_to_cvxfxs(amount):
+    return interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).get_dy(0, 1, amount)
+
+
+def cvxfxs_to_fxs(amount):
+    return interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL).get_dy(1, 0, amount)
+
+
+def calc_staking_harvest_amount(strategy, staking, option, lock=False):
+
+    fxs_balance, eth_balance = calc_staking_rewards(strategy, staking)
+    if eth_balance > 0:
+        fxs_balance += eth_to_fxs(eth_balance, option)
+    return fxs_balance if lock else fxs_to_cvxfxs(fxs_balance)
+
+
+def calc_staking_rewards(strategy, staking):
+    staking_rewards = staking.claimableRewards(strategy)
+    eth_balance = 0
+    fxs_rewards = 0
+    for rewards in staking_rewards:
+        token, amount = rewards
+        if token == CRV_TOKEN:
+            eth_balance += get_crv_to_eth_amount(amount)
+        elif token == CVX:
+            eth_balance += get_cvx_to_eth_amount(amount)
+        elif token == FXS:
+            fxs_rewards += amount
+
+    return fxs_rewards, eth_balance
 
 
 def eth_to_fxs(amount, option):

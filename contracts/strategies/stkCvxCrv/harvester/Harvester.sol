@@ -18,6 +18,7 @@ contract stkCvxCrvHarvester {
     address public pendingOwner;
 
     bool public useOracle = true;
+    bool public forceLock;
 
     address private constant TRIPOOL =
         0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
@@ -86,14 +87,23 @@ contract stkCvxCrvHarvester {
         pendingOwner = address(0);
     }
 
+    /// @notice switch the forceLock option to force harvester to lock
+    /// @dev the harvester will lock even if there is a discount if forceLock is true
+    function setForceLock() external onlyOwner {
+        forceLock = !forceLock;
+    }
+
     /// @notice Rescue tokens wrongly sent to the contracts or claimed extra
     /// rewards that the contract is not equipped to handle
     /// @dev Unhandled rewards can be redirected to new harvester contract
     function rescueToken(address _token, address _to) external onlyOwner {
         /// Only allow to rescue non-supported tokens
-        require(_token != CRV_TOKEN, "not allowed");
-        require(_token != CVX_TOKEN, "not allowed");
-        require(_token != THREECRV_TOKEN, "not allowed");
+        require(
+            _token != CRV_TOKEN &&
+                _token != CVX_TOKEN &&
+                _token != THREECRV_TOKEN,
+            "not allowed"
+        );
         uint256 _balance = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(_to, _balance);
     }
@@ -175,14 +185,11 @@ contract stkCvxCrvHarvester {
     }
 
     function _crvToCvxCrv(uint256 _amount) internal returns (uint256) {
-        return crvCvxCrvSwap.exchange(0, 1, _amount, 0, address(this));
+        // if swapping, we want at least as much cvxCrv out as crv in
+        return crvCvxCrvSwap.exchange(0, 1, _amount, _amount, address(this));
     }
 
-    function processRewards(bool _forceLock)
-        external
-        onlyStrategy
-        returns (uint256)
-    {
+    function processRewards() external onlyStrategy returns (uint256) {
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
         if (_cvxBalance > 0) {
             _cvxToEth(_cvxBalance);
@@ -202,7 +209,7 @@ contract stkCvxCrvHarvester {
             uint256 _quote = crvCvxCrvSwap.get_dy(0, 1, _crvBalance);
             // swap on Curve if there is a premium for doing so
             // and if we have not been instructed to lock
-            if ((_quote > _crvBalance) && !_forceLock) {
+            if ((_quote > _crvBalance) && !forceLock) {
                 _crvToCvxCrv(_crvBalance);
             }
             // otherwise lock
