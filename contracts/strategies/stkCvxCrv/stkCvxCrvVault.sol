@@ -47,20 +47,21 @@ contract stkCvxCrvVault is GenericUnionVault {
             "authorized only"
         );
         stkCvxCrvStrategy(strategy).setRewardWeight(_weight);
+        weight = _weight;
     }
 
     /// @notice Updates the strategy's reward weight before harvesting
     /// @dev Always only available to owner or authorized harvesters
     /// @param _minAmountOut - min amount of cvxCrv to receive for harvest
-    /// @param _lock - whether to lock or swap lp tokens for cvxCrv
+    /// @param _sweep - whether to retrieve potential token rewards in strategy contract
     /// @param _weight the desired weight: 0 = full group 0, 10k = full group 1
     function harvestAndSetRewardWeight(
         uint256 _minAmountOut,
-        bool _lock,
+        bool _sweep,
         uint256 _weight
     ) public {
         setRewardWeight(_weight);
-        harvest(_minAmountOut, _lock);
+        harvest(_minAmountOut, _sweep);
     }
 
     /// @notice Claim rewards and swaps them to cvxCrv for restaking
