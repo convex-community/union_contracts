@@ -7,7 +7,7 @@ import "../../../../interfaces/ICurvePool.sol";
 import "../../../../interfaces/ICurveTriCrypto.sol";
 import "../../../../interfaces/ICurveV2Pool.sol";
 import "../../../../interfaces/ICvxCrvDeposit.sol";
-import "../../../../interfaces/ICurveFactoryPool.sol";
+import "../../../../interfaces/ICurveNewFactoryPool.sol";
 
 contract stkCvxCrvHarvester {
     using SafeERC20 for IERC20;
@@ -41,13 +41,13 @@ contract stkCvxCrvHarvester {
     address private constant CVXCRV_DEPOSIT =
         0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae;
     address public constant CURVE_CVXCRV_CRV_POOL =
-        0x9D0464996170c6B9e75eED71c68B99dDEDf279e8;
+        0x971add32Ea87f10bD192671630be3BE8A11b8623;
 
     ICurvePool private tripool = ICurvePool(TRIPOOL);
     ICurveTriCrypto private tricrypto = ICurveTriCrypto(TRICRYPTO);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
     ICurveV2Pool crvEthSwap = ICurveV2Pool(CURVE_CRV_ETH_POOL);
-    ICurveFactoryPool crvCvxCrvSwap = ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL);
+    ICurveNewFactoryPool crvCvxCrvSwap = ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL);
 
     constructor(address _strategy) {
         strategy = _strategy;
@@ -184,9 +184,8 @@ contract stkCvxCrvHarvester {
         }
     }
 
-    function _crvToCvxCrv(uint256 _amount) internal returns (uint256) {
-        // if swapping, we want at least as much cvxCrv out as crv in
-        return crvCvxCrvSwap.exchange(0, 1, _amount, _amount, address(this));
+    function _crvToCvxCrv(uint256 _amount, uint256 _minAmounOut) internal returns (uint256) {
+        return crvCvxCrvSwap.exchange(0, 1, _amount, _minAmounOut, address(this));
     }
 
     function processRewards() external onlyStrategy returns (uint256) {
@@ -203,14 +202,13 @@ contract stkCvxCrvHarvester {
         _ethToCrv(address(this).balance);
         uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
         if (_crvBalance > 0) {
-            // no oracle yet on the pool so we use get_dy
-            // this is not to get a minAmountOut just for lock vs swap decision
-            // so worst case scenario, we end up locking instead of swapping
-            uint256 _quote = crvCvxCrvSwap.get_dy(0, 1, _crvBalance);
-            // swap on Curve if there is a premium for doing so
-            // and if we have not been instructed to lock
-            if ((_quote > _crvBalance) && !forceLock) {
-                _crvToCvxCrv(_crvBalance);
+            // use the pool's price oracle to determine if there's a swap discount
+            uint256 _priceOracle = crvCvxCrvSwap.price_oracle();
+            // swap on Curve if there is a discount for doing so
+            // and if we are not set to lock
+            if ((_priceOracle < 1 ether) && !forceLock) {
+                // we compute a minamountout using the price oracle
+                _crvToCvxCrv(_crvBalance, (((_crvBalance / _priceOracle) * 1e18) * allowedSlippage) / DECIMALS);
             }
             // otherwise lock
             else {

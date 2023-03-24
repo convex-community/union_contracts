@@ -28,7 +28,7 @@ contract stkCvxCrvZaps {
     address private constant CURVE_CVX_ETH_POOL =
         0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
     address private constant CURVE_CVXCRV_CRV_POOL =
-        0x9D0464996170c6B9e75eED71c68B99dDEDf279e8;
+        0x971add32Ea87f10bD192671630be3BE8A11b8623;
 
     address private constant CRV_TOKEN =
         0xD533a949740bb3306d119CC777fa900bA034cd52;
