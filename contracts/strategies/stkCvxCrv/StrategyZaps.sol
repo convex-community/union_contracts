@@ -37,7 +37,7 @@ contract stkCvxCrvZaps {
     address private constant CVX_TOKEN =
         0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address private constant UNION_CRV =
-        0x83507cc8C8B67Ed48BADD1F59F684D5d02884C81;
+        0x4eBaD8DbD4EdBd74DB0278714FbD67eBc76B89B7;
     address private constant WETH_TOKEN =
         0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private constant USDT_TOKEN =

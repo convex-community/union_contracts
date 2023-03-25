@@ -10,7 +10,7 @@ from ....utils.constants import (
     CRV_TOKEN,
     CURVE_CVXCRV_CRV_POOL_V2,
     CVXCRV_TOKEN,
-    UNION_CRV,
+    UNION_CRV_V2,
 )
 
 
@@ -62,13 +62,13 @@ def test_deposit_from_ucrv(fn_isolation, alice, zaps, vault):
     interface.IERC20(CVXCRV_TOKEN).transfer(
         alice.address, amount, {"from": CURVE_CVXCRV_CRV_POOL_V2}
     )
-    interface.IERC20(CVXCRV_TOKEN).approve(UNION_CRV, 2**256 - 1, {"from": alice})
-    interface.IERC20(UNION_CRV).approve(zaps, 2**256 - 1, {"from": alice})
-    interface.IUnionVault(UNION_CRV).deposit(alice, amount, {"from": alice})
+    interface.IERC20(CVXCRV_TOKEN).approve(UNION_CRV_V2, 2**256 - 1, {"from": alice})
+    interface.IERC20(UNION_CRV_V2).approve(zaps, 2**256 - 1, {"from": alice})
+    interface.IUnionVault(UNION_CRV_V2).deposit(alice, amount, {"from": alice})
     initial_vault_balance = vault.balanceOf(alice)
 
-    ucrv_amount = interface.IERC20(UNION_CRV).balanceOf(alice)
-    withdrawal_penalty = (interface.IUnionVault(UNION_CRV).withdrawalPenalty()) / 10000
+    ucrv_amount = interface.IERC20(UNION_CRV_V2).balanceOf(alice)
+    withdrawal_penalty = (interface.IUnionVault(UNION_CRV_V2).withdrawalPenalty()) / 10000
     with brownie.reverts():
         zaps.depositFromUCrv(ucrv_amount, 0, ADDRESS_ZERO, {"from": alice})
 
