@@ -1,22 +1,17 @@
 import brownie
-
-from tests.utils.cvxfxs import (
-    get_cvx_to_eth_amount,
-)
 from tests.utils.merkle import OrderedMerkleTree
 from brownie import interface
 from tests.utils.constants import (
     CLAIM_AMOUNT,
     CVX,
     TRICRYPTO,
-    SPELL,
     SUSHI_ROUTER,
     WETH,
     CVXCRV_TOKEN,
     CRV_TOKEN,
-    USDT_TOKEN, CURVE_CVXCRV_CRV_POOL, FXS,
+    USDT_TOKEN, CURVE_CVXCRV_CRV_POOL_V2, FXS,
 )
-from tests.utils import approx, get_crv_to_eth_amount, eth_to_crv, cvxcrv_to_crv, eth_to_cvx
+from tests.utils import approx, get_crv_to_eth_amount, eth_to_cvx
 
 
 def test_claim_as_cvx(
@@ -38,7 +33,7 @@ def test_claim_as_cvx(
     distributor.setApprovals({"from": owner})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     cvx_amount = eth_to_cvx(get_crv_to_eth_amount(crv_amount))
@@ -81,7 +76,7 @@ def test_claim_as_eth(
     distributor.updateMerkleRoot(tree.get_root(), True, {"from": owner})
     distributor.setApprovals({"from": owner})
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
@@ -123,7 +118,7 @@ def test_claim_as_crv(
     distributor.updateMerkleRoot(tree.get_root(), True, {"from": owner})
     distributor.setApprovals({"from": owner})
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     # test claim as cvx
@@ -205,7 +200,7 @@ def test_claim_as_usdt(
     distributor.setApprovals({"from": owner})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
@@ -250,7 +245,7 @@ def test_claim_as_fxs(
     distributor.setApprovals({"from": owner})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
