@@ -11,10 +11,10 @@ contract stkCvxCrvMigration is Ownable {
     using SafeERC20 for IERC20;
 
     address private constant UNION_CRV =
-        0x83507cc8C8B67Ed48BADD1F59F684D5d02884C81;
+        0x4eBaD8DbD4EdBd74DB0278714FbD67eBc76B89B7;
 
     address private constant UNION_CRV_DISTRIBUTOR =
-        0x4eBaD8DbD4EdBd74DB0278714FbD67eBc76B89B7;
+        0x0eD7d0497194fc029Ae02223fEc6d4d567696F17;
 
     address private constant CVXCRV_TOKEN =
         0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;
