@@ -47,7 +47,8 @@ contract stkCvxCrvHarvester {
     ICurveTriCrypto private tricrypto = ICurveTriCrypto(TRICRYPTO);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
     ICurveV2Pool crvEthSwap = ICurveV2Pool(CURVE_CRV_ETH_POOL);
-    ICurveNewFactoryPool crvCvxCrvSwap = ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL);
+    ICurveNewFactoryPool crvCvxCrvSwap =
+        ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL);
 
     constructor(address _strategy) {
         strategy = _strategy;
@@ -184,8 +185,12 @@ contract stkCvxCrvHarvester {
         }
     }
 
-    function _crvToCvxCrv(uint256 _amount, uint256 _minAmounOut) internal returns (uint256) {
-        return crvCvxCrvSwap.exchange(0, 1, _amount, _minAmounOut, address(this));
+    function _crvToCvxCrv(uint256 _amount, uint256 _minAmounOut)
+        internal
+        returns (uint256)
+    {
+        return
+            crvCvxCrvSwap.exchange(0, 1, _amount, _minAmounOut, address(this));
     }
 
     function processRewards() external onlyStrategy returns (uint256) {
@@ -208,7 +213,11 @@ contract stkCvxCrvHarvester {
             // and if we are not set to lock
             if ((_priceOracle < 1 ether) && !forceLock) {
                 // we compute a minamountout using the price oracle
-                _crvToCvxCrv(_crvBalance, (((_crvBalance / _priceOracle) * 1e18) * allowedSlippage) / DECIMALS);
+                _crvToCvxCrv(
+                    _crvBalance,
+                    (((_crvBalance / _priceOracle) * 1e18) * allowedSlippage) /
+                        DECIMALS
+                );
             }
             // otherwise lock
             else {
