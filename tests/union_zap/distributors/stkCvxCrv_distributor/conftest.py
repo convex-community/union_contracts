@@ -5,14 +5,17 @@ from brownie import (
     stkCvxCrvDistributorZaps,
     stkCvxCrvZaps,
     stkCvxCrvMigration,
+    stkCvxCrvVault,
+    stkCvxCrvStrategy,
+    stkCvxCrvHarvester,
     interface,
 )
 from tests.utils.constants import (
-    STAKED_CVXCRV_VAULT,
     CVXCRV_TOKEN,
-    STAKED_CVXCRV_ZAPS,
     CVXCRV,
     CURVE_CVXCRV_CRV_POOL,
+    AIRFORCE_SAFE,
+    NEW_CVX_CRV_STAKING,
 )
 
 
@@ -48,8 +51,29 @@ def owner(accounts):
 
 @pytest.fixture(scope="module")
 def vault(owner):
-    vault = interface.IGenericVault(STAKED_CVXCRV_VAULT)
+    vault = stkCvxCrvVault.deploy(CVXCRV, {"from": owner})
+    vault.setPlatform(AIRFORCE_SAFE, {"from": owner})
     yield vault
+
+
+@pytest.fixture(scope="module")
+def wrapper(owner):
+    yield interface.ICvxCrvStaking(NEW_CVX_CRV_STAKING)
+
+
+@pytest.fixture(scope="module")
+def strategy(owner, vault, wrapper):
+    strategy = stkCvxCrvStrategy.deploy(vault, wrapper, {"from": owner})
+    vault.setStrategy(strategy, {"from": owner})
+    strategy.setApprovals({"from": owner})
+    yield strategy
+
+
+@pytest.fixture(scope="module")
+def harvester(owner, strategy):
+    harvester = stkCvxCrvHarvester.deploy(strategy, {"from": owner})
+    harvester.setApprovals({"from": owner})
+    yield harvester
 
 
 @pytest.fixture(scope="module")
@@ -62,8 +86,10 @@ def distributor(owner, vault, alice):
 
 
 @pytest.fixture(scope="module")
-def vault_zaps(owner):
-    yield stkCvxCrvZaps.at(STAKED_CVXCRV_ZAPS)
+def vault_zaps(owner, vault):
+    zaps = stkCvxCrvZaps.deploy(vault, {"from": owner})
+    zaps.setApprovals({"from": owner})
+    yield zaps
 
 
 @pytest.fixture(scope="module")
@@ -81,7 +107,12 @@ def distributor_zaps(owner, distributor, vault_zaps, vault):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def distribute_cvxcrv(distributor, owner):
+def set_harvester(owner, strategy, harvester):
+    strategy.setHarvester(harvester, {"from": owner})
+
+
+@pytest.fixture(scope="module", autouse=True)
+def distribute_cvxcrv(distributor, owner, strategy, harvester):
     interface.IERC20(CVXCRV).transfer(
         distributor, 1e24, {"from": CURVE_CVXCRV_CRV_POOL}
     )
