@@ -14,13 +14,13 @@ from brownie.network import gas_price
 
 from tests.utils.constants import (
     AIRFORCE_SAFE, CVXCRV, NEW_CVX_CRV_STAKING, CVXCRV_TOKEN,
-    AIRFORCE_TREASURY,
+    AIRFORCE_TREASURY, CRV, CVX, THREECRV_TOKEN,
 )
 
 
 def main():
-    publish = False
-    gas_strategy = LinearScalingStrategy("15 gwei", "25 gwei", 1.1)
+    publish = True
+    gas_strategy = LinearScalingStrategy("12 gwei", "25 gwei", 1.2)
     gas_price(gas_strategy)
     deployer = accounts.load("mainnet-deploy")
 
@@ -34,6 +34,9 @@ def main():
 
     strategy = stkCvxCrvStrategy.deploy(vault, NEW_CVX_CRV_STAKING, {"from": deployer}, publish_source=publish)
     strategy.setApprovals({"from": deployer})
+    strategy.updateRewardToken(CRV, 1)
+    strategy.updateRewardToken(CVX, 1)
+    strategy.updateRewardToken(THREECRV_TOKEN, 1)
     vault.setStrategy(strategy, {"from": deployer})
 
     harvester = stkCvxCrvHarvester.deploy(strategy, {"from": deployer})
@@ -41,6 +44,7 @@ def main():
     harvester.setPendingOwner(AIRFORCE_SAFE, {"from": deployer})
 
     strategy.setHarvester(harvester, {"from": deployer})
+
     zaps = stkCvxCrvZaps.deploy(vault, {"from": deployer}, publish_source=publish)
     zaps.setApprovals({"from": deployer})
 
