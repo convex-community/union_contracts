@@ -23,7 +23,8 @@ from .constants import (
     CURVE_CVX_PCVX_POOL,
     AURA_BAL_TOKEN,
     BAL_ETH_POOL_TOKEN,
-    CVXFXS, CURVE_CVXCRV_CRV_POOL_V2,
+    CVXFXS,
+    CURVE_CVXCRV_CRV_POOL_V2,
 )
 from .cvxfxs import get_crv_to_eth_amount
 
@@ -88,9 +89,9 @@ def calc_staked_cvxcrv_harvest(strategy, wrapper, force_lock=False):
     if crv_balance > 0:
         oracle = interface.ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).price_oracle()
         if oracle < 1e18 and not force_lock:
-            cvxcrv_amount = interface.ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
-            0, 1, crv_balance
-        )
+            cvxcrv_amount = interface.ICurveNewFactoryPool(
+                CURVE_CVXCRV_CRV_POOL_V2
+            ).get_dy(0, 1, crv_balance)
             assert cvxcrv_amount > crv_balance
 
     return cvxcrv_amount

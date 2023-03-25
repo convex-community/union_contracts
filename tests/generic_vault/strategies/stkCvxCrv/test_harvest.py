@@ -13,7 +13,10 @@ from ....utils.constants import (
     USDT_TOKEN,
     TRICRYPTO,
     UNISWAP_ETH_USDT_POOL,
-    CURVE_CRV_ETH_POOL, CURVE_CVXCRV_CRV_POOL_V2, CVXCRV_TOKEN, CRV_TOKEN,
+    CURVE_CRV_ETH_POOL,
+    CURVE_CVXCRV_CRV_POOL_V2,
+    CVXCRV_TOKEN,
+    CRV_TOKEN,
 )
 from ....utils import (
     approx,
@@ -306,7 +309,6 @@ def test_harvest_multiple_stakers(
             (actual_harvest) // len(accounts),
             1e-3,
         )
-
 
 
 def test_harvest_no_discount(

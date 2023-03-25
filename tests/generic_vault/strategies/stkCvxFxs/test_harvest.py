@@ -110,7 +110,6 @@ def test_harvest_multiple_stakers(
     )
 
 
-
 @pytest.mark.parametrize("option", [0, 1, 2, 3])
 def test_harvest_with_harvester_change(
     fn_isolation,
@@ -170,6 +169,7 @@ def test_harvest_with_harvester_change(
         (net_harvest) // len(accounts),
         1e-5,
     )
+
 
 @pytest.mark.parametrize("option", [0, 1, 2, 3])
 def test_harvest_with_discount(

@@ -8,7 +8,11 @@ from brownie import (
     interface,
 )
 from tests.utils.constants import (
-    STAKED_CVXCRV_VAULT, CVXCRV_TOKEN, STAKED_CVXCRV_ZAPS, CVXCRV, CURVE_CVXCRV_CRV_POOL,
+    STAKED_CVXCRV_VAULT,
+    CVXCRV_TOKEN,
+    STAKED_CVXCRV_ZAPS,
+    CVXCRV,
+    CURVE_CVXCRV_CRV_POOL,
 )
 
 
@@ -50,7 +54,9 @@ def vault(owner):
 
 @pytest.fixture(scope="module")
 def distributor(owner, vault, alice):
-    merkle = stkCvxCrvMerkleDistributor.deploy(vault, alice, CVXCRV_TOKEN, {"from": owner})
+    merkle = stkCvxCrvMerkleDistributor.deploy(
+        vault, alice, CVXCRV_TOKEN, {"from": owner}
+    )
     merkle.setApprovals({"from": owner})
     yield merkle
 
