@@ -2,7 +2,6 @@ import brownie
 import pytest
 from brownie import interface, chain
 
-from ....utils.constants import CVXCRV, CVXCRV_REWARDS
 from ....utils import cvxcrv_balance
 
 

@@ -1,22 +1,19 @@
 import brownie
-
-from tests.utils.cvxfxs import (
-    get_cvx_to_eth_amount,
-)
 from tests.utils.merkle import OrderedMerkleTree
 from brownie import interface
 from tests.utils.constants import (
     CLAIM_AMOUNT,
     CVX,
     TRICRYPTO,
-    SPELL,
     SUSHI_ROUTER,
     WETH,
     CVXCRV_TOKEN,
     CRV_TOKEN,
-    USDT_TOKEN, CURVE_CVXCRV_CRV_POOL, FXS,
+    USDT_TOKEN,
+    CURVE_CVXCRV_CRV_POOL_V2,
+    FXS,
 )
-from tests.utils import approx, get_crv_to_eth_amount, eth_to_crv, cvxcrv_to_crv, eth_to_cvx
+from tests.utils import approx, get_crv_to_eth_amount, eth_to_cvx
 
 
 def test_claim_as_cvx(
@@ -38,14 +35,14 @@ def test_claim_as_cvx(
     distributor.setApprovals({"from": owner})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     cvx_amount = eth_to_cvx(get_crv_to_eth_amount(crv_amount))
     # test claim as cvx
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = cvx.balanceOf(alice)
-    vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsCvx(
         proofs["claim"]["index"],
         alice.address,
@@ -69,9 +66,9 @@ def test_claim_as_eth(
     bob,
     owner,
     distributor_zaps,
-        distributor,
-        vault,
-        vault_zaps,
+    distributor,
+    vault,
+    vault_zaps,
 ):
 
     claimers = [owner, alice, bob]
@@ -81,14 +78,14 @@ def test_claim_as_eth(
     distributor.updateMerkleRoot(tree.get_root(), True, {"from": owner})
     distributor.setApprovals({"from": owner})
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
     # test claim as cvx
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = alice.balance()
-    vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsEth(
         proofs["claim"]["index"],
         alice.address,
@@ -111,9 +108,9 @@ def test_claim_as_crv(
     bob,
     owner,
     distributor_zaps,
-        distributor,
-        vault,
-        vault_zaps,
+    distributor,
+    vault,
+    vault_zaps,
 ):
     crv = interface.IERC20(CRV_TOKEN)
     claimers = [owner, alice, bob]
@@ -123,13 +120,13 @@ def test_claim_as_crv(
     distributor.updateMerkleRoot(tree.get_root(), True, {"from": owner})
     distributor.setApprovals({"from": owner})
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     # test claim as cvx
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = crv.balanceOf(alice)
-    vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsCrv(
         proofs["claim"]["index"],
         alice.address,
@@ -152,9 +149,9 @@ def test_claim_as_cvxcrv(
     bob,
     owner,
     distributor_zaps,
-        distributor,
-        vault,
-        vault_zaps,
+    distributor,
+    vault,
+    vault_zaps,
 ):
     cvxcrv = interface.IERC20(CVXCRV_TOKEN)
     claimers = [owner, alice, bob]
@@ -170,7 +167,7 @@ def test_claim_as_cvxcrv(
     # test claim as cvx
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = cvxcrv.balanceOf(alice)
-    vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsUnderlying(
         proofs["claim"]["index"],
         alice.address,
@@ -192,9 +189,9 @@ def test_claim_as_usdt(
     bob,
     owner,
     distributor_zaps,
-        distributor,
-        vault,
-        vault_zaps,
+    distributor,
+    vault,
+    vault_zaps,
 ):
     usdt = interface.IERC20(USDT_TOKEN)
     claimers = [owner, alice, bob]
@@ -205,7 +202,7 @@ def test_claim_as_usdt(
     distributor.setApprovals({"from": owner})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
@@ -214,7 +211,7 @@ def test_claim_as_usdt(
     # test claim as cvx
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = usdt.balanceOf(alice)
-    vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorAsUsdt(
         proofs["claim"]["index"],
         alice.address,
@@ -237,9 +234,9 @@ def test_claim_as_fxs(
     bob,
     owner,
     distributor_zaps,
-        distributor,
-        vault,
-        vault_zaps,
+    distributor,
+    vault,
+    vault_zaps,
 ):
     fxs = interface.IERC20(FXS)
     claimers = [owner, alice, bob]
@@ -250,7 +247,7 @@ def test_claim_as_fxs(
     distributor.setApprovals({"from": owner})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, CLAIM_AMOUNT * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
@@ -261,7 +258,7 @@ def test_claim_as_fxs(
 
     proofs = tree.get_proof(alice.address)
     alice_initial_balance = fxs.balanceOf(alice)
-    vault.approve(distributor_zaps, 2 ** 256 - 1, {"from": alice})
+    vault.approve(distributor_zaps, 2**256 - 1, {"from": alice})
     tx = distributor_zaps.claimFromDistributorViaUniV2EthPair(
         proofs["claim"]["index"],
         alice.address,

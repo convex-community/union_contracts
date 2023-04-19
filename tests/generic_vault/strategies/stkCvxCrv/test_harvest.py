@@ -14,6 +14,9 @@ from ....utils.constants import (
     TRICRYPTO,
     UNISWAP_ETH_USDT_POOL,
     CURVE_CRV_ETH_POOL,
+    CURVE_CVXCRV_CRV_POOL_V2,
+    CVXCRV_TOKEN,
+    CRV_TOKEN,
 )
 from ....utils import (
     approx,
@@ -97,11 +100,11 @@ def test_harvest_sweep(fn_isolation, alice, bob, owner, vault, strategy, wrapper
     vault.depositAll(alice, {"from": alice})
     chain.sleep(100000)
     chain.mine(1)
-    estimated_harvest = calc_staked_cvxcrv_harvest(strategy, wrapper)
     crv_balance = 1e23
     interface.IERC20(CRV).transfer(strategy, crv_balance, {"from": CURVE_VOTING_ESCROW})
-    estimated_sweep_harvest = estimated_harvest + interface.ICurveFactoryPool(
-        CURVE_CVXCRV_CRV_POOL
+    estimated_harvest = calc_staked_cvxcrv_harvest(strategy, wrapper)
+    estimated_sweep_harvest = estimated_harvest + interface.ICurveNewFactoryPool(
+        CURVE_CVXCRV_CRV_POOL_V2
     ).get_dy(0, 1, crv_balance)
     tx = vault.harvest(0, True, {"from": bob})
 
@@ -279,6 +282,65 @@ def test_harvest_multiple_stakers(
 
     chain.sleep(100000)
     chain.mine(1)
+
+    estimated_harvest = calc_staked_cvxcrv_harvest(strategy, wrapper)
+    tx = vault.harvest({"from": bob})
+
+    actual_harvest = tx.events["Harvest"]["_value"]
+
+    platform_fees = estimated_harvest * vault.platformFee() // 10000
+    caller_incentive = estimated_harvest * vault.callIncentive() // 10000
+
+    assert approx(
+        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3
+    )
+    assert approx(cvxcrv_balance(bob), caller_incentive, 1e-3)
+    assert approx(
+        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
+    )
+    for account in accounts:
+        underlying_balance = (
+            vault.balanceOf(account)
+            * interface.ICvxCrvStaking(wrapper).balanceOf(strategy)
+            / vault.totalSupply()
+        )
+        assert approx(
+            underlying_balance - initial_balances[account.address],
+            (actual_harvest) // len(accounts),
+            1e-3,
+        )
+
+
+def test_harvest_no_discount(
+    fn_isolation, alice, bob, charlie, dave, owner, vault, strategy, wrapper
+):
+
+    vault.setRewardWeight(5000, {"from": owner})
+    initial_balances = {}
+    accounts = [alice, bob, charlie, dave]
+
+    for account in accounts:
+        initial_balances[account.address] = cvxcrv_balance(account)
+        vault.depositAll(account, {"from": account})
+
+    platform_initial_balance = cvxcrv_balance(vault.platform())
+    cvxcrv_swap = interface.ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL_V2)
+    print(f"Price oracle before {cvxcrv_swap.price_oracle()}")
+    crv = interface.IERC20(CRV_TOKEN)
+    total_liq = crv.balanceOf(CURVE_VOTING_ESCROW)
+    crv.approve(CURVE_CVXCRV_CRV_POOL_V2, 2**256 - 1, {"from": CURVE_VOTING_ESCROW})
+
+    steps = 5
+    for i in range(steps):
+        cvxcrv_swap.add_liquidity(
+            [total_liq / 2 // steps, 0],
+            0,
+            CURVE_VOTING_ESCROW,
+            {"from": CURVE_VOTING_ESCROW},
+        )
+    chain.sleep(100000)
+    chain.mine(1)
+    print(f"Price oracle after {cvxcrv_swap.price_oracle()}")
 
     estimated_harvest = calc_staked_cvxcrv_harvest(strategy, wrapper)
     tx = vault.harvest({"from": bob})

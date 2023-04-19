@@ -24,6 +24,7 @@ from .constants import (
     AURA_BAL_TOKEN,
     BAL_ETH_POOL_TOKEN,
     CVXFXS,
+    CURVE_CVXCRV_CRV_POOL_V2,
 )
 from .cvxfxs import get_crv_to_eth_amount
 
@@ -86,11 +87,12 @@ def calc_staked_cvxcrv_harvest(strategy, wrapper, force_lock=False):
 
     cvxcrv_amount = crv_balance
     if crv_balance > 0:
-        quote = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
-            0, 1, crv_balance
-        )
-        if quote > crv_balance and not force_lock:
-            cvxcrv_amount = quote
+        oracle = interface.ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).price_oracle()
+        if oracle < 1e18 and not force_lock:
+            cvxcrv_amount = interface.ICurveNewFactoryPool(
+                CURVE_CVXCRV_CRV_POOL_V2
+            ).get_dy(0, 1, crv_balance)
+            assert cvxcrv_amount > crv_balance
 
     return cvxcrv_amount
 
@@ -172,12 +174,24 @@ def crv_to_cvxcrv(amount):
     return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(0, 1, amount)
 
 
+def crv_to_cvxcrv_v2(amount):
+    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(0, 1, amount)
+
+
 def cvxcrv_to_crv(amount):
     return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(1, 0, amount)
 
 
+def cvxcrv_to_crv_v2(amount):
+    return interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(1, 0, amount)
+
+
 def eth_to_cvxcrv(amount):
     return crv_to_cvxcrv(eth_to_crv(amount))
+
+
+def eth_to_cvxcrv_v2(amount):
+    return crv_to_cvxcrv_v2(eth_to_crv(amount))
 
 
 def eth_to_crv(amount):

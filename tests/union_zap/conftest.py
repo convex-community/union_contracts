@@ -102,7 +102,9 @@ def merkle_distributor_v2(owner, union_contract, vault):
 
 @pytest.fixture(scope="module")
 def crv_distributor(owner, union_contract, vault):
-    merkle = stkCvxCrvMerkleDistributor.deploy(vault, union_contract, CVXCRV, {"from": owner})
+    merkle = stkCvxCrvMerkleDistributor.deploy(
+        vault, union_contract, CVXCRV, {"from": owner}
+    )
     merkle.setApprovals({"from": owner})
     yield merkle
 

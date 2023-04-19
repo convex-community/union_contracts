@@ -28,7 +28,7 @@ contract stkCvxCrvZaps {
     address private constant CURVE_CVX_ETH_POOL =
         0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
     address private constant CURVE_CVXCRV_CRV_POOL =
-        0x9D0464996170c6B9e75eED71c68B99dDEDf279e8;
+        0x971add32Ea87f10bD192671630be3BE8A11b8623;
 
     address private constant CRV_TOKEN =
         0xD533a949740bb3306d119CC777fa900bA034cd52;
@@ -37,7 +37,7 @@ contract stkCvxCrvZaps {
     address private constant CVX_TOKEN =
         0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address private constant UNION_CRV =
-        0x83507cc8C8B67Ed48BADD1F59F684D5d02884C81;
+        0x4eBaD8DbD4EdBd74DB0278714FbD67eBc76B89B7;
     address private constant WETH_TOKEN =
         0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private constant USDT_TOKEN =

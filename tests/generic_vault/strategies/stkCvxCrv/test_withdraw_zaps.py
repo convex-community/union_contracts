@@ -8,7 +8,7 @@ from ....utils.constants import (
     WETH,
     SPELL,
     ADDRESS_ZERO,
-    CURVE_CVXCRV_CRV_POOL,
+    CURVE_CVXCRV_CRV_POOL_V2,
     CRV,
     CVX,
     TRICRYPTO,
@@ -27,7 +27,7 @@ def test_claim_as_eth(fn_isolation, alice, bob, vault, strategy, zaps):
     vault.deposit(bob, amount, {"from": bob})
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, amount * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
@@ -47,7 +47,7 @@ def test_claim_as_crv(fn_isolation, alice, bob, vault, strategy, zaps):
     vault.deposit(bob, amount, {"from": bob})
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, amount * (1 - withdrawal_penalty)
     )
 
@@ -70,7 +70,7 @@ def test_claim_as_cvx(fn_isolation, alice, bob, vault, strategy, zaps):
     vault.deposit(bob, amount, {"from": bob})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, amount * (1 - withdrawal_penalty)
     )
     cvx_amount = eth_to_cvx(get_crv_to_eth_amount(crv_amount))
@@ -94,7 +94,7 @@ def test_claim_as_cvx_and_lock(fn_isolation, alice, bob, vault, strategy, zaps):
     vault.deposit(bob, amount, {"from": bob})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, amount * (1 - withdrawal_penalty)
     )
     cvx_amount = eth_to_cvx(get_crv_to_eth_amount(crv_amount))
@@ -118,7 +118,7 @@ def test_claim_as_usdt(fn_isolation, alice, bob, vault, strategy, zaps):
     vault.deposit(bob, amount, {"from": bob})
 
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, amount * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
@@ -137,12 +137,12 @@ def test_claim_as_usdt(fn_isolation, alice, bob, vault, strategy, zaps):
 
 
 def test_claim_as_tripool(fn_isolation, alice, bob, vault, strategy, zaps):
-    amount = int(1e21)
+    amount = int(1e22)
     vault.deposit(alice, amount, {"from": alice})
     vault.deposit(bob, amount, {"from": bob})
-
+    alice_initial_balance = interface.IRewards(CONVEX_TRIPOOL_REWARDS).balanceOf(alice)
     withdrawal_penalty = (vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, amount * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)
@@ -156,7 +156,7 @@ def test_claim_as_tripool(fn_isolation, alice, bob, vault, strategy, zaps):
     )
     assert approx(
         interface.IRewards(CONVEX_TRIPOOL_REWARDS).balanceOf(alice) * 1e-18,
-        tricrv_amount,
+        alice_initial_balance + tricrv_amount,
         1e-3,
     )
 
@@ -167,7 +167,7 @@ def test_claim_as_fxs(fn_isolation, alice, bob, vault, strategy, zaps):
         vault.deposit(account, amount, {"from": account})
 
     withdrawal_penalty = Decimal(vault.withdrawalPenalty()) / 10000
-    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL).get_dy(
+    crv_amount = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL_V2).get_dy(
         1, 0, amount * (1 - withdrawal_penalty)
     )
     eth_amount = get_crv_to_eth_amount(crv_amount)

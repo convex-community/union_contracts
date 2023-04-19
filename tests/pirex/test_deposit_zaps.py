@@ -14,7 +14,8 @@ from ..utils.constants import (
     PXCVX_TOKEN,
     CRV_TOKEN,
     CURVE_CVXCRV_CRV_POOL,
-    CVXCRV_TOKEN, NULL_ADDRESS,
+    CVXCRV_TOKEN,
+    NULL_ADDRESS,
 )
 
 
@@ -137,7 +138,7 @@ def test_deposit_from_sushi(fn_isolation, alice, cvx_zaps, cvx_vault, lock):
     amount = 1e20
 
     interface.IERC20(ALCX).transfer(alice.address, amount, {"from": NULL_ADDRESS})
-    interface.IERC20(ALCX).approve(cvx_zaps, 2 ** 256 - 1, {"from": alice})
+    interface.IERC20(ALCX).approve(cvx_zaps, 2**256 - 1, {"from": alice})
 
     initial_vault_balance = cvx_vault.balanceOf(alice)
 
@@ -161,7 +162,9 @@ def test_deposit_from_sushi(fn_isolation, alice, cvx_zaps, cvx_vault, lock):
     )
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
     assert approx(
-        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice) - initial_vault_balance), received_pxcvx, 1e-6
+        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice) - initial_vault_balance),
+        received_pxcvx,
+        1e-6,
     )
 
     before_redeem_balance = interface.IERC20(PXCVX_TOKEN).balanceOf(alice)
