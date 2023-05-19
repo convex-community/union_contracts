@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@rari/src/tokens/ERC20.sol";
 import "@rari/src/utils/SafeTransferLib.sol";
 
-
 // https://docs.synthetix.io/contracts/source/contracts/StakingRewards/
 // https://github.com/Synthetixio/synthetix/blob/v2.66.0/contracts/StakingRewards.sol
 contract UnionPirexStaking is Ownable {
@@ -50,8 +49,8 @@ contract UnionPirexStaking is Ownable {
         uint256 t = _totalSupply;
 
         return (
-        t,
-        ((t * (rewardPerToken() - userRewardPerTokenPaid)) / 1e18) + rewards
+            t,
+            ((t * (rewardPerToken() - userRewardPerTokenPaid)) / 1e18) + rewards
         );
     }
 
@@ -65,15 +64,15 @@ contract UnionPirexStaking is Ownable {
         }
 
         return
-        rewardPerTokenStored +
-        ((((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate) *
-        1e18) / _totalSupply);
+            rewardPerTokenStored +
+            ((((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate) *
+                1e18) / _totalSupply);
     }
 
     function earned() public view returns (uint256) {
         return
-        ((_totalSupply * (rewardPerToken() - userRewardPerTokenPaid)) /
-        1e18) + rewards;
+            ((_totalSupply * (rewardPerToken() - userRewardPerTokenPaid)) /
+                1e18) + rewards;
     }
 
     function getRewardForDuration() external view returns (uint256) {
@@ -109,17 +108,17 @@ contract UnionPirexStaking is Ownable {
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     function notifyRewardAmount()
-    external
-    onlyDistributor
-    updateReward(address(0))
+        external
+        onlyDistributor
+        updateReward(address(0))
     {
         // Rewards transferred directly to this contract are not added to _totalSupply
         // To get the rewards w/o relying on a potentially incorrect passed in arg,
         // we can use the difference between the token balance and _totalSupply.
         // Additionally, to avoid re-distributing rewards, deduct the output of `earned`
         uint256 rewardBalance = token.balanceOf(address(this)) -
-        _totalSupply -
-        earned();
+            _totalSupply -
+            earned();
 
         rewardRate = rewardBalance / rewardsDuration;
         require(rewardRate != 0, "No rewards");
@@ -132,8 +131,8 @@ contract UnionPirexStaking is Ownable {
 
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
     function recoverERC20(address tokenAddress, uint256 tokenAmount)
-    external
-    onlyOwner
+        external
+        onlyOwner
     {
         require(
             tokenAddress != address(token),
