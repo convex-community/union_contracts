@@ -10,9 +10,11 @@ reports:
 
 dependencies:
   - OpenZeppelin/openzeppelin-contracts@4.1.0
+  - rari-capital/solmate@6
 compiler:
   solc:
     remappings:
       - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.1.0'
+      - '@rari=rari-capital/solmate@6'
 networks:
   default: mainnet-fork
