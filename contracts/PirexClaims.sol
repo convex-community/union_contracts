@@ -8,10 +8,12 @@ import "../interfaces/IMerkleDistributorV2.sol";
 import "../interfaces/IUniV2Router.sol";
 import "../interfaces/IWETH.sol";
 import "../interfaces/ICvxCrvDeposit.sol";
+import "../interfaces/IUnionVault.sol";
 import "../interfaces/IVotiumRegistry.sol";
 import "../interfaces/IUniV3Router.sol";
 import "../interfaces/ICurveV2Pool.sol";
 import "../interfaces/IPirexCVX.sol";
+import "../interfaces/ILpxCvx.sol";
 import "../interfaces/IPirexStrategy.sol";
 import "./UnionBase.sol";
 
@@ -34,10 +36,11 @@ contract PirexClaims is Ownable, UnionBase {
         0x35A398425d9f1029021A92bc3d2557D42C8588D7;
     address private constant PXCVX_TOKEN =
         0xBCe0Cf87F513102F22232436CCa2ca49e815C3aC;
-    address private constant PCVX_STRATEGY =
-        0x45F97D07dAB04B21F36fA3b1149c35e316b35d03;
-    address private constant CURVE_CVX_PCVX_POOL =
+
+    address private constant LPX_CVX =
         0xF3456E8061461e144b3f252E69DcD5b6070fdEE0;
+    address public pcvxStrategy = 0x45F97D07dAB04B21F36fA3b1149c35e316b35d03;
+    address public uCvx = 0x8659Fc767cad6005de79AF65dAfE4249C57927AF;
 
     mapping(uint256 => address) private routers;
     mapping(uint256 => uint24) private fees;
@@ -51,6 +54,8 @@ contract PirexClaims is Ownable, UnionBase {
 
     event FundsRetrieved(address token, address to, uint256 amount);
     event CurvePoolUpdated(address token, address pool);
+    event StrategyUpdated(address strategy);
+    event UnionCvxUpdated(address pool);
 
     constructor() {
         routers[0] = SUSHI_ROUTER;
@@ -78,6 +83,22 @@ contract PirexClaims is Ownable, UnionBase {
         IERC20(token).safeApprove(curveRegistry[token].pool, 0);
         delete curveRegistry[token];
         emit CurvePoolUpdated(token, address(0));
+    }
+
+    /// @notice Change the staking strategy address
+    /// @param strategy - Address of the new strategy
+    function updateStrategy(address strategy) external onlyOwner {
+        require(strategy != address(0));
+        pcvxStrategy = strategy;
+        emit StrategyUpdated(strategy);
+    }
+
+    /// @notice Change the Union CVX address in case of a migration
+    /// @param ucvx - Address of the new ucvx contract
+    function updateUnionAddress(address ucvx) external onlyOwner {
+        require(ucvx != address(0));
+        uCvx = ucvx;
+        emit UnionCvxUpdated(ucvx);
     }
 
     /// @notice Withdraws specified ERC20 tokens to the multisig
@@ -125,8 +146,8 @@ contract PirexClaims is Ownable, UnionBase {
         IERC20(CVX_TOKEN).safeApprove(PIREX_CVX, 0);
         IERC20(CVX_TOKEN).safeApprove(PIREX_CVX, type(uint256).max);
 
-        IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_PCVX_POOL, 0);
-        IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_PCVX_POOL, type(uint256).max);
+        IERC20(CVX_TOKEN).safeApprove(LPX_CVX, 0);
+        IERC20(CVX_TOKEN).safeApprove(LPX_CVX, type(uint256).max);
     }
 
     /// @notice Swap a token for ETH on Curve
@@ -211,7 +232,7 @@ contract PirexClaims is Ownable, UnionBase {
         onlyOwner
     {
         // claim all from strat
-        IPirexStrategy(PCVX_STRATEGY).redeemRewards(epoch, rewardIndexes);
+        IPirexStrategy(pcvxStrategy).redeemRewards(epoch, rewardIndexes);
     }
 
     function swap(
@@ -269,25 +290,28 @@ contract PirexClaims is Ownable, UnionBase {
 
         // swap on Curve if there is a premium for doing so
         if (!lock) {
-            uint256 _pxCvxAmount = ICurveV2Pool(CURVE_CVX_PCVX_POOL).exchange(
-                0,
-                1,
+            ILpxCvx(LPX_CVX).swap(
+                ILpxCvx.Token.CVX,
                 _cvxBalance,
                 minAmountOut,
-                false,
-                PCVX_STRATEGY
+                0,
+                1
+            );
+            IERC20(PXCVX_TOKEN).safeTransfer(
+                pcvxStrategy,
+                IERC20(PXCVX_TOKEN).balanceOf(address(this))
             );
         } else {
             require(_cvxBalance >= minAmountOut, "slippage");
             IPirexCVX(PIREX_CVX).deposit(
                 _cvxBalance,
-                PCVX_STRATEGY,
+                pcvxStrategy,
                 false,
                 address(0)
             );
         }
         // queue in new rewards
-        IPirexStrategy(PCVX_STRATEGY).notifyRewardAmount();
+        IPirexStrategy(pcvxStrategy).notifyRewardAmount();
     }
 
     /// @notice Claims all specified rewards and swaps them to ETH
@@ -298,6 +322,7 @@ contract PirexClaims is Ownable, UnionBase {
     /// @param claimBeforeSwap - whether to claim on Votium or not
     /// @param lock - whether to deposit or swap cvx to pxcvx
     /// @param stake - whether to stake cvxcrv (if distributor is vault)
+    /// @param harvest - whether to trigger a harvest
     /// @param minAmountOut - min output amount of cvxCRV or CRV (if locking)
     /// @dev routerChoices is a 3-bit bitmap such that
     /// 0b000 (0) - Sushi
@@ -316,6 +341,7 @@ contract PirexClaims is Ownable, UnionBase {
         bool claimBeforeSwap,
         bool lock,
         bool stake,
+        bool harvest,
         uint256 minAmountOut,
         uint256 gasRefund
     ) external onlyOwner {
@@ -330,6 +356,10 @@ contract PirexClaims is Ownable, UnionBase {
         // deposit to strategy
         if (stake) {
             deposit(lock, minAmountOut);
+        }
+
+        if (harvest) {
+            IUnionVault(uCvx).harvest();
         }
     }
 
