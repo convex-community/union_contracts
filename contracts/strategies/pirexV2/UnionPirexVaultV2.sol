@@ -8,7 +8,7 @@ import "@rari/src/utils/FixedPointMathLib.sol";
 import "@rari/src/mixins/ERC4626.sol";
 import "./UnionPirexStaking.sol";
 
-contract UnionPirexVault is Ownable, ERC4626 {
+contract UnionPirexVaultV2 is Ownable, ERC4626 {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
 
