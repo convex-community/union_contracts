@@ -38,7 +38,7 @@ contract PirexClaims is Ownable, UnionBase {
         0xBCe0Cf87F513102F22232436CCa2ca49e815C3aC;
 
     address private constant LPX_CVX =
-        0xF3456E8061461e144b3f252E69DcD5b6070fdEE0;
+        0x389fB29230D02e67eB963C1F5A00f2b16f95BEb7;
     address public pcvxStrategy = 0x45F97D07dAB04B21F36fA3b1149c35e316b35d03;
     address public uCvx = 0x8659Fc767cad6005de79AF65dAfE4249C57927AF;
 
