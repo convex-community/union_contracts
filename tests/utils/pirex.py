@@ -11,7 +11,8 @@ from tests.utils.constants import (
     CURVE_CONTRACT_REGISTRY,
     CRV,
     CVXCRV,
-    CVX, LPXCVX_POOL,
+    CVX,
+    LPXCVX_POOL,
 )
 
 
@@ -32,13 +33,12 @@ def get_cvx_to_pxcvx_via_lpxcvx(amount):
 
 
 def get_pcvx_to_cvx_via_lpxcvx(amount):
-    return (
-        interface.ICurveV2Pool(LPXCVX_POOL).get_dy(1, 0, amount)
-        if amount > 0
-        else 0
-    )
+    return interface.ICurveV2Pool(LPXCVX_POOL).get_dy(1, 0, amount) if amount > 0 else 0
 
-def estimate_output_cvx_amount(tokens, claim_amount, union_contract, router_choices, gas_fee, lock):
+
+def estimate_output_cvx_amount(
+    tokens, claim_amount, union_contract, router_choices, gas_fee, lock
+):
     eth_amount = 0
     cvx_amount = 0
     for token in tokens:
