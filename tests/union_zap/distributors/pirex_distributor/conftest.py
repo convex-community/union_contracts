@@ -5,6 +5,7 @@ from brownie import (
     PirexDistributorZaps,
     PCvxZaps,
     interface,
+    PirexMigrationV1,
 )
 from tests.utils.constants import (
     PIREX_CVX_VAULT,
@@ -77,6 +78,11 @@ def distributor_zaps(fxs_distributor, owner, cvx_distributor, cvx_zaps, cvx_vaul
     )
     distributor_zaps.setApprovals({"from": owner})
     yield distributor_zaps
+
+
+@pytest.fixture(scope="module")
+def migration(owner):
+    yield PirexMigrationV1.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module", autouse=True)
