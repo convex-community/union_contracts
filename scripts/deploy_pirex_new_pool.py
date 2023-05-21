@@ -16,7 +16,7 @@ AIRFORCE_SAFE = "0x9Bc7c6ad7E7Cf3A6fCB58fb21e27752AC1e53f99"
 
 
 def main():
-    publish = False
+    publish = True
     deployer = accounts.load("mainnet-deploy")
     claim = PirexClaims.deploy({"from": deployer}, publish_source=publish)
     claim.setApprovals({"from": deployer})

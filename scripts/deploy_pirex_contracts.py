@@ -7,12 +7,8 @@ from brownie import (
     PirexDistributorZaps,
 )
 
-from tests.utils import CRV, CURVE_CRV_ETH_POOL
 from tests.utils.constants import (
     CVX,
-    FXS,
-    CURVE_CVX_ETH_POOL,
-    CURVE_FXS_ETH_POOL,
     PIREX_CVX_VAULT,
 )
 
