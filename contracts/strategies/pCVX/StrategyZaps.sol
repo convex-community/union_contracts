@@ -277,7 +277,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         _claimAndWithdraw(_amount);
         uint256 _cvxAmount = _claimAsCvx(
             IERC20(PXCVX_TOKEN).balanceOf(address(this)),
-            0,
+            1,
             address(this)
         );
         return
