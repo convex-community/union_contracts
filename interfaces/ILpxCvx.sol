@@ -14,4 +14,6 @@ interface ILpxCvx {
         uint256 fromIndex,
         uint256 toIndex
     ) external;
+
+    function wrap(uint256 amount) external;
 }

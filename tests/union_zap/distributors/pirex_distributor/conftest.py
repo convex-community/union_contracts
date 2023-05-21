@@ -81,7 +81,7 @@ def distributor_zaps(fxs_distributor, owner, cvx_distributor, cvx_zaps, cvx_vaul
 
 @pytest.fixture(scope="module", autouse=True)
 def distribute_cvx(cvx_distributor, owner):
-    amount = 1e24
+    amount = 1e20
     interface.IERC20(CVX).transfer(
         cvx_distributor, amount, {"from": CVX_STAKING_CONTRACT}
     )
