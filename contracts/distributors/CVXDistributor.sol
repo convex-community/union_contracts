@@ -17,7 +17,6 @@ contract CVXMerkleDistributor is GenericDistributor {
         0x389fB29230D02e67eB963C1F5A00f2b16f95BEb7;
     address private constant PXCVX_TOKEN =
         0xBCe0Cf87F513102F22232436CCa2ca49e815C3aC;
-    address public unionPirex = 0x8659Fc767cad6005de79AF65dAfE4249C57927AF;
 
     ICurveV2Pool private constant LPXCVX_CVX_POOL =
         ICurveV2Pool(0x72725C0C879489986D213A9A6D2116dE45624c1c);
@@ -40,8 +39,8 @@ contract CVXMerkleDistributor is GenericDistributor {
         IERC20(token).safeApprove(LPX_CVX, type(uint256).max);
         IERC20(token).safeApprove(PIREX_CVX, 0);
         IERC20(token).safeApprove(PIREX_CVX, type(uint256).max);
-        IERC20(PXCVX_TOKEN).safeApprove(unionPirex, 0);
-        IERC20(PXCVX_TOKEN).safeApprove(unionPirex, type(uint256).max);
+        IERC20(PXCVX_TOKEN).safeApprove(vault, 0);
+        IERC20(PXCVX_TOKEN).safeApprove(vault, type(uint256).max);
     }
 
     /// @notice Set the acceptable level of slippage for LP deposits
@@ -49,13 +48,6 @@ contract CVXMerkleDistributor is GenericDistributor {
     /// @param _slippage - the acceptable slippage threshold
     function setSlippage(uint256 _slippage) external onlyAdmin {
         slippage = _slippage;
-    }
-
-    /// @notice Update the union vault address in case of a migration
-    /// @param _vault - the new vault address
-    function updateUnionVault(address _vault) external onlyAdmin {
-        require(_vault != address(0));
-        unionPirex = _vault;
     }
 
     /// @notice Stakes the contract's entire CVX balance in the Vault
@@ -82,7 +74,7 @@ contract CVXMerkleDistributor is GenericDistributor {
             uint256 _pxCvxBalance = IERC20(PXCVX_TOKEN).balanceOf(
                 address(this)
             );
-            IERC4626(unionPirex).deposit(_pxCvxBalance, address(this));
+            IERC4626(vault).deposit(_pxCvxBalance, address(this));
         }
     }
 }
