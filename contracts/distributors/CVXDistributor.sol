@@ -16,7 +16,7 @@ contract CVXMerkleDistributor is GenericDistributor {
         0x389fB29230D02e67eB963C1F5A00f2b16f95BEb7;
 
     ICurveV2Pool private constant LPXCVX_CVX_POOL =
-    ICurveV2Pool(0x72725C0C879489986D213A9A6D2116dE45624c1c);
+        ICurveV2Pool(0x72725C0C879489986D213A9A6D2116dE45624c1c);
 
     // 2.5% slippage tolerance by default
     uint256 public slippage = 9750;
@@ -53,8 +53,8 @@ contract CVXMerkleDistributor is GenericDistributor {
                 address(this),
                 true,
                 address(0)
-            );}
-        else {
+            );
+        } else {
             uint256 _minAmountOut = (_cvxBalance * _price) / 1e18;
             _minAmountOut = ((_minAmountOut * slippage) / DECIMALS);
             ILpxCvx(LPX_CVX).swap(

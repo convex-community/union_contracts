@@ -28,7 +28,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
     address private constant USDT_TOKEN =
         0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address private constant LPX_CVX =
-    0x389fB29230D02e67eB963C1F5A00f2b16f95BEb7;
+        0x389fB29230D02e67eB963C1F5A00f2b16f95BEb7;
     IERC4626 vault = IERC4626(PXCVX_VAULT);
     ICurveTriCrypto triCryptoSwap = ICurveTriCrypto(TRICRYPTO);
 
@@ -216,9 +216,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
             0
         );
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
-        IERC20(CVX_TOKEN).safeTransfer(
-            _to,
-            _cvxBalance);
+        IERC20(CVX_TOKEN).safeTransfer(_to, _cvxBalance);
         return _cvxBalance;
     }
 
