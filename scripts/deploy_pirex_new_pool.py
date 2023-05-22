@@ -8,6 +8,9 @@ from brownie import (
     PirexMigrationV1
 )
 
+from brownie.network.gas.strategies import LinearScalingStrategy
+from brownie.network import gas_price
+
 from tests.utils import CVX
 from tests.utils.constants import PIREX_CVX_VAULT
 
@@ -17,6 +20,9 @@ AIRFORCE_SAFE = "0x9Bc7c6ad7E7Cf3A6fCB58fb21e27752AC1e53f99"
 
 def main():
     publish = True
+    gas_strategy = LinearScalingStrategy("35 gwei", "50 gwei", 1.2)
+    gas_price(gas_strategy)
+
     deployer = accounts.load("mainnet-deploy")
     claim = PirexClaims.deploy({"from": deployer}, publish_source=publish)
     claim.setApprovals({"from": deployer})
