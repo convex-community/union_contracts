@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 interface ICvxFxsStaking {
-
     function balanceOf(address) external view returns (uint256);
 
     function withdraw(uint256) external;
@@ -29,5 +28,4 @@ interface ICvxFxsStaking {
 
     function notifyRewardAmount(address _rewardsToken, uint256 _reward)
         external;
-
 }

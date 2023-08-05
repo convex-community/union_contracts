@@ -5,6 +5,7 @@ from brownie import (
     PirexDistributorZaps,
     PCvxZaps,
     interface,
+    PirexMigrationV1,
 )
 from tests.utils.constants import (
     PIREX_CVX_VAULT,
@@ -79,9 +80,14 @@ def distributor_zaps(fxs_distributor, owner, cvx_distributor, cvx_zaps, cvx_vaul
     yield distributor_zaps
 
 
+@pytest.fixture(scope="module")
+def migration(owner):
+    yield PirexMigrationV1.deploy({"from": owner})
+
+
 @pytest.fixture(scope="module", autouse=True)
 def distribute_cvx(cvx_distributor, owner):
-    amount = 1e24
+    amount = 1e20
     interface.IERC20(CVX).transfer(
         cvx_distributor, amount, {"from": CVX_STAKING_CONTRACT}
     )

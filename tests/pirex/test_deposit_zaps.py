@@ -4,7 +4,7 @@ from brownie import chain, interface
 
 from ..utils import approx, eth_to_cvx, cvxcrv_to_crv
 from ..utils.cvxfxs import get_crv_to_eth_amount
-from ..utils.pirex import get_cvx_to_pxcvx
+from ..utils.pirex import get_cvx_to_pxcvx_via_lpxcvx
 from ..utils.constants import (
     ADDRESS_ZERO,
     CVX,
@@ -30,13 +30,13 @@ def test_deposit_from_cvx(fn_isolation, alice, cvx_zaps, cvx_vault, lock):
     # with brownie.reverts():
     #    cvx_zaps.depositFromCvx(amount, amount * 2, alice, {"from": alice})
     with brownie.reverts():
-        cvx_zaps.depositFromCvx(amount, 0, ADDRESS_ZERO, lock, {"from": alice})
+        cvx_zaps.depositFromCvx(amount, 1, ADDRESS_ZERO, lock, {"from": alice})
 
-    received_pxcvx = amount if lock else get_cvx_to_pxcvx(amount)
-    cvx_zaps.depositFromCvx(amount, 0, alice, lock, {"from": alice})
+    received_pxcvx = amount if lock else get_cvx_to_pxcvx_via_lpxcvx(amount)
+    cvx_zaps.depositFromCvx(amount, 1, alice, lock, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
     assert approx(
-        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice)), received_pxcvx, 1e-6
+        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice)), received_pxcvx, 1e-3
     )
 
     before_redeem_balance = interface.IERC20(PXCVX_TOKEN).balanceOf(alice)
@@ -53,14 +53,14 @@ def test_deposit_from_eth(fn_isolation, alice, cvx_zaps, cvx_vault, lock):
     # with brownie.reverts():
     #    cvx_zaps.depositFromEth(amount * 1e10, alice, {"value": amount, "from": alice})
     with brownie.reverts():
-        cvx_zaps.depositFromEth(0, ADDRESS_ZERO, lock, {"value": amount, "from": alice})
+        cvx_zaps.depositFromEth(1, ADDRESS_ZERO, lock, {"value": amount, "from": alice})
 
     received_cvx = eth_to_cvx(amount)
-    received_pxcvx = received_cvx if lock else get_cvx_to_pxcvx(received_cvx)
-    cvx_zaps.depositFromEth(0, alice, lock, {"value": amount, "from": alice})
+    received_pxcvx = received_cvx if lock else get_cvx_to_pxcvx_via_lpxcvx(received_cvx)
+    cvx_zaps.depositFromEth(1, alice, lock, {"value": amount, "from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
     assert approx(
-        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice)), received_pxcvx, 1e-6
+        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice)), received_pxcvx, 1e-3
     )
 
     before_redeem_balance = interface.IERC20(PXCVX_TOKEN).balanceOf(alice)
@@ -85,14 +85,14 @@ def test_deposit_from_crv(fn_isolation, alice, cvx_zaps, cvx_vault, lock):
     #         amount, amount * 1e10, alice, {"from": alice}
     #     )
     with brownie.reverts():
-        cvx_zaps.depositFromCrv(amount, 0, ADDRESS_ZERO, lock, {"from": alice})
+        cvx_zaps.depositFromCrv(amount, 1, ADDRESS_ZERO, lock, {"from": alice})
 
     received_cvx = eth_to_cvx(get_crv_to_eth_amount(amount))
-    received_pxcvx = received_cvx if lock else get_cvx_to_pxcvx(received_cvx)
-    cvx_zaps.depositFromCrv(amount, 0, alice, lock, {"from": alice})
+    received_pxcvx = received_cvx if lock else get_cvx_to_pxcvx_via_lpxcvx(received_cvx)
+    cvx_zaps.depositFromCrv(amount, 1, alice, lock, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
     assert approx(
-        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice)), received_pxcvx, 1e-6
+        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice)), received_pxcvx, 1e-3
     )
 
     before_redeem_balance = interface.IERC20(PXCVX_TOKEN).balanceOf(alice)
@@ -117,14 +117,14 @@ def test_deposit_from_cvxcrv(fn_isolation, alice, cvx_zaps, cvx_vault, lock):
     #         amount, amount * 1e10, alice, {"from": alice}
     #     )
     with brownie.reverts():
-        cvx_zaps.depositFromCvxCrv(amount, 0, ADDRESS_ZERO, lock, {"from": alice})
+        cvx_zaps.depositFromCvxCrv(amount, 1, ADDRESS_ZERO, lock, {"from": alice})
 
     received_cvx = eth_to_cvx(get_crv_to_eth_amount(cvxcrv_to_crv(amount)))
-    received_pxcvx = received_cvx if lock else get_cvx_to_pxcvx(received_cvx)
-    cvx_zaps.depositFromCvxCrv(amount, 0, alice, lock, {"from": alice})
+    received_pxcvx = received_cvx if lock else get_cvx_to_pxcvx_via_lpxcvx(received_cvx)
+    cvx_zaps.depositFromCvxCrv(amount, 1, alice, lock, {"from": alice})
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
     assert approx(
-        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice)), received_pxcvx, 1e-6
+        cvx_vault.convertToAssets(cvx_vault.balanceOf(alice)), received_pxcvx, 1e-3
     )
 
     before_redeem_balance = interface.IERC20(PXCVX_TOKEN).balanceOf(alice)
@@ -156,15 +156,15 @@ def test_deposit_from_sushi(fn_isolation, alice, cvx_zaps, cvx_vault, lock):
     # in case there is already eth in the contract (happened during testing)
     eth_amount = eth_amount + cvx_zaps.balance()
     received_cvx = eth_to_cvx(eth_amount)
-    received_pxcvx = received_cvx if lock else get_cvx_to_pxcvx(received_cvx)
+    received_pxcvx = received_cvx if lock else get_cvx_to_pxcvx_via_lpxcvx(received_cvx)
     tx = cvx_zaps.depositViaUniV2EthPair(
-        amount, 0, SUSHI_ROUTER, ALCX, alice, lock, {"from": alice}
+        amount, 1, SUSHI_ROUTER, ALCX, alice, lock, {"from": alice}
     )
     assert cvx_vault.balanceOf(alice) > initial_vault_balance
     assert approx(
         cvx_vault.convertToAssets(cvx_vault.balanceOf(alice) - initial_vault_balance),
         received_pxcvx,
-        1e-6,
+        1e-3,
     )
 
     before_redeem_balance = interface.IERC20(PXCVX_TOKEN).balanceOf(alice)

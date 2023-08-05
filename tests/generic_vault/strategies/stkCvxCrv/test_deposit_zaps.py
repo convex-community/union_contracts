@@ -68,7 +68,9 @@ def test_deposit_from_ucrv(fn_isolation, alice, zaps, vault):
     initial_vault_balance = vault.balanceOf(alice)
 
     ucrv_amount = interface.IERC20(UNION_CRV_V2).balanceOf(alice)
-    withdrawal_penalty = (interface.IUnionVault(UNION_CRV_V2).withdrawalPenalty()) / 10000
+    withdrawal_penalty = (
+        interface.IUnionVault(UNION_CRV_V2).withdrawalPenalty()
+    ) / 10000
     with brownie.reverts():
         zaps.depositFromUCrv(ucrv_amount, 0, ADDRESS_ZERO, {"from": alice})
 

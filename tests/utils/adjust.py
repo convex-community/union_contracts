@@ -1,10 +1,9 @@
 from brownie import interface
 from decimal import Decimal
 from requests_cache import CachedSession
-import requests
 import json
 
-from . import eth_to_crv, eth_to_cvx, crv_to_cvxcrv
+from . import eth_to_crv, eth_to_cvx, crv_to_cvxcrv_v2
 from .constants import (
     CRV,
     CVX,
@@ -77,7 +76,7 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens, adjust
                 else:
                     output_amount = token_balance + eth_to_crv(swappable)
                     if not lock:
-                        output_amount = crv_to_cvxcrv(output_amount)
+                        output_amount = crv_to_cvxcrv_v2(output_amount)
             elif output_token == CVX:
                 if sell:
                     output_amount = token_balance - swappable

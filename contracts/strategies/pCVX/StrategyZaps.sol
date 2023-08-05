@@ -10,6 +10,7 @@ import "../../../interfaces/IUniV2Router.sol";
 import "../../../interfaces/ICurveTriCrypto.sol";
 import "../../../interfaces/IERC4626.sol";
 import "../../../interfaces/IPirexCVX.sol";
+import "../../../interfaces/ILpxCvx.sol";
 
 contract PCvxZaps is UnionBase, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -26,8 +27,8 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         0xD51a44d3FaE010294C616388b506AcdA1bfAAE46;
     address private constant USDT_TOKEN =
         0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    address private constant CURVE_CVX_PCVX_POOL =
-        0xF3456E8061461e144b3f252E69DcD5b6070fdEE0;
+    address private constant LPX_CVX =
+        0x389fB29230D02e67eB963C1F5A00f2b16f95BEb7;
     IERC4626 vault = IERC4626(PXCVX_VAULT);
     ICurveTriCrypto triCryptoSwap = ICurveTriCrypto(TRICRYPTO);
 
@@ -42,11 +43,11 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, 0);
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, type(uint256).max);
 
-        IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_PCVX_POOL, 0);
-        IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_PCVX_POOL, type(uint256).max);
+        IERC20(CVX_TOKEN).safeApprove(LPX_CVX, 0);
+        IERC20(CVX_TOKEN).safeApprove(LPX_CVX, type(uint256).max);
 
-        IERC20(PXCVX_TOKEN).safeApprove(CURVE_CVX_PCVX_POOL, 0);
-        IERC20(PXCVX_TOKEN).safeApprove(CURVE_CVX_PCVX_POOL, type(uint256).max);
+        IERC20(PXCVX_TOKEN).safeApprove(LPX_CVX, 0);
+        IERC20(PXCVX_TOKEN).safeApprove(LPX_CVX, type(uint256).max);
 
         IERC20(CVXCRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
         IERC20(CVXCRV_TOKEN).safeApprove(
@@ -68,14 +69,14 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         bool _lock
     ) internal {
         if (!_lock) {
-            uint256 _pxCvxAmount = ICurveV2Pool(CURVE_CVX_PCVX_POOL).exchange(
-                0,
-                1,
+            ILpxCvx(LPX_CVX).swap(
+                ILpxCvx.Token.CVX,
                 _amount,
                 _minAmountOut,
-                false,
-                address(this)
+                0,
+                1
             );
+            uint256 _pxCvxAmount = IERC20(PXCVX_TOKEN).balanceOf(address(this));
             vault.deposit(_pxCvxAmount, _to);
         } else {
             require(_amount >= _minAmountOut, "slippage");
@@ -207,15 +208,16 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         uint256 _minAmountOut,
         address _to
     ) internal returns (uint256) {
-        return
-            ICurveV2Pool(CURVE_CVX_PCVX_POOL).exchange(
-                1,
-                0,
-                _amount,
-                _minAmountOut,
-                false,
-                _to
-            );
+        ILpxCvx(LPX_CVX).swap(
+            ILpxCvx.Token.pxCVX,
+            _amount,
+            _minAmountOut,
+            1,
+            0
+        );
+        uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
+        IERC20(CVX_TOKEN).safeTransfer(_to, _cvxBalance);
+        return _cvxBalance;
     }
 
     /// @notice Retrieves a user's vault shares and withdraw all
@@ -275,7 +277,7 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
         _claimAndWithdraw(_amount);
         uint256 _cvxAmount = _claimAsCvx(
             IERC20(PXCVX_TOKEN).balanceOf(address(this)),
-            0,
+            1,
             address(this)
         );
         return
