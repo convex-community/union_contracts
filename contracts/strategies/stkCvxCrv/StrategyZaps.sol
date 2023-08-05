@@ -13,6 +13,7 @@ import "../../../interfaces/ITriPool.sol";
 import "../../../interfaces/IBooster.sol";
 import "../../../interfaces/IRewards.sol";
 import "../../../interfaces/IUnionVault.sol";
+import "../../../interfaces/ICurveTriCryptoFactoryNG.sol";
 
 contract stkCvxCrvZaps {
     using SafeERC20 for IERC20;
@@ -23,8 +24,8 @@ contract stkCvxCrvZaps {
         0x72a19342e8F1838460eBFCCEf09F6585e32db86E;
     address private constant CVXCRV_STAKING_CONTRACT =
         0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e;
-    address private constant CURVE_CRV_ETH_POOL =
-        0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511;
+    address private constant CURVE_TRICRV_POOL =
+        0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14;
     address private constant CURVE_CVX_ETH_POOL =
         0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
     address private constant CURVE_CVXCRV_CRV_POOL =
@@ -55,15 +56,16 @@ contract stkCvxCrvZaps {
     address private constant CONVEX_TRIPOOL_REWARDS =
         0x689440f2Ff927E1f24c72F1087E1FAF471eCe1c8;
 
-    uint256 private constant CRVETH_ETH_INDEX = 0;
-    uint256 private constant CRVETH_CRV_INDEX = 1;
+    uint256 private constant TRICRV_ETH_INDEX = 1;
+    uint256 private constant TRICRV_CRV_INDEX = 2;
     int128 private constant CVXCRV_CRV_INDEX = 0;
     int128 private constant CVXCRV_CVXCRV_INDEX = 1;
     uint256 private constant CVXETH_ETH_INDEX = 0;
     uint256 private constant CVXETH_CVX_INDEX = 1;
 
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
-    ICurveV2Pool crvEthSwap = ICurveV2Pool(CURVE_CRV_ETH_POOL);
+    ICurveTriCryptoFactoryNG crvEthSwap =
+        ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL);
     ITriPool triPool = ITriPool(TRIPOOL);
     IBooster booster = IBooster(BOOSTER);
     IRewards triPoolRewards = IRewards(CONVEX_TRIPOOL_REWARDS);
@@ -77,9 +79,6 @@ contract stkCvxCrvZaps {
 
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
-
         IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
         IERC20(CVXCRV_TOKEN).safeApprove(
             CVXCRV_STAKING_CONTRACT,
@@ -113,8 +112,8 @@ contract stkCvxCrvZaps {
         IERC20(CVX_TOKEN).safeApprove(CONVEX_LOCKER, 0);
         IERC20(CVX_TOKEN).safeApprove(CONVEX_LOCKER, type(uint256).max);
 
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, type(uint256).max);
     }
 
     /// @notice Swap CRV for cvxCRV on Curve
@@ -166,11 +165,12 @@ contract stkCvxCrvZaps {
         returns (uint256)
     {
         return
-            crvEthSwap.exchange_underlying{value: 0}(
-                CRVETH_CRV_INDEX,
-                CRVETH_ETH_INDEX,
+            crvEthSwap.exchange{value: 0}(
+                TRICRV_CRV_INDEX,
+                TRICRV_ETH_INDEX,
                 amount,
-                minAmountOut
+                minAmountOut,
+                true
             );
     }
 
@@ -183,11 +183,12 @@ contract stkCvxCrvZaps {
         returns (uint256)
     {
         return
-            crvEthSwap.exchange_underlying{value: amount}(
-                CRVETH_ETH_INDEX,
-                CRVETH_CRV_INDEX,
+            crvEthSwap.exchange{value: amount}(
+                TRICRV_ETH_INDEX,
+                TRICRV_CRV_INDEX,
                 amount,
-                minAmountOut
+                minAmountOut,
+                true
             );
     }
 

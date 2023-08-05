@@ -47,7 +47,8 @@ contract stkCvxCrvHarvester {
     ICurvePool private tripool = ICurvePool(TRIPOOL);
     ICurveTriCrypto private tricrypto = ICurveTriCrypto(TRICRYPTO);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
-    ICurveTriCryptoFactoryNG crvEthSwap = ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL);
+    ICurveTriCryptoFactoryNG crvEthSwap =
+        ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL);
     ICurveNewFactoryPool crvCvxCrvSwap =
         ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL);
 
@@ -167,7 +168,8 @@ contract stkCvxCrvHarvester {
         internal
         returns (uint256)
     {
-        uint256 _amountCrvPrice = ((_amount * crvEthSwap.price_oracle(0)) / crvEthSwap.price_oracle(1));
+        uint256 _amountCrvPrice = ((_amount * crvEthSwap.price_oracle(0)) /
+            crvEthSwap.price_oracle(1));
         return ((_amountCrvPrice * allowedSlippage) / DECIMALS);
     }
 

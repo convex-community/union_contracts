@@ -8,7 +8,7 @@ interface ICurveTriCryptoFactoryNG {
         uint256 dx,
         uint256 min_dy,
         bool use_eth
-    ) external payable;
+    ) external payable returns (uint256);
 
     function exchange(
         uint256 i,
@@ -17,7 +17,7 @@ interface ICurveTriCryptoFactoryNG {
         uint256 min_dy,
         bool use_eth,
         address receiver
-    ) external payable;
+    ) external payable returns (uint256);
 
     function get_dy(
         uint256 i,
