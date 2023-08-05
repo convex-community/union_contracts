@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../../interfaces/IVaultRewardHandler.sol";
 import "../../../../interfaces/ICurvePool.sol";
 import "../../../../interfaces/ICurveTriCrypto.sol";
+import "../../../../interfaces/ICurveTriCryptoFactoryNG.sol";
 import "../../../../interfaces/ICurveV2Pool.sol";
 import "../../../../interfaces/ICvxCrvDeposit.sol";
 import "../../../../interfaces/ICurveNewFactoryPool.sol";
@@ -32,8 +33,8 @@ contract stkCvxCrvHarvester {
         0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CURVE_CVX_ETH_POOL =
         0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
-    address public constant CURVE_CRV_ETH_POOL =
-        0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511;
+    address public constant CURVE_TRICRV_POOL =
+        0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14;
     address public constant CRV_TOKEN =
         0xD533a949740bb3306d119CC777fa900bA034cd52;
     address public constant CVXCRV_TOKEN =
@@ -46,7 +47,7 @@ contract stkCvxCrvHarvester {
     ICurvePool private tripool = ICurvePool(TRIPOOL);
     ICurveTriCrypto private tricrypto = ICurveTriCrypto(TRICRYPTO);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
-    ICurveV2Pool crvEthSwap = ICurveV2Pool(CURVE_CRV_ETH_POOL);
+    ICurveTriCryptoFactoryNG crvEthSwap = ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL);
     ICurveNewFactoryPool crvCvxCrvSwap =
         ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL);
 
@@ -166,8 +167,7 @@ contract stkCvxCrvHarvester {
         internal
         returns (uint256)
     {
-        uint256 _crvEthPrice = crvEthSwap.price_oracle();
-        uint256 _amountCrvPrice = ((_amount * 1e18) / _crvEthPrice);
+        uint256 _amountCrvPrice = ((_amount * crvEthSwap.price_oracle(0)) / crvEthSwap.price_oracle(1));
         return ((_amountCrvPrice * allowedSlippage) / DECIMALS);
     }
 
@@ -176,11 +176,12 @@ contract stkCvxCrvHarvester {
             uint256 _minAmountOut = useOracle
                 ? _calcMinAmountOutEthCrv(_amount)
                 : 0;
-            crvEthSwap.exchange_underlying{value: _amount}(
-                0,
+            crvEthSwap.exchange{value: _amount}(
                 1,
+                2,
                 _amount,
-                _minAmountOut
+                _minAmountOut,
+                true
             );
         }
     }
