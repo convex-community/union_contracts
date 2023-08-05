@@ -8,7 +8,6 @@ from .constants import (
     UNI_ROUTER,
     WETH,
     CRV,
-    CURVE_CRV_ETH_POOL,
     CURVE_CVXCRV_CRV_POOL,
     ADDRESS_ZERO,
     CURVE_VOTING_ESCROW,
@@ -24,7 +23,7 @@ from .constants import (
     AURA_BAL_TOKEN,
     BAL_ETH_POOL_TOKEN,
     CVXFXS,
-    CURVE_CVXCRV_CRV_POOL_V2,
+    CURVE_CVXCRV_CRV_POOL_V2, CURVE_TRICRV_POOL,
 )
 from .cvxfxs import get_crv_to_eth_amount
 
@@ -46,7 +45,7 @@ def calc_harvest_amount_in_cvxcrv(vault):
     )
     eth_balance += tricrypto.get_dy(0, 2, usdt_balance) if usdt_balance > 0 else 0
     crv_balance += (
-        interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, eth_balance)
+        interface.ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL).get_dy(1, 2, eth_balance)
         if eth_balance > 0
         else 0
     )
@@ -80,7 +79,7 @@ def calc_staked_cvxcrv_harvest(strategy, wrapper, force_lock=False):
     )
     eth_balance += tricrypto.get_dy(0, 2, usdt_balance) if usdt_balance > 0 else 0
     crv_balance += (
-        interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, eth_balance)
+        interface.ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL).get_dy(1, 2, eth_balance)
         if eth_balance > 0
         else 0
     )
@@ -197,7 +196,7 @@ def eth_to_cvxcrv_v2(amount):
 def eth_to_crv(amount):
     if amount <= 0:
         return 0
-    return interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).get_dy(0, 1, amount)
+    return interface.ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL).get_dy(1, 2, amount)
 
 
 def eth_to_cvx(amount):

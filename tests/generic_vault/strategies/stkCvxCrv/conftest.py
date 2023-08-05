@@ -13,7 +13,7 @@ from ....utils.constants import (
     CRV,
     CURVE_VOTING_ESCROW,
     CVXCRV,
-    CURVE_CVXCRV_CRV_POOL,
+    CURVE_CVXCRV_CRV_POOL_V2,
     AIRFORCE_SAFE,
     NEW_CVX_CRV_STAKING,
     CVX,
@@ -71,7 +71,7 @@ def distribute_crv_and_cvxcrv(accounts, wrapper, vault):
             account.address, 1e24, {"from": CURVE_VOTING_ESCROW}
         )
         interface.IERC20(CVXCRV).transfer(
-            account.address, 1e24, {"from": CURVE_CVXCRV_CRV_POOL}
+            account.address, 1e24, {"from": CURVE_CVXCRV_CRV_POOL_V2}
         )
         interface.IERC20(CVXCRV).approve(wrapper, 2**256 - 1, {"from": account})
         interface.IERC20(CVXCRV).approve(vault, 2**256 - 1, {"from": account})

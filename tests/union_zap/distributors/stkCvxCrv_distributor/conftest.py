@@ -13,7 +13,7 @@ from brownie import (
 from tests.utils.constants import (
     CVXCRV_TOKEN,
     CVXCRV,
-    CURVE_CVXCRV_CRV_POOL,
+    CURVE_CVXCRV_CRV_POOL_V2,
     AIRFORCE_SAFE,
     NEW_CVX_CRV_STAKING,
 )
@@ -114,6 +114,6 @@ def set_harvester(owner, strategy, harvester):
 @pytest.fixture(scope="module", autouse=True)
 def distribute_cvxcrv(distributor, owner, strategy, harvester):
     interface.IERC20(CVXCRV).transfer(
-        distributor, 1e24, {"from": CURVE_CVXCRV_CRV_POOL}
+        distributor, 1e24, {"from": CURVE_CVXCRV_CRV_POOL_V2}
     )
     distributor.stake({"from": owner})

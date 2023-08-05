@@ -1,7 +1,6 @@
 from brownie import interface
 from decimal import Decimal
 from requests_cache import CachedSession
-import requests
 import json
 
 from . import eth_to_crv, eth_to_cvx, crv_to_cvxcrv_v2

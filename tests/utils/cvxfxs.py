@@ -20,7 +20,7 @@ from .constants import (
     CVX_MINING_LIB,
     CURVE_FRAX_USDC_POOL,
     CRV_TOKEN,
-    CVX,
+    CVX, CURVE_TRICRV_POOL,
 )
 
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
@@ -86,8 +86,8 @@ def get_cvx_to_eth_amount(amount):
 
 
 def get_crv_to_eth_amount(amount):
-    crv_eth_swap = interface.ICurveV2Pool(CURVE_CRV_ETH_POOL)
-    return crv_eth_swap.get_dy(1, 0, amount) if amount > 0 else 0
+    crv_eth_swap = interface.ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL)
+    return crv_eth_swap.get_dy(2, 1, amount) if amount > 0 else 0
 
 
 def eth_fxs_uniswap(amount):
