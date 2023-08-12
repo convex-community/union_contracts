@@ -197,8 +197,8 @@ contract UnionZap is Ownable, UnionBase {
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
 
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, type(uint256).max);
 
         IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, 0);
         IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, type(uint256).max);

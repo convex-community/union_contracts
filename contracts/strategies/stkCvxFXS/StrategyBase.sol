@@ -14,8 +14,6 @@ contract stkCvxFxsStrategyBase {
     address public constant FXS_DEPOSIT =
         0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e;
 
-    address public constant CURVE_CRV_ETH_POOL =
-        0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511;
     address public constant CURVE_CVX_ETH_POOL =
         0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
     address public constant CURVE_FXS_ETH_POOL =
@@ -66,81 +64,10 @@ contract stkCvxFxsStrategyBase {
     ICvxFxsDeposit cvxFxsDeposit = ICvxFxsDeposit(FXS_DEPOSIT);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
 
-    ICurveV2Pool crvEthSwap = ICurveV2Pool(CURVE_CRV_ETH_POOL);
     ICurveV2Pool fxsEthSwap = ICurveV2Pool(CURVE_FXS_ETH_POOL);
     ICurveV2Pool cvxFxsFxsSwap = ICurveV2Pool(CURVE_CVXFXS_FXS_POOL);
 
     ICurvePool fraxUsdcSwap = ICurvePool(CURVE_FRAX_USDC_POOL);
-
-    /// @notice Swap CRV for native ETH on Curve
-    /// @param amount - amount to swap
-    /// @return amount of ETH obtained after the swap
-    function _swapCrvToEth(uint256 amount) internal returns (uint256) {
-        return _crvToEth(amount, 0);
-    }
-
-    /// @notice Swap CRV for native ETH on Curve
-    /// @param amount - amount to swap
-    /// @param minAmountOut - minimum expected amount of output tokens
-    /// @return amount of ETH obtained after the swap
-    function _swapCrvToEth(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
-        return _crvToEth(amount, minAmountOut);
-    }
-
-    /// @notice Swap CRV for native ETH on Curve
-    /// @param amount - amount to swap
-    /// @param minAmountOut - minimum expected amount of output tokens
-    /// @return amount of ETH obtained after the swap
-    function _crvToEth(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
-        return
-            crvEthSwap.exchange_underlying{value: 0}(
-                CRVETH_CRV_INDEX,
-                CRVETH_ETH_INDEX,
-                amount,
-                minAmountOut
-            );
-    }
-
-    /// @notice Swap native ETH for CRV on Curve
-    /// @param amount - amount to swap
-    /// @return amount of CRV obtained after the swap
-    function _swapEthToCrv(uint256 amount) internal returns (uint256) {
-        return _ethToCrv(amount, 0);
-    }
-
-    /// @notice Swap native ETH for CRV on Curve
-    /// @param amount - amount to swap
-    /// @param minAmountOut - minimum expected amount of output tokens
-    /// @return amount of CRV obtained after the swap
-    function _swapEthToCrv(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
-        return _ethToCrv(amount, minAmountOut);
-    }
-
-    /// @notice Swap native ETH for CRV on Curve
-    /// @param amount - amount to swap
-    /// @param minAmountOut - minimum expected amount of output tokens
-    /// @return amount of CRV obtained after the swap
-    function _ethToCrv(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
-        return
-            crvEthSwap.exchange_underlying{value: amount}(
-                CRVETH_ETH_INDEX,
-                CRVETH_CRV_INDEX,
-                amount,
-                minAmountOut
-            );
-    }
 
     /// @notice Swap native ETH for CVX on Curve
     /// @param amount - amount to swap

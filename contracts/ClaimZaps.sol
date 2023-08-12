@@ -19,8 +19,8 @@ contract ClaimZaps is ReentrancyGuard, UnionBase {
 
     /// @notice Set approvals for the tokens used when swapping
     function _setApprovals() internal {
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, type(uint256).max);
 
         IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
         IERC20(CVXCRV_TOKEN).safeApprove(

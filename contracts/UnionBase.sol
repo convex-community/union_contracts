@@ -4,13 +4,14 @@ pragma solidity 0.8.9;
 import "../interfaces/ICurveV2Pool.sol";
 import "../interfaces/ICurveFactoryPool.sol";
 import "../interfaces/IBasicRewards.sol";
+import "../interfaces/ICurveTriCryptoFactoryNG.sol";
 
 // Common variables and functions
 contract UnionBase {
     address public constant CVXCRV_STAKING_CONTRACT =
         0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e;
-    address public constant CURVE_CRV_ETH_POOL =
-        0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511;
+    address public constant CURVE_TRICRV_POOL =
+        0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14;
     address public constant CURVE_CVX_ETH_POOL =
         0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
     address public constant CURVE_CVXCRV_CRV_POOL =
@@ -23,8 +24,8 @@ contract UnionBase {
     address public constant CVX_TOKEN =
         0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
 
-    uint256 public constant CRVETH_ETH_INDEX = 0;
-    uint256 public constant CRVETH_CRV_INDEX = 1;
+    uint256 private constant TRICRV_ETH_INDEX = 1;
+    uint256 private constant TRICRV_CRV_INDEX = 2;
     int128 public constant CVXCRV_CRV_INDEX = 0;
     int128 public constant CVXCRV_CVXCRV_INDEX = 1;
     uint256 public constant CVXETH_ETH_INDEX = 0;
@@ -32,7 +33,8 @@ contract UnionBase {
 
     IBasicRewards cvxCrvStaking = IBasicRewards(CVXCRV_STAKING_CONTRACT);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
-    ICurveV2Pool crvEthSwap = ICurveV2Pool(CURVE_CRV_ETH_POOL);
+    ICurveTriCryptoFactoryNG crvEthSwap =
+        ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL);
     ICurveFactoryPool crvCvxCrvSwap = ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL);
 
     /// @notice Swap CRV for cvxCRV on Curve
@@ -150,11 +152,12 @@ contract UnionBase {
         returns (uint256)
     {
         return
-            crvEthSwap.exchange_underlying{value: 0}(
-                CRVETH_CRV_INDEX,
-                CRVETH_ETH_INDEX,
+            crvEthSwap.exchange{value: 0}(
+                TRICRV_CRV_INDEX,
+                TRICRV_ETH_INDEX,
                 amount,
-                minAmountOut
+                minAmountOut,
+                true
             );
     }
 
@@ -185,11 +188,12 @@ contract UnionBase {
         returns (uint256)
     {
         return
-            crvEthSwap.exchange_underlying{value: amount}(
-                CRVETH_ETH_INDEX,
-                CRVETH_CRV_INDEX,
+            crvEthSwap.exchange{value: amount}(
+                TRICRV_ETH_INDEX,
+                TRICRV_CRV_INDEX,
                 amount,
-                minAmountOut
+                minAmountOut,
+                true
             );
     }
 
