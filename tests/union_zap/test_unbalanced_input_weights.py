@@ -17,7 +17,7 @@ from ..utils.constants import (
     MAX_WEIGHT_1E9,
     UNBALANCED_TOKENS,
 )
-from ..utils.cvxfxs import estimate_lp_tokens_received
+from ..utils.cvxfxs import get_stk_cvxfxs_received
 
 
 @pytest.mark.parametrize(
@@ -29,7 +29,7 @@ from ..utils.cvxfxs import estimate_lp_tokens_received
         #        [[950000000, 0, 50000000], [2, 1, 0]],
     ],
 )
-@pytest.mark.parametrize("option", [3, 2, 1, 0])
+@pytest.mark.parametrize("option", [3, 0])
 def test_swap_adjust_distribute(
     fn_isolation,
     owner,
@@ -130,7 +130,7 @@ def test_swap_adjust_distribute(
 
     # convert fxs to lp token to validate distributor balance
     fxs_index = output_tokens.index(FXS)
-    output_amounts[fxs_index] = estimate_lp_tokens_received(output_amounts[fxs_index])
+    output_amounts[fxs_index] = get_stk_cvxfxs_received(output_amounts[fxs_index])
 
     tx_distribute = union_contract.distribute(weights)
 
