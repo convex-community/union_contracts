@@ -4,8 +4,7 @@ from ..utils.constants import (
     ADDRESS_ZERO,
     VOTIUM_DISTRIBUTOR,
     CRV,
-    CURVE_CRV_ETH_POOL,
-    CURVE_CVXCRV_CRV_POOL,
+    CURVE_CVXCRV_CRV_POOL_V2,
     CVXCRV_DEPOSIT,
     VOTIUM_REGISTRY,
     NSBT,
@@ -16,6 +15,7 @@ from ..utils.constants import (
     TOKENS,
     CLAIM_AMOUNT,
     MAX_WEIGHT_1E9,
+    CURVE_TRICRV_POOL,
 )
 
 
@@ -38,8 +38,8 @@ def test_update_votium_distributor_address_zero(owner, union_contract):
 
 
 def test_retrieve_tokens(fn_isolation, owner, bob, charlie, union_contract):
-    interface.ICurveV2Pool(CURVE_CRV_ETH_POOL).exchange_underlying(
-        0, 1, 1e18, 0, {"from": charlie, "value": 1e18}
+    interface.ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL).exchange(
+        1, 2, 1e18, 0, True, {"from": charlie, "value": 1e18}
     )
     crv = interface.IERC20(CRV)
     initial_bob_crv_amount = crv.balanceOf(bob)
@@ -69,7 +69,7 @@ def test_set_approvals(owner, union_contract):
     union_contract.setApprovals({"from": owner})
     crv = interface.IERC20(CRV)
     assert crv.allowance(union_contract, CVXCRV_DEPOSIT) == MAX_UINT256
-    assert crv.allowance(union_contract, CURVE_CVXCRV_CRV_POOL) == MAX_UINT256
+    assert crv.allowance(union_contract, CURVE_CVXCRV_CRV_POOL_V2) == MAX_UINT256
 
 
 def test_set_approvals_non_owner(alice, union_contract):
@@ -127,7 +127,7 @@ def test_execute(fn_isolation, owner, union_contract):
     nsbt.transfer(
         union_contract,
         nsbt_amount,
-        {"from": "0x6871eacd33fbcfe585009ab64f0795d7152dc5a0"},
+        {"from": "0x000000000000000000000000000000000000dead"},
     )
 
     previous_balance = nsbt.balanceOf(VOTIUM_REGISTRY)
@@ -361,14 +361,14 @@ def test_update_output_token_replace_existing(fn_isolation, owner, union_contrac
         NSBT, [FXS, VOTIUM_REGISTRY, owner], {"from": owner}
     )
     union_contract.updateOutputToken(
-        NSBT, [CURVE_CVXCRV_CRV_POOL, owner, CVXCRV_DEPOSIT], {"from": owner}
+        NSBT, [CURVE_CVXCRV_CRV_POOL_V2, owner, CVXCRV_DEPOSIT], {"from": owner}
     )
 
     assert union_contract.outputTokens(OUTPUT_TOKEN_LENGTH) == NSBT
     with brownie.reverts():
         union_contract.outputTokens(OUTPUT_TOKEN_LENGTH + 1)
     assert union_contract.tokenInfo(NSBT) == (
-        CURVE_CVXCRV_CRV_POOL,
+        CURVE_CVXCRV_CRV_POOL_V2,
         owner,
         CVXCRV_DEPOSIT,
     )

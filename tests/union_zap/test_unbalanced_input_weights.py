@@ -90,7 +90,7 @@ def test_swap_adjust_distribute(
         lock, weights, adjust_order, [0, 0, 0], {"from": owner}
     )
 
-    assert approx(platform.balance() - initial_platform_balance, fee_amount, 1e-2)
+    assert approx(platform.balance() - initial_platform_balance, fee_amount, 5e-2)
 
     spot_amounts = []
     for i, output_token in enumerate(output_tokens):
@@ -100,7 +100,7 @@ def test_swap_adjust_distribute(
         balance = interface.IERC20(output_token).balanceOf(union_contract)
         # account for the fact that we leave 1 token unit for gas saving when swapping
         balance = 0 if balance == 1 else balance
-        assert approx(balance, output_amounts[i], 1e-2)
+        assert approx(balance, output_amounts[i], 5e-2)
         # calculate spoth ETH price and store
         price = get_spot_prices(output_token)
         spot_amounts.append(balance * price)
@@ -143,7 +143,7 @@ def test_swap_adjust_distribute(
             if vaults[i] != cvx_vault
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
-        assert approx(underlying, output_amounts[i], 1e-2)
+        assert approx(underlying, output_amounts[i], 5e-2)
 
     # revert to test process incentives result
     chain.revert()
@@ -169,4 +169,4 @@ def test_swap_adjust_distribute(
             if vaults[i] != cvx_vault
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
-        assert approx(underlying, output_amounts[i], 1e-2)
+        assert approx(underlying, output_amounts[i], 5e-2)

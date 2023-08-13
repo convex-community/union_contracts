@@ -20,7 +20,8 @@ from .constants import (
     CVX_MINING_LIB,
     CURVE_FRAX_USDC_POOL,
     CRV_TOKEN,
-    CVX, CURVE_TRICRV_POOL,
+    CVX,
+    CURVE_TRICRV_POOL,
 )
 
 random_wallet = "0xBa90C1f2B5678A055467Ed2d29ab66ed407Ba8c6"
@@ -39,6 +40,14 @@ def estimate_underlying_received(amount, token_index):
         value = tx.events[-1]["coin_amount"]
     chain.undo(2)
     return value
+
+
+def get_stk_cvxfxs_received(amount):
+    pool = interface.ICurveV2Pool(CURVE_CVXFXS_FXS_POOL)
+    if pool.price_oracle() > 1e18:
+        return amount
+    else:
+        return pool.get_dy(0, 1, amount) if amount > 0 else 0
 
 
 def estimate_lp_tokens_received(amount, amount_cvxfxs=0):

@@ -14,7 +14,8 @@ from ....utils.constants import (
     TRICRYPTO,
     UNISWAP_ETH_USDT_POOL,
     CURVE_CVXCRV_CRV_POOL_V2,
-    CRV_TOKEN, CURVE_TRICRV_POOL,
+    CRV_TOKEN,
+    CURVE_TRICRV_POOL,
 )
 from ....utils import (
     approx,

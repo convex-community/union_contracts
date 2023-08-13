@@ -8,6 +8,7 @@ from .constants import (
     CRV,
     CVX,
     MAX_WEIGHT_1E9,
+    CURVE_TRICRV_POOL,
 )
 from .cvxfxs import eth_to_fxs
 
@@ -40,9 +41,16 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens, adjust
     for order, weight in enumerate(weights):
         if weight > 0:
             output_token = output_tokens[order]
-            prices[order] = interface.ICurveV2Pool(
-                union_contract.tokenInfo(output_token)[0]
-            ).price_oracle()
+            if output_token != CRV:
+                prices[order] = interface.ICurveV2Pool(
+                    union_contract.tokenInfo(output_token)[0]
+                ).price_oracle()
+            else:
+                pool = interface.ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL)
+                prices[order] = int(
+                    (Decimal(pool.price_oracle(1)) * Decimal(1e18))
+                    / Decimal(pool.price_oracle(0))
+                )
             amounts[order] = int(
                 Decimal(interface.IERC20(output_token).balanceOf(union_contract))
                 * Decimal(prices[order])
@@ -51,8 +59,8 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens, adjust
             total_eth += amounts[order]
 
     fee_amount = int(Decimal(total_eth * fees) / Decimal(MAX_WEIGHT_1E9))
-    total_eth = total_eth - fee_amount if (total_eth >= fee_amount) else total_eth
 
+    total_eth = total_eth - fee_amount if (total_eth >= fee_amount) else total_eth
     for order in adjust_order:
         weight = weights[order]
         if weight > 0:
