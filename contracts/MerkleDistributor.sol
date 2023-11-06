@@ -78,8 +78,8 @@ contract MerkleDistributor is ReentrancyGuard, UnionBase {
 
     /// @notice Set approvals for the tokens used when swapping
     function setApprovals() external onlyAdmin {
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 2**256 - 1);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 2**256 - 1);
 
         IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
         IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 2**256 - 1);

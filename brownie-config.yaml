@@ -19,6 +19,3 @@ compiler:
       - '@rari=rari-capital/solmate@6'
 networks:
   default: hardhat-fork
-  #development:
-  #  cmd_settings:
-   #   evm_version: shanghai

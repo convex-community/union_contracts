@@ -197,8 +197,8 @@ contract UnionZap is Ownable, UnionBase {
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
         IERC20(CRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, type(uint256).max);
 
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 0);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, type(uint256).max);
 
         IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, 0);
         IERC20(CRV_TOKEN).safeApprove(CVXCRV_DEPOSIT, type(uint256).max);
@@ -504,6 +504,23 @@ contract UnionZap is Ownable, UnionBase {
         }
     }
 
+    /// @notice Gets ETH token price from curve pools with edge case for CRV pool
+    /// @param _outputToken the token to get a price for
+    /// @return the ETH price of the token
+    function _getPriceFromOracle(address _outputToken)
+        internal
+        returns (uint256)
+    {
+        if (_outputToken != CRV_TOKEN) {
+            return ICurveV2Pool(tokenInfo[_outputToken].pool).price_oracle();
+        } else {
+            ICurveTriCryptoFactoryNG _pool = ICurveTriCryptoFactoryNG(
+                tokenInfo[_outputToken].pool
+            );
+            return (_pool.price_oracle(1) * 1e18) / _pool.price_oracle(0);
+        }
+    }
+
     /// @notice Splits contract balance into output tokens as per weights
     /// @param lock - whether to lock or swap crv to cvxcrv
     /// @param weights - weight of output assets (cvxCRV, FXS, CVX) in bips
@@ -535,15 +552,12 @@ contract UnionZap is Ownable, UnionBase {
 
         // first loop to calculate total ETH amounts and store oracle prices
         for (uint256 i; i < weights.length; ++i) {
-            if (weights[i] > 0) {
-                _outputToken = outputTokens[i];
-                prices[i] = ICurveV2Pool(tokenInfo[_outputToken].pool)
-                    .price_oracle();
+            _outputToken = outputTokens[i];
+            uint256 _curBalance = IERC20(_outputToken).balanceOf(address(this));
+            if ((weights[i] > 0) && (_curBalance > 1)) {
+                prices[i] = _getPriceFromOracle(_outputToken);
                 // compute ETH value of current token balance
-                amounts[i] =
-                    (IERC20(_outputToken).balanceOf(address(this)) *
-                        prices[i]) /
-                    1e18;
+                amounts[i] = (_curBalance * prices[i]) / 1e18;
                 // add the ETH value of token to current ETH value in contract
                 _totalEthBalance += amounts[i];
             }

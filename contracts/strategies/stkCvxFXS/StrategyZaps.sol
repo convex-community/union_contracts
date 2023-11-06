@@ -83,9 +83,6 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
         IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, 0);
         IERC20(USDC_TOKEN).safeApprove(CURVE_FRAX_USDC_POOL, type(uint256).max);
 
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_CRV_ETH_POOL, type(uint256).max);
-
         IERC20(CVXFXS_TOKEN).safeApprove(CURVE_CVXFXS_FXS_POOL, 0);
         IERC20(CVXFXS_TOKEN).safeApprove(
             CURVE_CVXFXS_FXS_POOL,
@@ -176,7 +173,7 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     /// @notice Use at your own risk
     /// @dev Zap contract needs approval for spending of inputToken
     /// @param amount - min amount of input token
-    /// @param minAmountOut - min amount of cvxCRV expected
+    /// @param minAmountOut - min amount of cvxFXS expected
     /// @param router - address of the router to use. e.g. 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F for Sushi
     /// @param inputToken - address of the token to swap from, needs to have an ETH pair on router used
     /// @param to - address to stake on behalf of

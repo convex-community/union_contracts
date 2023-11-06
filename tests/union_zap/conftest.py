@@ -2,16 +2,17 @@ import pytest
 from brownie import (
     MerkleDistributor,
     MerkleDistributorV2,
-    FXSMerkleDistributor,
+    stkCvxFxsMerkleDistributor,
     GenericUnionVault,
-    CvxFxsStrategy,
-    CvxFxsZaps,
+    stkCvxFxsVault,
+    stkCvxFxsZaps,
     StakingRewards,
     GenericDistributor,
     CVXMerkleDistributor,
     PCvxStrategy,
     FXSSwapper,
     UnionVault,
+    stkCvxFxsStrategy,
     UnionZap,
     stkCvxCrvMerkleDistributor,
     interface,
@@ -39,6 +40,8 @@ from ..utils.constants import (
     PIREX_CVX_VAULT,
     PIREX_CVX,
     UNBALANCED_TOKENS,
+    CURVE_TRICRV_POOL,
+    CVXFXS,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -111,14 +114,14 @@ def crv_distributor(owner, union_contract, vault):
 
 @pytest.fixture(scope="module")
 def fxs_vault(owner):
-    vault = GenericUnionVault.deploy(CURVE_CVXFXS_FXS_LP_TOKEN, {"from": owner})
+    vault = stkCvxFxsVault.deploy(CVXFXS, {"from": owner})
     vault.setPlatform(AIRFORCE_SAFE, {"from": owner})
     yield vault
 
 
 @pytest.fixture(scope="module")
 def fxs_strategy(owner, fxs_vault):
-    strategy = CvxFxsStrategy.deploy(fxs_vault, {"from": owner})
+    strategy = stkCvxFxsStrategy.deploy(fxs_vault, {"from": owner})
     strategy.setApprovals({"from": owner})
     fxs_vault.setStrategy(strategy, {"from": owner})
     yield strategy
@@ -126,7 +129,7 @@ def fxs_strategy(owner, fxs_vault):
 
 @pytest.fixture(scope="module")
 def fxs_zaps(owner, fxs_vault):
-    zaps = CvxFxsZaps.deploy(fxs_vault, {"from": owner})
+    zaps = stkCvxFxsZaps.deploy(fxs_vault, {"from": owner})
     zaps.setApprovals({"from": owner})
     yield zaps
 
@@ -161,7 +164,7 @@ def cvx_distributor(owner, cvx_vault, pirex_cvx, union_contract):
 
 @pytest.fixture(scope="module")
 def fxs_distributor(owner, union_contract, fxs_zaps, fxs_vault):
-    fxs_distributor = FXSMerkleDistributor.deploy(
+    fxs_distributor = stkCvxFxsMerkleDistributor.deploy(
         fxs_vault, union_contract, fxs_zaps, {"from": owner}
     )
     fxs_distributor.setApprovals({"from": owner})
@@ -184,7 +187,7 @@ def set_up_ouput_tokens(
 ):
     # set up all the output tokens since all contracts are deployed
     union_contract.updateOutputToken(
-        CRV, [CURVE_CRV_ETH_POOL, ADDRESS_ZERO, crv_distributor], {"from": owner}
+        CRV, [CURVE_TRICRV_POOL, ADDRESS_ZERO, crv_distributor], {"from": owner}
     )
     union_contract.updateOutputToken(
         CVX, [CURVE_CVX_ETH_POOL, ADDRESS_ZERO, cvx_distributor], {"from": owner}
