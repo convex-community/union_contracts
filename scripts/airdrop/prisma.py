@@ -22,9 +22,24 @@ def main():
     data = [{"user": Web3.toChecksumAddress(k), "amount": v} for k, v in PRISMA_CLAIMS.items()]
     tree = OrderedMerkleTree(data)
     proofs = tree.get_proofs()
+
+    new_proofs = {
+        proof['claim']['user']: {
+            'index': proof['claim']['index'],
+            'amount': f"0x{(proof['claim']['amount']):x}",
+            'proof': proof['proofs']
+        }
+        for proof in proofs['proofs']
+    }
+    final_proofs = {
+        'id': 'cvxprisma',
+        'merkleRoot': proofs['root'],
+        'proofs': new_proofs
+    }
+
     location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
     with open(os.path.join(location, "proofs.json"), "w") as fp:
-        json.dump(proofs, fp)
+        json.dump(final_proofs, fp)
 
     publish = True
     deployer = accounts.load("mainnet-deploy")
