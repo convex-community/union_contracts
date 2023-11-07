@@ -12,7 +12,6 @@ dependencies:
   - OpenZeppelin/openzeppelin-contracts@4.1.0
   - rari-capital/solmate@6
 compiler:
-  evm_version: london
   solc:
     remappings:
       - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.1.0'
