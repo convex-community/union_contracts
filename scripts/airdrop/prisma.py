@@ -2,7 +2,7 @@ from web3 import Web3
 import json
 import os
 from tests.utils.airdrop.prisma import PRISMA_CLAIMS
-from tests.utils.constants import PRISMA
+from tests.utils.constants import CVXPRISMA
 from tests.utils.merkle import OrderedMerkleTree
 from brownie import (
     accounts,
@@ -16,7 +16,7 @@ PIREX_MULTISIG = "0x6ED9c171E02De08aaEDF0Fc1D589923D807061D6"
 
 
 def main():
-    gas_strategy = LinearScalingStrategy("20 gwei", "45 gwei", 1.2)
+    gas_strategy = LinearScalingStrategy("25 gwei", "45 gwei", 1.2)
     gas_price(gas_strategy)
 
     data = [{"user": Web3.toChecksumAddress(k), "amount": v} for k, v in PRISMA_CLAIMS.items()]
@@ -43,7 +43,7 @@ def main():
 
     publish = True
     deployer = accounts.load("mainnet-deploy")
-    airdrop = AirdropDistributor.deploy(PRISMA, 8, {"from": deployer}, publish_source=publish)
+    airdrop = AirdropDistributor.deploy(CVXPRISMA, 8, {"from": deployer}, publish_source=publish)
     airdrop.updateMerkleRoot(tree.get_root(), True, {"from": deployer})
     airdrop.updateAdmin(PIREX_MULTISIG)
 
