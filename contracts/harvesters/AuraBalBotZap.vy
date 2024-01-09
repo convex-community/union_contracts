@@ -1,4 +1,4 @@
-# @version 0.3.4
+# @version 0.3.9
 """
 @title Both zap auraBal harvest to ETH
 @license MIT
