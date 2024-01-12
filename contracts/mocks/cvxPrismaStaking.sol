@@ -35,7 +35,7 @@ interface IBooster {
     function isShutdown() external returns (bool);
 }
 
-interface IFxsDepositor {
+interface IPrismaDepositor {
     function deposit(uint256 _amount, bool _lock) external;
 }
 
@@ -43,7 +43,7 @@ interface IVoterProxy {
     function operator() external view returns (address);
 }
 
-contract cvxFxsStaking is ERC20, ReentrancyGuard {
+contract cvxPrismaStaking is ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
@@ -60,14 +60,10 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
         uint256 amount;
     }
 
-    address public constant vefxsProxy =
-        address(0x59CFCD384746ec3035299D90782Be065e466800B);
-    address public constant cvxfxs =
-        address(0xFEEf77d3f69374f66429C91d732A244f074bdf74);
-    address public constant fxs =
-        address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
-    address public constant fxsDepositor =
-        address(0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e);
+    address public immutable prisma;
+    address public immutable veProxy;
+    address public immutable cvxprisma;
+    address public immutable prismaDepositor;
 
     //rewards
     address[] public rewardTokens;
@@ -87,8 +83,17 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor() ERC20("Staked CvxFxs", "stkCvxFxs") {
-        IERC20(fxs).approve(fxsDepositor, type(uint256).max);
+    constructor(
+        address _proxy,
+        address _prisma,
+        address _cvxprisma,
+        address _depositor
+    ) ERC20("Staked CvxPrisma", "stkCvxPrisma") {
+        veProxy = _proxy;
+        prisma = _prisma;
+        cvxprisma = _cvxprisma;
+        prismaDepositor = _depositor;
+        IERC20(_prisma).approve(_depositor, type(uint256).max);
     }
 
     /* ========== ADMIN CONFIGURATION ========== */
@@ -98,9 +103,9 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
         address _rewardsToken,
         address _distributor
     ) public onlyOwner {
-        require(rewardData[_rewardsToken].lastUpdateTime == 0);
+        require(rewardData[_rewardsToken].lastUpdateTime == 0, "!new");
         require(
-            _rewardsToken != cvxfxs && _rewardsToken != address(this),
+            _rewardsToken != cvxprisma && _rewardsToken != address(this),
             "invalid token"
         );
 
@@ -124,46 +129,46 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    //deposit fxs for cvxfxs and stake
+    //deposit prisma for cvxprisma and stake
     function deposit(uint256 _amount, bool _lock) public nonReentrant {
         require(_amount > 0, "RewardPool : Cannot deposit 0");
 
         //mint will call _updateReward
         _mint(msg.sender, _amount);
 
-        //transfer fxs
-        IERC20(fxs).safeTransferFrom(msg.sender, address(this), _amount);
-        //deposit, cvxfxs will be returned here
-        IFxsDepositor(fxsDepositor).deposit(_amount, _lock);
+        //transfer prisma
+        IERC20(prisma).safeTransferFrom(msg.sender, address(this), _amount);
+        //deposit, cvxprisma will be returned here
+        IPrismaDepositor(prismaDepositor).deposit(_amount, _lock);
 
         emit Staked(msg.sender, _amount);
     }
 
-    //deposit fxs for cvxfxs and stake
+    //deposit prisma for cvxprisma and stake
     function deposit(uint256 _amount) external {
         deposit(_amount, false);
     }
 
-    //deposit cvxfxs
+    //deposit cvxprisma
     function stake(uint256 _amount) public nonReentrant {
         require(_amount > 0, "RewardPool : Cannot stake 0");
 
         //mint will call _updateReward
         _mint(msg.sender, _amount);
 
-        //pull cvxfxs
-        IERC20(cvxfxs).safeTransferFrom(msg.sender, address(this), _amount);
+        //pull cvxprisma
+        IERC20(cvxprisma).safeTransferFrom(msg.sender, address(this), _amount);
 
         emit Staked(msg.sender, _amount);
     }
 
-    //deposit all cvxfxs
+    //deposit all cvxprisma
     function stakeAll() external {
-        uint256 balance = IERC20(cvxfxs).balanceOf(msg.sender);
+        uint256 balance = IERC20(cvxprisma).balanceOf(msg.sender);
         stake(balance);
     }
 
-    //deposit cvxfxs and accredit a different address
+    //deposit cvxprisma and accredit a different address
     function stakeFor(address _for, uint256 _amount) external nonReentrant {
         require(_amount > 0, "RewardPool : Cannot stake 0");
 
@@ -172,19 +177,19 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
         _mint(_for, _amount);
 
         //pull from sender
-        IERC20(cvxfxs).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(cvxprisma).safeTransferFrom(msg.sender, address(this), _amount);
         emit Staked(_for, _amount);
     }
 
-    //withdraw cvxfxs
+    //withdraw cvxprisma
     function withdraw(uint256 _amount) external nonReentrant {
         require(_amount > 0, "RewardPool : Cannot withdraw 0");
 
         //burn will call _updateReward
         _burn(msg.sender, _amount);
 
-        //send cvxfxs
-        IERC20(cvxfxs).safeTransfer(msg.sender, _amount);
+        //send cvxprisma
+        IERC20(cvxprisma).safeTransfer(msg.sender, _amount);
 
         emit Withdrawn(msg.sender, _amount);
     }
@@ -271,7 +276,7 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
     function getReward(
         address _address
     ) public nonReentrant updateReward(_address) {
-        for (uint256 i; i < rewardTokens.length; i++) {
+        for (uint i; i < rewardTokens.length; i++) {
             address _rewardsToken = rewardTokens[i];
             uint256 reward = rewards[_address][_rewardsToken];
             if (reward > 0) {
@@ -297,7 +302,7 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
         //if forwarding, require caller is self
         require(msg.sender == _address, "!self");
 
-        for (uint256 i; i < rewardTokens.length; i++) {
+        for (uint i; i < rewardTokens.length; i++) {
             address _rewardsToken = rewardTokens[i];
             uint256 reward = rewards[_address][_rewardsToken];
             if (reward > 0) {
@@ -358,9 +363,9 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
             rewardData[_tokenAddress].lastUpdateTime == 0,
             "Cannot withdraw reward token"
         );
-        require(_tokenAddress != cvxfxs, "Cannot withdraw staking token");
+        require(_tokenAddress != cvxprisma, "Cannot withdraw staking token");
         IERC20(_tokenAddress).safeTransfer(
-            IBooster(IVoterProxy(vefxsProxy).operator()).rewardManager(),
+            IBooster(IVoterProxy(veProxy).operator()).rewardManager(),
             _tokenAmount
         );
         emit Recovered(_tokenAddress, _tokenAmount);
@@ -368,7 +373,7 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
 
     function _updateReward(address _account) internal {
         uint256 userBal = balanceOf(_account);
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
+        for (uint i = 0; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
             rewardData[token].rewardPerTokenStored = _rewardPerToken(token);
             rewardData[token].lastUpdateTime = _lastTimeRewardApplicable(
@@ -401,7 +406,7 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard {
 
     modifier onlyOwner() {
         require(
-            IBooster(IVoterProxy(vefxsProxy).operator()).rewardManager() ==
+            IBooster(IVoterProxy(veProxy).operator()).rewardManager() ==
                 msg.sender,
             "!owner"
         );

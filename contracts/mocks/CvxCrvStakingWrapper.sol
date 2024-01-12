@@ -54,11 +54,10 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function tryAdd(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function tryAdd(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool, uint256) {
         uint256 c = a + b;
         if (c < a) return (false, 0);
         return (true, c);
@@ -69,11 +68,10 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function trySub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function trySub(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool, uint256) {
         if (b > a) return (false, 0);
         return (true, a - b);
     }
@@ -83,11 +81,10 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function tryMul(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function tryMul(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool, uint256) {
         // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
         // benefit is lost if 'b' is also tested.
         // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
@@ -102,11 +99,10 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function tryDiv(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function tryDiv(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool, uint256) {
         if (b == 0) return (false, 0);
         return (true, a / b);
     }
@@ -116,11 +112,10 @@ library SafeMath {
      *
      * _Available since v3.4._
      */
-    function tryMod(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function tryMod(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool, uint256) {
         if (b == 0) return (false, 0);
         return (true, a % b);
     }
@@ -299,9 +294,10 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transfer(address recipient, uint256 amount)
-        external
-        returns (bool);
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
     /**
      * @dev Returns the remaining number of tokens that `spender` will be
@@ -310,10 +306,10 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender)
-        external
-        view
-        returns (uint256);
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -378,11 +374,7 @@ library SafeERC20 {
     using SafeMath for uint256;
     using Address for address;
 
-    function safeTransfer(
-        IERC20 token,
-        address to,
-        uint256 value
-    ) internal {
+    function safeTransfer(IERC20 token, address to, uint256 value) internal {
         _callOptionalReturn(
             token,
             abi.encodeWithSelector(token.transfer.selector, to, value)
@@ -572,10 +564,10 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data)
-        internal
-        returns (bytes memory)
-    {
+    function functionCall(
+        address target,
+        bytes memory data
+    ) internal returns (bytes memory) {
         return functionCall(target, data, "Address: low-level call failed");
     }
 
@@ -649,11 +641,10 @@ library Address {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(address target, bytes memory data)
-        internal
-        view
-        returns (bytes memory)
-    {
+    function functionStaticCall(
+        address target,
+        bytes memory data
+    ) internal view returns (bytes memory) {
         return
             functionStaticCall(
                 target,
@@ -686,10 +677,10 @@ library Address {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(address target, bytes memory data)
-        internal
-        returns (bytes memory)
-    {
+    function functionDelegateCall(
+        address target,
+        bytes memory data
+    ) internal returns (bytes memory) {
         return
             functionDelegateCall(
                 target,
@@ -855,13 +846,9 @@ contract ERC20 is Context, IERC20 {
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function balanceOf(
+        address account
+    ) public view virtual override returns (uint256) {
         return _balances[account];
     }
 
@@ -873,12 +860,10 @@ contract ERC20 is Context, IERC20 {
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) public virtual override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -886,13 +871,10 @@ contract ERC20 is Context, IERC20 {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function allowance(
+        address owner,
+        address spender
+    ) public view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -903,12 +885,10 @@ contract ERC20 is Context, IERC20 {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    function approve(
+        address spender,
+        uint256 amount
+    ) public virtual override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -955,11 +935,10 @@ contract ERC20 is Context, IERC20 {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue)
-        public
-        virtual
-        returns (bool)
-    {
+    function increaseAllowance(
+        address spender,
+        uint256 addedValue
+    ) public virtual returns (bool) {
         _approve(
             _msgSender(),
             spender,
@@ -982,11 +961,10 @@ contract ERC20 is Context, IERC20 {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        public
-        virtual
-        returns (bool)
-    {
+    function decreaseAllowance(
+        address spender,
+        uint256 subtractedValue
+    ) public virtual returns (bool) {
         _approve(
             _msgSender(),
             spender,
@@ -1358,11 +1336,10 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
         }
     }
 
-    function addTokenReward(address _token, uint256 _rewardGroup)
-        public
-        onlyOwner
-        nonReentrant
-    {
+    function addTokenReward(
+        address _token,
+        uint256 _rewardGroup
+    ) public onlyOwner nonReentrant {
         require(
             _token != address(0) &&
                 _token != cvxCrvStaking &&
@@ -1420,10 +1397,10 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     //set reward group
-    function setRewardGroup(address _token, uint256 _rewardGroup)
-        public
-        onlyOwner
-    {
+    function setRewardGroup(
+        address _token,
+        uint256 _rewardGroup
+    ) public onlyOwner {
         //checkpoint
         _checkpoint([address(msg.sender), address(0)]);
 
@@ -1567,10 +1544,9 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
         }
     }
 
-    function _checkpointAndClaim(address[2] memory _accounts)
-        internal
-        nonReentrant
-    {
+    function _checkpointAndClaim(
+        address[2] memory _accounts
+    ) internal nonReentrant {
         uint256 supply = totalSupply();
         uint256[2] memory depositedBalance;
         depositedBalance[0] = balanceOf(_accounts[0]); //only do first slot
@@ -1600,21 +1576,18 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     //run earned as a mutable function to claim everything before calculating earned rewards
-    function earned(address _account)
-        external
-        returns (EarnedData[] memory claimable)
-    {
+    function earned(
+        address _account
+    ) external returns (EarnedData[] memory claimable) {
         _checkpoint([_account, address(0)]);
         return _earned(_account);
     }
 
     //because we are doing a mutative earned(), we can just simulate checkpointing a user and looking at recorded claimables
     //thus no need to look at each reward contract's claimable tokens or cvx minting equations etc
-    function _earned(address _account)
-        internal
-        view
-        returns (EarnedData[] memory claimable)
-    {
+    function _earned(
+        address _account
+    ) internal view returns (EarnedData[] memory claimable) {
         uint256 rewardCount = rewards.length;
         claimable = new EarnedData[](rewardCount);
 
@@ -1655,11 +1628,10 @@ contract CvxCrvStakingWrapper is ERC20, ReentrancyGuard {
     }
 
     //get user's weighted balance for specified reward group
-    function userRewardBalance(address _address, uint256 _rewardGroup)
-        external
-        view
-        returns (uint256)
-    {
+    function userRewardBalance(
+        address _address,
+        uint256 _rewardGroup
+    ) external view returns (uint256) {
         uint256 userb = balanceOf(_address);
         if (_rewardGroup == 0) {
             //userRewardWeight of 0 should be full weight for reward group 0
