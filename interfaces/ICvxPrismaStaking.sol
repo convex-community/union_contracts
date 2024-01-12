@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.9;
 
-interface ICvxFxsStaking {
+interface ICvxPrismaStaking {
     function balanceOf(address) external view returns (uint256);
 
     function withdraw(uint256) external;

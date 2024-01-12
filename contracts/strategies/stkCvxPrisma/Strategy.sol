@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../../../interfaces/IBooster.sol";
 import "../../../interfaces/IStrategyOracle.sol";
 import "../../../interfaces/IGenericVault.sol";
-import "../../../interfaces/ICvxPrismaStaking.sol.sol";
+import "../../../interfaces/ICvxPrismaStaking.sol";
 import "../../../interfaces/IHarvester.sol";
 
 error ZeroAddress();
@@ -18,7 +18,7 @@ contract stkCvxPrismaStrategy is Ownable {
         IERC20(0x34635280737b5BFe6c7DC2FC3065D60d66e78185);
 
     address public immutable vault;
-    ICvxPrismaStaking.sol private constant cvxPrismaStaking =
+    ICvxPrismaStaking private constant cvxPrismaStaking =
         ICvxPrismaStaking(0x0c73f1cFd5C9dFc150C8707Aa47Acbd14F0BE108);
 
     address public harvester;
