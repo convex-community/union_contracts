@@ -6,16 +6,16 @@ import "../../GenericVault.sol";
 error ZeroAddress();
 
 interface IstkCvxPrismaStrategy {
-    function harvest(address _caller, uint256 _minAmountOut)
-        external
-        returns (uint256 harvested);
+    function harvest(
+        address _caller,
+        uint256 _minAmountOut
+    ) external returns (uint256 harvested);
 }
 
 interface ICvxPrismaStaking {
-    function claimableRewards(address _account)
-        external
-        view
-        returns (EarnedData[] memory userRewards);
+    function claimableRewards(
+        address _account
+    ) external view returns (EarnedData[] memory userRewards);
 
     struct EarnedData {
         address token;
@@ -40,10 +40,10 @@ contract stkCvxPrismaVault is GenericUnionVault {
     /// @notice Adds or remove an address from the harvesters' whitelist
     /// @param _harvester address of the authorized harvester
     /// @param _authorized Whether to add or remove harvester
-    function updateAuthorizedHarvesters(address _harvester, bool _authorized)
-        external
-        onlyOwner
-    {
+    function updateAuthorizedHarvesters(
+        address _harvester,
+        bool _authorized
+    ) external onlyOwner {
         if (_harvester == address(0)) revert ZeroAddress();
         authorizedHarvesters[_harvester] = _authorized;
     }
