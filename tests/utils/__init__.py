@@ -25,6 +25,8 @@ from .constants import (
     CVXFXS,
     CURVE_CVXCRV_CRV_POOL_V2,
     CURVE_TRICRV_POOL,
+    PRISMA,
+    CVXPRISMA
 )
 from .cvxfxs import get_crv_to_eth_amount
 
@@ -119,6 +121,14 @@ def fxs_balance(address):
 
 def cvxfxs_balance(address):
     return interface.IERC20(CVXFXS).balanceOf(address)
+
+
+def prisma_balance(address):
+    return interface.IERC20(PRISMA).balanceOf(address)
+
+
+def cvxprisma_balance(address):
+    return interface.IERC20(CVXPRISMA).balanceOf(address)
 
 
 def approx(a, b, precision=1e-10):
