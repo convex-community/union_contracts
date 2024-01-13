@@ -8,6 +8,7 @@ from ....utils.cvxprisma import calc_staking_harvest_amount
 def test_harvest_single_staker(
     fn_isolation, alice, bob, owner, vault, strategy, staking, harvester
 ):
+    harvester.setApprovals({"from": owner})
     alice_initial_balance = cvxprisma_balance(alice)
     bob_initial_balance = cvxprisma_balance(bob)
     platform_initial_balance = cvxprisma_balance(vault.platform())

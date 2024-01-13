@@ -23,18 +23,27 @@ def prisma_to_eth(amount):
 
 
 def prisma_to_cvxprisma(amount):
+    if amount == 0:
+        return 0
     return interface.ICurvePool(CURVE_CVXPRISMA_PRISMA_POOL).get_dy(0, 1, amount)
 
 
 def cvxprisma_to_prisma(amount):
+    if amount == 0:
+        return 0
     return interface.ICurvePool(CURVE_CVXPRISMA_PRISMA_POOL).get_dy(1, 0, amount)
 
 
 def prisma_to_mkusd(amount):
+    if amount == 0:
+        return 0
     return interface.ICurveV2Pool(CURVE_PRISMA_MKUSD_POOL).get_dy(1, 0, amount)
 
 
 def mkusd_to_prisma(amount):
+    print("MKUSD Amount,", amount)
+    if amount == 0:
+        return 0
     return interface.ICurveV2Pool(CURVE_PRISMA_MKUSD_POOL).get_dy(0, 1, amount)
 
 
