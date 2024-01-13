@@ -137,10 +137,10 @@ contract stkCvxPrismaHarvester is stkCvxPrismaStrategyBase {
                 true
             );
         }
-
         // handle mkusd rewards
         uint256 _mkUsdBalance = IERC20(MKUSD_TOKEN).balanceOf(address(this));
         // swap to prisma
+        console.log("MKUSD AMOUNT:", _mkUsdBalance);
         if (_mkUsdBalance > 0) {
             _swapMkUsdPrisma(
                 _mkUsdBalance,
@@ -163,16 +163,15 @@ contract stkCvxPrismaHarvester is stkCvxPrismaStrategyBase {
                 uint256 _minCvxPrismaAmountOut = 0;
                 if (useOracle) {
                     _minCvxPrismaAmountOut =
-                        (_prismaBalance * _oraclePrice) /
-                        1e18;
+                        (_prismaBalance * 1e18) /
+                        _oraclePrice;
                     _minCvxPrismaAmountOut = ((_minCvxPrismaAmountOut *
                         allowedSlippage) / DECIMALS);
                 }
-                _harvested = cvxPrismaPrismaSwap.exchange_underlying(
-                    0,
-                    1,
+                _harvested = _swapCvxPrismaPrisma(
                     _prismaBalance,
-                    _minCvxPrismaAmountOut
+                    _minCvxPrismaAmountOut,
+                    false
                 );
             }
             IERC20(CVXPRISMA_TOKEN).safeTransfer(msg.sender, _harvested);

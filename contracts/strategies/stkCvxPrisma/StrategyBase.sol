@@ -40,14 +40,14 @@ contract stkCvxPrismaStrategyBase {
     uint256 public constant CVXETH_CVX_INDEX = 1;
     uint256 public constant PRISMAMKUSD_MKUSD_INDEX = 0;
     uint256 public constant PRISMAMKUSD_PRISMA_INDEX = 1;
-    uint256 public constant PRISMACVXPRISMA_CVXPRISMA_INDEX = 1;
-    uint256 public constant PRISMACVXPRISMA_PRISMA_INDEX = 0;
+    int128 public constant PRISMACVXPRISMA_CVXPRISMA_INDEX = 1;
+    int128 public constant PRISMACVXPRISMA_PRISMA_INDEX = 0;
 
     ICvxPrismaDeposit cvxPrismaDeposit = ICvxPrismaDeposit(PRISMA_DEPOSIT);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
     ICurveV2Pool prismaEthSwap = ICurveV2Pool(CURVE_PRISMA_ETH_POOL);
-    ICurveV2Pool cvxPrismaPrismaSwap =
-        ICurveV2Pool(CURVE_CVXPRISMA_PRISMA_POOL);
+    ICurvePool cvxPrismaPrismaSwap =
+        ICurvePool(CURVE_CVXPRISMA_PRISMA_POOL);
     ICurveV2Pool mkUsdPrismaSwap = ICurveV2Pool(CURVE_PRISMA_MKUSD_POOL);
 
     /// @notice Swap native ETH <-> CVX on Curve
