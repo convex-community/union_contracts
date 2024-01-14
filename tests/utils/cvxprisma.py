@@ -45,6 +45,14 @@ def prisma_to_mkusd(amount):
     return interface.ICurveV2Pool(CURVE_PRISMA_MKUSD_POOL).get_dy(1, 0, amount)
 
 
+def get_stk_cvxprisma_received(amount):
+    pool = interface.ICurvePool(CURVE_CVXPRISMA_PRISMA_POOL)
+    if pool.price_oracle() > 1e18:
+        return amount
+    else:
+        return pool.get_dy(0, 1, amount) if amount > 0 else 0
+
+
 def mkusd_to_prisma(amount):
     print("MKUSD Amount,", amount)
     if amount == 0:

@@ -26,7 +26,7 @@ from .constants import (
     CURVE_CVXCRV_CRV_POOL_V2,
     CURVE_TRICRV_POOL,
     PRISMA,
-    CVXPRISMA,
+    CVXPRISMA, LPXCVX_POOL,
 )
 from .cvxfxs import get_crv_to_eth_amount
 
@@ -214,3 +214,11 @@ def eth_to_cvx(amount):
     if amount <= 0:
         return 0
     return interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, amount)
+
+
+def get_pirex_cvx_received(amount):
+    pool = interface.ICurveV2Pool(LPXCVX_POOL)
+    if pool.price_oracle() > 1e18:
+        return amount
+    else:
+        return pool.get_dy(0, 1, amount) if amount > 0 else 0

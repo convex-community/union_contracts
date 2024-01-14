@@ -8,9 +8,10 @@ from .constants import (
     CRV,
     CVX,
     MAX_WEIGHT_1E9,
-    CURVE_TRICRV_POOL,
+    CURVE_TRICRV_POOL, FXS,
 )
 from .cvxfxs import eth_to_fxs
+from .cvxprisma import eth_to_prisma
 
 DECIMAL_18 = Decimal(1000000000000000000)
 session = CachedSession("test_cache", expire_after=300)
@@ -90,11 +91,16 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens, adjust
                     output_amount = token_balance - swappable
                 else:
                     output_amount = token_balance + eth_to_cvx(swappable)
-            else:
+            elif output_token == FXS:
                 if sell:
                     output_amount = token_balance - swappable
                 else:
                     output_amount = token_balance + eth_to_fxs(swappable, option)
+            else:
+                if sell:
+                    output_amount = token_balance - swappable
+                else:
+                    output_amount = token_balance + eth_to_prisma(swappable)
 
             output_amounts[order] = output_amount
 

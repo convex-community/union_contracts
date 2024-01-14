@@ -5,7 +5,7 @@ from brownie import interface, chain, network
 import pytest
 from ..utils import (
     estimate_amounts_after_swap,
-    approx,
+    approx, get_pirex_cvx_received,
 )
 from ..utils.adjust import simulate_adjust, get_spot_prices
 from ..utils.constants import (
@@ -15,26 +15,28 @@ from ..utils.constants import (
     CRV,
     FXS,
     CVXCRV,
-    MAX_WEIGHT_1E9,
+    MAX_WEIGHT_1E9, PRISMA,
 )
-from ..utils.cvxfxs import estimate_lp_tokens_received, get_stk_cvxfxs_received
+from ..utils.cvxfxs import get_stk_cvxfxs_received
+from ..utils.cvxprisma import get_stk_cvxprisma_received
 
 data = [
     #    [MAX_WEIGHT_1E9, 0, 0],
     #    [0, MAX_WEIGHT_1E9, 0],
     #    [0, 0, MAX_WEIGHT_1E9],
-    [0, 800000000, 200000000],
-    [200000000, 0, 800000000],
-    [333333334, 666666666, 0],
-    [100000000, 800000000, 100000000],
-    [350000000, 250000000, 400000000],
-    [300000000, 500000000, 200000000],
+    [0, 333333334, 0, 666666666],
+    [0, 800000000, 200000000, 0],
+    [200000000, 0, 800000000, 0],
+    [200000000, 200000000, 0, 600000000],
+    [100000000, 700000000, 100000000, 100000000],
+    [350000000, 250000000, 100000000, 300000000],
+    [300000000, 500000000, 50000000, 150000000],
 ]
 
 
 @pytest.mark.parametrize("weights", data)
 @pytest.mark.parametrize("lock", [True, False])
-@pytest.mark.parametrize("option", [0, 3])  # disable option 1 b/c too much slippage
+@pytest.mark.parametrize("option", [3])  # disable all but 3 b/c too much slippage
 def test_swap_adjust_distribute(
     fn_isolation,
     owner,
@@ -44,22 +46,26 @@ def test_swap_adjust_distribute(
     cvx_vault,
     fxs_vault,
     fxs_swapper,
+    prisma_vault,
+    prisma_swapper,
     claim_tree,
     crv_distributor,
     cvx_distributor,
     fxs_distributor,
+    prisma_distributor,
     weights,
     lock,
     option,
 ):
+    token_symbols = ["CRV", "CVX", "FXS", "PRISMA"]
     print(f"Test with weights: {weights}")
     gas_refund = 3e16
     platform = PublicKeyAccount(union_contract.platform())
     initial_platform_balance = platform.balance()
     fxs_swapper.updateOption(option, {"from": owner})
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
-    vaults = [vault, cvx_vault, fxs_vault]
-    distributors = [crv_distributor, cvx_distributor, fxs_distributor]
+    vaults = [vault, cvx_vault, fxs_vault, prisma_vault]
+    distributors = [crv_distributor, cvx_distributor, fxs_distributor, prisma_distributor]
 
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
@@ -78,18 +84,17 @@ def test_swap_adjust_distribute(
     tx_swap = union_contract.swap(
         params, 0, True, 0, gas_refund, weights, {"from": owner}
     )
+
     gas_fees = owner.balance() - original_caller_balance
     assert gas_fees == gas_refund
     assert union_contract.balance() == expected_eth_amount - gas_fees
 
     fee_amount, output_amounts = simulate_adjust(
-        union_contract, lock, weights, option, output_tokens, [0, 1, 2]
+        union_contract, lock, weights, option, output_tokens, [0, 1, 2, 3]
     )
-    # for token in [CRV, CVX, FXS]:
-    #     print(f"Balance {token} : {interface.IERC20(token).balanceOf(union_contract)}")
 
     tx_adjust = union_contract.adjust(
-        lock, weights, [0, 1, 2], [0, 0, 0], {"from": owner}
+        lock, weights, [0, 1, 2, 3], [0, 0, 0, 0], {"from": owner}
     )
 
     assert approx(platform.balance() - initial_platform_balance, fee_amount, 25e-3)
@@ -100,7 +105,7 @@ def test_swap_adjust_distribute(
         if output_token == CRV:
             output_token = CVXCRV
         balance = interface.IERC20(output_token).balanceOf(union_contract)
-        # print(f"Balance {output_token}: {balance}")
+        # print(f"Balance {token_symbols[i]}: {balance}")
         # account for the fact that we leave 1 token unit for gas saving when swapping
         balance = 0 if balance == 1 else balance
         assert approx(balance, output_amounts[i], 25e-3)
@@ -136,9 +141,13 @@ def test_swap_adjust_distribute(
         precision = 1e-1
         assert approx(weights[i], actual_weight, precision)
 
-    # convert fxs to lp token to validate distributor balance
+    # Account for discounts in curve pools
     fxs_index = output_tokens.index(FXS)
     output_amounts[fxs_index] = get_stk_cvxfxs_received(output_amounts[fxs_index])
+    prisma_index = output_tokens.index(PRISMA)
+    output_amounts[prisma_index] = get_stk_cvxprisma_received(output_amounts[prisma_index])
+    cvx_index = output_tokens.index(CVX)
+    output_amounts[cvx_index] = get_pirex_cvx_received(output_amounts[cvx_index])
 
     tx_distribute = union_contract.distribute(weights)
 
@@ -151,6 +160,8 @@ def test_swap_adjust_distribute(
             if vaults[i] != cvx_vault
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
+        print(f"Expected {token_symbols[i]}: {output_amounts[i]}")
+        print(f"Realized {token_symbols[i]}: {underlying}")
         assert approx(underlying, output_amounts[i], 25e-3)
 
     # revert to test process incentives result
@@ -163,8 +174,8 @@ def test_swap_adjust_distribute(
         lock,
         gas_refund,
         weights,
-        [0, 1, 2],
-        [0, 0, 0],
+        [0, 1, 2, 3],
+        [0, 0, 0, 0],
         {"from": owner},
     )
 
