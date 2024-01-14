@@ -7,7 +7,7 @@ import "../../interfaces/ICurveV2Pool.sol";
 import "../../interfaces/IStrategyZaps.sol";
 
 interface IVaultZaps {
-    function depositFromFxs(
+    function depositFromPrisma(
         uint256 amount,
         uint256 minAmountOut,
         address to,
@@ -15,22 +15,23 @@ interface IVaultZaps {
     ) external;
 }
 
-contract stkCvxFxsMerkleDistributor is GenericDistributor {
+contract stkCvxPrismaMerkleDistributor is GenericDistributor {
     using SafeERC20 for IERC20;
 
     address public vaultZap;
 
-    address private constant FXS_TOKEN =
-        0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0;
+    address private constant PRISMA_TOKEN =
+        0xdA47862a83dac0c112BA89c6abC2159b95afd71C;
 
-    address private constant CURVE_CVXFXS_FXS_POOL =
-        0xd658A338613198204DCa1143Ac3F01A722b5d94A;
+    address private constant CURVE_CVXPRISMA_PRISMA_POOL =
+        0x3b21C2868B6028CfB38Ff86127eF22E68d16d53B;
 
     // 1.5% slippage tolerance by default
     uint256 public slippage = 9850;
     uint256 private constant DECIMALS = 10000;
 
-    ICurveV2Pool private cvxFxsPool = ICurveV2Pool(CURVE_CVXFXS_FXS_POOL);
+    ICurveV2Pool private cvxPrismaPool =
+        ICurveV2Pool(CURVE_CVXPRISMA_PRISMA_POOL);
 
     // This event is triggered whenever the zap contract is updated.
     event ZapUpdated(address indexed oldZap, address indexed newZap);
@@ -39,7 +40,7 @@ contract stkCvxFxsMerkleDistributor is GenericDistributor {
         address _vault,
         address _depositor,
         address _zap
-    ) GenericDistributor(_vault, _depositor, FXS_TOKEN) {
+    ) GenericDistributor(_vault, _depositor, PRISMA_TOKEN) {
         require(_zap != address(0));
         vaultZap = _zap;
     }
@@ -67,14 +68,14 @@ contract stkCvxFxsMerkleDistributor is GenericDistributor {
         IERC20(token).safeApprove(vaultZap, type(uint256).max);
     }
 
-    /// @notice Stakes the contract's entire cvxCRV balance in the Vault
+    /// @notice Stakes the contract's entire Prisma balance in the Vault
     function stake() external override onlyAdminOrDistributor {
         uint256 balance = IERC20(token).balanceOf(address(this));
         if (balance > 0) {
-            uint256 price = cvxFxsPool.price_oracle();
+            uint256 price = cvxPrismaPool.price_oracle();
             uint256 minAmountOut = (balance * price) / 1e18;
             minAmountOut = ((minAmountOut * slippage) / DECIMALS);
-            IVaultZaps(vaultZap).depositFromFxs(
+            IVaultZaps(vaultZap).depositFromPrisma(
                 balance,
                 minAmountOut,
                 address(this),

@@ -13,11 +13,7 @@ contract stkCvxFxsDistributorZaps {
     address public vault;
     IGenericDistributor public distributor;
 
-    constructor(
-        address _strategyZaps,
-        address _distributor,
-        address _vault
-    ) {
+    constructor(address _strategyZaps, address _distributor, address _vault) {
         zaps = _strategyZaps;
         distributor = IGenericDistributor(_distributor);
         vault = _vault;

@@ -29,16 +29,16 @@ contract AirdropDistributor {
         address indexed account
     );
     // This event is triggered whenever the merkle root gets updated.
-    event MerkleRootUpdated(bytes32 indexed merkleRoot, uint256 indexed canClaimUntil);
+    event MerkleRootUpdated(
+        bytes32 indexed merkleRoot,
+        uint256 indexed canClaimUntil
+    );
     // This event is triggered whenever the admin is updated.
     event AdminUpdated(address indexed oldAdmin, address indexed newAdmin);
     // When recovering stuck ERC20s
     event Recovered(address token, uint256 amount);
 
-    constructor(
-        address _token,
-        uint256 duration
-    ) {
+    constructor(address _token, uint256 duration) {
         require(_token != address(0));
         admin = msg.sender;
         token = _token;
@@ -60,16 +60,16 @@ contract AirdropDistributor {
     function _setClaimed(uint256 index) private {
         uint256 claimedWordIndex = index / 256;
         uint256 claimedBitIndex = index % 256;
-        claimedBitMap[claimedWordIndex] = claimedBitMap[claimedWordIndex] | (1 << claimedBitIndex);
+        claimedBitMap[claimedWordIndex] =
+            claimedBitMap[claimedWordIndex] |
+            (1 << claimedBitIndex);
     }
 
     /// @notice Transfers ownership of the contract
     /// @param newAdmin - address of the new admin of the contract
-    function updateAdmin(address newAdmin)
-        external
-        onlyAdmin
-        notToZeroAddress(newAdmin)
-    {
+    function updateAdmin(
+        address newAdmin
+    ) external onlyAdmin notToZeroAddress(newAdmin) {
         address oldAdmin = admin;
         admin = newAdmin;
         emit AdminUpdated(oldAdmin, newAdmin);
@@ -135,10 +135,10 @@ contract AirdropDistributor {
     /// @notice Update the merkle root and increment the week.
     /// @param _merkleRoot - the new root to push
     /// @param _unfreeze - whether to unfreeze the contract after unlock
-    function updateMerkleRoot(bytes32 _merkleRoot, bool _unfreeze)
-        external
-        onlyAdmin
-    {
+    function updateMerkleRoot(
+        bytes32 _merkleRoot,
+        bool _unfreeze
+    ) external onlyAdmin {
         require(frozen, "Contract not frozen.");
 
         canClaimUntil = block.timestamp + CLAIM_DURATION;
@@ -156,10 +156,10 @@ contract AirdropDistributor {
     /// @param tokenAddress - address of the token to retrieve
     /// @param tokenAmount - amount to retrieve
     /// @dev Will revert if token is same as token being distributed
-    function recoverERC20(address tokenAddress, uint256 tokenAmount)
-        external
-        onlyAdmin
-    {
+    function recoverERC20(
+        address tokenAddress,
+        uint256 tokenAmount
+    ) external onlyAdmin {
         require(
             tokenAddress != address(token),
             "Cannot withdraw the distributed token"
