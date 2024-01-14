@@ -9,7 +9,8 @@ from ....utils.constants import (
     SUSHI_ROUTER,
     WETH,
     SPELL,
-    ADDRESS_ZERO, PRISMA,
+    ADDRESS_ZERO,
+    PRISMA,
 )
 from ....utils.cvxprisma import (
     prisma_to_eth,
@@ -17,9 +18,7 @@ from ....utils.cvxprisma import (
 )
 
 
-def test_claim_as_usdt(
-    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps
-):
+def test_claim_as_usdt(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps):
     amount = int(1e21)
     for i, account in enumerate([alice, bob, charlie]):
         vault.deposit(account, amount, {"from": account})
@@ -40,9 +39,7 @@ def test_claim_as_usdt(
     assert interface.IERC20(USDT_TOKEN).balanceOf(alice) == usdt_amount
 
 
-def test_claim_as_eth(
-    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps
-):
+def test_claim_as_eth(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps):
     amount = int(1e21)
     alice_original_balance = alice.balance()
     for i, account in enumerate([alice, bob, charlie]):
@@ -61,7 +58,9 @@ def test_claim_as_eth(
     assert alice.balance() == eth_amount + alice_original_balance
 
 
-def test_claim_as_prisma(fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps):
+def test_claim_as_prisma(
+    fn_isolation, alice, bob, charlie, owner, vault, strategy, zaps
+):
     amount = int(1e21)
     for i, account in enumerate([alice, bob, charlie]):
         vault.deposit(account, amount, {"from": account})
@@ -73,7 +72,9 @@ def test_claim_as_prisma(fn_isolation, alice, bob, charlie, owner, vault, strate
 
     vault.approve(zaps, 2**256 - 1, {"from": alice})
 
-    zaps.claimFromVaultAsPrisma(vault.balanceOf(alice), 0, alice.address, {"from": alice})
+    zaps.claimFromVaultAsPrisma(
+        vault.balanceOf(alice), 0, alice.address, {"from": alice}
+    )
     assert interface.IERC20(PRISMA).balanceOf(alice) == prisma_amount + initial_balance
 
 

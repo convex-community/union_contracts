@@ -1,7 +1,12 @@
 from brownie import interface
 
 from .constants import (
-    CVX, CURVE_PRISMA_ETH_POOL, CURVE_CVXPRISMA_PRISMA_POOL, CURVE_PRISMA_MKUSD_POOL, MKUSD_TOKEN, PRISMA,
+    CVX,
+    CURVE_PRISMA_ETH_POOL,
+    CURVE_CVXPRISMA_PRISMA_POOL,
+    CURVE_PRISMA_MKUSD_POOL,
+    MKUSD_TOKEN,
+    PRISMA,
 )
 from .cvxfxs import get_cvx_to_eth_amount
 
@@ -69,4 +74,3 @@ def calc_staking_rewards(strategy, staking):
             prisma_rewards += amount
 
     return prisma_rewards, eth_balance
-

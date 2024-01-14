@@ -17,10 +17,7 @@ def test_harvest_single_staker(
     chain.mine(1)
     gross_estimated_harvest = calc_staking_harvest_amount(strategy, staking)
     print(gross_estimated_harvest)
-    print(
-        "\033[95m"
-        + f"Harvested: {str(gross_estimated_harvest * 1e-18)} PRISMA"
-    )
+    print("\033[95m" + f"Harvested: {str(gross_estimated_harvest * 1e-18)} PRISMA")
     print("=" * 32 + "\033[0m")
     platform_fees = gross_estimated_harvest * vault.platformFee() // 10000
     caller_incentive = gross_estimated_harvest * vault.callIncentive() // 10000
@@ -34,7 +31,9 @@ def test_harvest_single_staker(
     assert approx(net_harvest, actual_harvest, 1e-3)
     assert approx(cvxprisma_balance(bob), bob_initial_balance + caller_incentive, 1e-5)
     assert approx(
-        cvxprisma_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-5
+        cvxprisma_balance(vault.platform()),
+        platform_initial_balance + platform_fees,
+        1e-5,
     )
     assert approx(
         staking.balanceOf(strategy),
@@ -74,10 +73,7 @@ def test_harvest_multiple_stakers(
     chain.sleep(60 * 60 * 24 * 30)
     chain.mine(1)
     gross_estimated_harvest = calc_staking_harvest_amount(strategy, staking)
-    print(
-        "\033[95m"
-        + f"Harvested: {gross_estimated_harvest * 1e-18} PRISMA"
-    )
+    print("\033[95m" + f"Harvested: {gross_estimated_harvest * 1e-18} PRISMA")
     print("=" * 32 + "\033[0m")
     platform_fees = gross_estimated_harvest * vault.platformFee() // 10000
     caller_incentive = gross_estimated_harvest * vault.callIncentive() // 10000
@@ -91,7 +87,9 @@ def test_harvest_multiple_stakers(
     assert approx(net_harvest, actual_harvest, 1e-3)
     assert approx(cvxprisma_balance(bob), bob_initial_balance + caller_incentive, 1e-5)
     assert approx(
-        cvxprisma_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-5
+        cvxprisma_balance(vault.platform()),
+        platform_initial_balance + platform_fees,
+        1e-5,
     )
     assert approx(
         vault.totalUnderlying(),
@@ -132,10 +130,7 @@ def test_harvest_with_harvester_change(
     chain.sleep(60 * 60 * 24 * 30)
     chain.mine(1)
     gross_estimated_harvest = calc_staking_harvest_amount(strategy, staking)
-    print(
-        "\033[95m"
-        + f"Harvested: {gross_estimated_harvest * 1e-18} PRISMA"
-    )
+    print("\033[95m" + f"Harvested: {gross_estimated_harvest * 1e-18} PRISMA")
     print("=" * 32 + "\033[0m")
     platform_fees = gross_estimated_harvest * vault.platformFee() // 10000
     caller_incentive = gross_estimated_harvest * vault.callIncentive() // 10000
@@ -149,7 +144,9 @@ def test_harvest_with_harvester_change(
     assert approx(net_harvest, actual_harvest, 1e-3)
     assert approx(cvxprisma_balance(bob), bob_initial_balance + caller_incentive, 1e-5)
     assert approx(
-        cvxprisma_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-5
+        cvxprisma_balance(vault.platform()),
+        platform_initial_balance + platform_fees,
+        1e-5,
     )
     assert approx(
         vault.totalUnderlying(),
@@ -205,13 +202,8 @@ def test_harvest_with_discount(
     platform_initial_balance = cvxprisma_balance(vault.platform())
     chain.sleep(60 * 60 * 24 * 30)
     chain.mine(1)
-    gross_estimated_harvest = calc_staking_harvest_amount(
-        strategy, staking, True
-    )
-    print(
-        "\033[95m"
-        + f"Harvested: {gross_estimated_harvest * 1e-18} PRISMA"
-    )
+    gross_estimated_harvest = calc_staking_harvest_amount(strategy, staking, True)
+    print("\033[95m" + f"Harvested: {gross_estimated_harvest * 1e-18} PRISMA")
     print("=" * 32 + "\033[0m")
     platform_fees = gross_estimated_harvest * vault.platformFee() // 10000
     caller_incentive = gross_estimated_harvest * vault.callIncentive() // 10000
@@ -225,7 +217,9 @@ def test_harvest_with_discount(
     assert approx(net_harvest, actual_harvest, 1e-3)
     assert approx(cvxprisma_balance(bob), bob_initial_balance + caller_incentive, 1e-5)
     assert approx(
-        cvxprisma_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-5
+        cvxprisma_balance(vault.platform()),
+        platform_initial_balance + platform_fees,
+        1e-5,
     )
     assert approx(
         vault.totalUnderlying(),

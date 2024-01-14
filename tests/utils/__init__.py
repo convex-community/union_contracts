@@ -26,7 +26,7 @@ from .constants import (
     CURVE_CVXCRV_CRV_POOL_V2,
     CURVE_TRICRV_POOL,
     PRISMA,
-    CVXPRISMA
+    CVXPRISMA,
 )
 from .cvxfxs import get_crv_to_eth_amount
 
