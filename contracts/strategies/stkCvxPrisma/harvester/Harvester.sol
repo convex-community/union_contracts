@@ -140,7 +140,6 @@ contract stkCvxPrismaHarvester is stkCvxPrismaStrategyBase {
         // handle mkusd rewards
         uint256 _mkUsdBalance = IERC20(MKUSD_TOKEN).balanceOf(address(this));
         // swap to prisma
-        console.log("MKUSD AMOUNT:", _mkUsdBalance);
         if (_mkUsdBalance > 0) {
             _swapMkUsdPrisma(
                 _mkUsdBalance,
