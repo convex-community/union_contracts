@@ -62,10 +62,11 @@ def zaps(owner, vault):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def distribute_fxs(alice, zaps):
+def distribute_prisma(accounts, zaps):
 
-    interface.IERC20(PRISMA).transfer(alice, 2e23, {"from": PRISMA_LOCKER})
-    interface.IERC20(PRISMA).approve(zaps, 2**256 - 1, {"from": alice})
+    for account in accounts[:10]:
+        interface.IERC20(PRISMA).transfer(account, 2e23, {"from": PRISMA_LOCKER})
+        interface.IERC20(PRISMA).approve(zaps, 2**256 - 1, {"from": account})
 
 
 # Ensure we have enough rewards of each type of token
@@ -86,7 +87,7 @@ def distribute_rewards(staking, alice, zaps):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def distribute_cvxfxs(accounts, vault, harvester):
+def distribute_cvxprisma(accounts, vault, harvester):
 
     for account in accounts[:10]:
         interface.IERC20(CVXPRISMA).transfer(
