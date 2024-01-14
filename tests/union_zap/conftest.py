@@ -245,6 +245,9 @@ def set_up_ouput_tokens(
     union_contract.updateOutputToken(
         PRISMA, [CURVE_PRISMA_ETH_POOL, prisma_swapper, prisma_distributor], {"from": owner}
     )
+    union_contract.addCurvePool(
+        PRISMA, [CURVE_PRISMA_ETH_POOL, 0]
+    )
 
 
 @pytest.fixture(scope="module")
