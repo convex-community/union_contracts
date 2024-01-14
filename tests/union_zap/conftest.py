@@ -46,7 +46,10 @@ from ..utils.constants import (
     PIREX_CVX,
     UNBALANCED_TOKENS,
     CURVE_TRICRV_POOL,
-    CVXFXS, CURVE_PRISMA_ETH_POOL, CVXPRISMA, PRISMA,
+    CVXFXS,
+    CURVE_PRISMA_ETH_POOL,
+    CVXPRISMA,
+    PRISMA,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -204,6 +207,7 @@ def prisma_swapper(owner, union_contract):
     swaps.setApprovals({"from": owner})
     yield swaps
 
+
 @pytest.fixture(scope="module")
 def prisma_distributor(owner, union_contract, prisma_zaps, prisma_vault):
     prisma_distributor = stkCvxPrismaMerkleDistributor.deploy(
@@ -243,11 +247,11 @@ def set_up_ouput_tokens(
         FXS, [CURVE_FXS_ETH_POOL, fxs_swapper, fxs_distributor], {"from": owner}
     )
     union_contract.updateOutputToken(
-        PRISMA, [CURVE_PRISMA_ETH_POOL, prisma_swapper, prisma_distributor], {"from": owner}
+        PRISMA,
+        [CURVE_PRISMA_ETH_POOL, prisma_swapper, prisma_distributor],
+        {"from": owner},
     )
-    union_contract.addCurvePool(
-        PRISMA, [CURVE_PRISMA_ETH_POOL, 0]
-    )
+    union_contract.addCurvePool(PRISMA, [CURVE_PRISMA_ETH_POOL, 0])
 
 
 @pytest.fixture(scope="module")

@@ -8,7 +8,8 @@ from .constants import (
     CRV,
     CVX,
     MAX_WEIGHT_1E9,
-    CURVE_TRICRV_POOL, FXS,
+    CURVE_TRICRV_POOL,
+    FXS,
 )
 from .cvxfxs import eth_to_fxs
 from .cvxprisma import eth_to_prisma

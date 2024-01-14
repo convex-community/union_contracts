@@ -10,7 +10,13 @@ from brownie import (
     stkCvxPrismaMerkleDistributor,
     interface,
 )
-from tests.utils.constants import AIRFORCE_SAFE, CURVE_CVXPRISMA_PRISMA_POOL, CVXPRISMA, PRISMA, PRISMA_LOCKER
+from tests.utils.constants import (
+    AIRFORCE_SAFE,
+    CURVE_CVXPRISMA_PRISMA_POOL,
+    CVXPRISMA,
+    PRISMA,
+    PRISMA_LOCKER,
+)
 
 
 @pytest.fixture(scope="module")

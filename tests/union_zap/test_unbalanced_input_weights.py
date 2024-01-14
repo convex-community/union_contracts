@@ -5,7 +5,8 @@ from brownie import interface, chain, network
 import pytest
 from ..utils import (
     estimate_amounts_after_swap,
-    approx, get_pirex_cvx_received,
+    approx,
+    get_pirex_cvx_received,
 )
 from ..utils.adjust import simulate_adjust, get_spot_prices
 from ..utils.constants import (
@@ -15,7 +16,9 @@ from ..utils.constants import (
     FXS,
     CVXCRV,
     MAX_WEIGHT_1E9,
-    UNBALANCED_TOKENS, PRISMA, CVX,
+    UNBALANCED_TOKENS,
+    PRISMA,
+    CVX,
 )
 from ..utils.cvxfxs import get_stk_cvxfxs_received
 from ..utils.cvxprisma import get_stk_cvxprisma_received
@@ -25,7 +28,7 @@ from ..utils.cvxprisma import get_stk_cvxprisma_received
     "weights,adjust_order",
     [
         [[837299477, 27058091, 67821216, 67821216], [1, 2, 3, 0]],
-                [[300000000, 600000000, 50000000, 50000000], [2, 3, 1, 0]],
+        [[300000000, 600000000, 50000000, 50000000], [2, 3, 1, 0]],
         #        [[50000000, 50000000, 900000000], [0, 1, 2]],
         #        [[950000000, 0, 50000000], [2, 1, 0]],
     ],
@@ -58,7 +61,12 @@ def test_swap_adjust_distribute(
     fxs_swapper.updateOption(option, {"from": owner})
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
     vaults = [vault, cvx_vault, fxs_vault, prisma_vault]
-    distributors = [crv_distributor, cvx_distributor, fxs_distributor, prisma_distributor]
+    distributors = [
+        crv_distributor,
+        cvx_distributor,
+        fxs_distributor,
+        prisma_distributor,
+    ]
 
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
@@ -137,7 +145,9 @@ def test_swap_adjust_distribute(
     fxs_index = output_tokens.index(FXS)
     output_amounts[fxs_index] = get_stk_cvxfxs_received(output_amounts[fxs_index])
     prisma_index = output_tokens.index(PRISMA)
-    output_amounts[prisma_index] = get_stk_cvxprisma_received(output_amounts[prisma_index])
+    output_amounts[prisma_index] = get_stk_cvxprisma_received(
+        output_amounts[prisma_index]
+    )
     cvx_index = output_tokens.index(CVX)
     output_amounts[cvx_index] = get_pirex_cvx_received(output_amounts[cvx_index])
 

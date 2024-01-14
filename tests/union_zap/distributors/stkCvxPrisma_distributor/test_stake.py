@@ -20,7 +20,8 @@ def test_stake(fn_isolation, prisma_distributor, prisma_vault, caller):
     cvxprisma_received = prisma_to_cvxprisma(amount)
     prisma_distributor.stake({"from": caller})
     assert (
-        prisma_vault.balanceOf(prisma_distributor) == cvxprisma_received + vault_initial_balance
+        prisma_vault.balanceOf(prisma_distributor)
+        == cvxprisma_received + vault_initial_balance
     )
     assert (
         prisma_vault.balanceOfUnderlying(prisma_distributor)
@@ -34,7 +35,7 @@ def test_stake_slippage(fn_isolation, prisma_distributor, prisma_vault, owner):
         prisma_distributor, amount, {"from": CURVE_CVXPRISMA_PRISMA_POOL}
     )
     prisma_distributor.setSlippage(20000, {"from": owner})
-    with brownie.reverts('Exchange resulted in fewer coins than expected'):
+    with brownie.reverts("Exchange resulted in fewer coins than expected"):
         prisma_distributor.stake({"from": owner})
 
 

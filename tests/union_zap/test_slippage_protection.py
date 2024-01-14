@@ -82,5 +82,13 @@ def test_process_incentives_slippage(
 
     with brownie.reverts():
         union_contract.processIncentives(
-            params, 0, True, lock, 0, weights, [0, 1, 2, 3], min_amounts, {"from": owner}
+            params,
+            0,
+            True,
+            lock,
+            0,
+            weights,
+            [0, 1, 2, 3],
+            min_amounts,
+            {"from": owner},
         )
