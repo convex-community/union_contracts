@@ -174,7 +174,7 @@ contract stkCvxPrismaZaps is Ownable, stkCvxPrismaStrategyBase {
         uint256 _cvxPrismaAmount = IGenericVault(vault).withdrawAll(
             address(this)
         );
-        return _swapCvxPrismaPrisma(_cvxPrismaAmount, minAmountOut, false);
+        return _swapCvxPrismaPrisma(_cvxPrismaAmount, minAmountOut, true);
     }
 
     /// @notice Claim as FXS
