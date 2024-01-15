@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../interfaces/IGenericVault.sol";
 import "../../../interfaces/IUnionVault.sol";
-import "../../../../node_modules/hardhat/console.sol";
 
 interface ICvxPrismaStaking {
     function withdraw(uint256) external;
@@ -41,7 +40,6 @@ contract stkCvxPrismaMigration {
             address(this),
             amount
         );
-        console.log(IERC20(STKCVXPRISMA_TOKEN).balanceOf(address(this)));
         ICvxPrismaStaking(STKCVXPRISMA_TOKEN).withdraw(amount);
         IGenericVault(vault).depositAll(to);
     }
