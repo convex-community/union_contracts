@@ -19,7 +19,7 @@ from tests.utils.constants import (
 
 def main():
     union_zap = "0xD52Ca71AAfa4d2590aac1E35e3005242dd31e5eD"
-    publish = False
+    publish = True
     gas_strategy = LinearScalingStrategy("20 gwei", "35 gwei", 1.1)
     gas_price(gas_strategy)
     deployer = accounts.load("mainnet-deploy")
@@ -29,7 +29,7 @@ def main():
     vault.setCallIncentive(100, {"from": deployer})
     vault.setPlatform(AIRFORCE_SAFE, {"from": deployer})
 
-    swaps = PrismaSwapper.deploy(union_zap, {"from": deployer}, publish_source=True)
+    swaps = PrismaSwapper.deploy(union_zap, {"from": deployer}, publish_source=publish)
     swaps.setApprovals({"from": deployer})
     swaps.transferOwnership(AIRFORCE_SAFE, {"from": deployer})
 
