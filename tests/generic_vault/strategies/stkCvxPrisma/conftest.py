@@ -7,6 +7,7 @@ from brownie import (
     GenericUnionVault,
     stkCvxPrismaZaps,
     stkCvxPrismaStrategy,
+    stkCvxPrismaMigration,
     interface,
 )
 from ....utils.constants import (
@@ -63,6 +64,13 @@ def zaps(owner, vault):
     zaps = stkCvxPrismaZaps.deploy(vault, {"from": owner})
     zaps.setApprovals({"from": owner})
     yield zaps
+
+
+@pytest.fixture(scope="module")
+def migration(owner, vault):
+    migration = stkCvxPrismaMigration.deploy(vault, {"from": owner})
+    migration.setApprovals({"from": owner})
+    yield migration
 
 
 @pytest.fixture(scope="module", autouse=True)
