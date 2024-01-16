@@ -43,11 +43,7 @@ contract GenericDistributor {
     // When recovering stuck ERC20s
     event Recovered(address token, uint256 amount);
 
-    constructor(
-        address _vault,
-        address _depositor,
-        address _token
-    ) {
+    constructor(address _vault, address _depositor, address _token) {
         require(_vault != address(0));
         vault = _vault;
         admin = msg.sender;
@@ -84,11 +80,9 @@ contract GenericDistributor {
 
     /// @notice Transfers ownership of the contract
     /// @param newAdmin - address of the new admin of the contract
-    function updateAdmin(address newAdmin)
-        external
-        onlyAdmin
-        notToZeroAddress(newAdmin)
-    {
+    function updateAdmin(
+        address newAdmin
+    ) external onlyAdmin notToZeroAddress(newAdmin) {
         address oldAdmin = admin;
         admin = newAdmin;
         emit AdminUpdated(oldAdmin, newAdmin);
@@ -96,11 +90,9 @@ contract GenericDistributor {
 
     /// @notice Changes the contract allowed to freeze before depositing
     /// @param newDepositor - address of the new depositor contract
-    function updateDepositor(address newDepositor)
-        external
-        onlyAdmin
-        notToZeroAddress(newDepositor)
-    {
+    function updateDepositor(
+        address newDepositor
+    ) external onlyAdmin notToZeroAddress(newDepositor) {
         address oldDepositor = depositor;
         depositor = newDepositor;
         emit DepositorUpdated(oldDepositor, newDepositor);
@@ -108,11 +100,9 @@ contract GenericDistributor {
 
     /// @notice Changes the Vault where funds are staked
     /// @param newVault - address of the new vault contract
-    function updateVault(address newVault)
-        external
-        onlyAdmin
-        notToZeroAddress(newVault)
-    {
+    function updateVault(
+        address newVault
+    ) external onlyAdmin notToZeroAddress(newVault) {
         address oldVault = vault;
         vault = newVault;
         emit VaultUpdated(oldVault, newVault);
@@ -182,10 +172,10 @@ contract GenericDistributor {
     /// @notice Update the merkle root and increment the week.
     /// @param _merkleRoot - the new root to push
     /// @param _unfreeze - whether to unfreeze the contract after unlock
-    function updateMerkleRoot(bytes32 _merkleRoot, bool _unfreeze)
-        external
-        onlyAdmin
-    {
+    function updateMerkleRoot(
+        bytes32 _merkleRoot,
+        bool _unfreeze
+    ) external onlyAdmin {
         require(frozen, "Contract not frozen.");
 
         // Increment the week (simulates the clearing of the claimedBitMap)
@@ -204,10 +194,10 @@ contract GenericDistributor {
     /// @param tokenAddress - address of the token to retrieve
     /// @param tokenAmount - amount to retrieve
     /// @dev Will revert if token is same as token being distributed
-    function recoverERC20(address tokenAddress, uint256 tokenAmount)
-        external
-        onlyAdmin
-    {
+    function recoverERC20(
+        address tokenAddress,
+        uint256 tokenAmount
+    ) external onlyAdmin {
         require(
             tokenAddress != address(token),
             "Cannot withdraw the distributed token"

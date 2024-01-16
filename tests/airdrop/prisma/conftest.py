@@ -39,7 +39,10 @@ def owner(accounts):
 
 @pytest.fixture(scope="module")
 def prisma_claim_tree():
-    data = [{"user": Web3.toChecksumAddress(k), "amount": v} for k, v in PRISMA_CLAIMS.items()]
+    data = [
+        {"user": Web3.toChecksumAddress(k), "amount": v}
+        for k, v in PRISMA_CLAIMS.items()
+    ]
     tree = OrderedMerkleTree(data)
     return tree
 

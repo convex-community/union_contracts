@@ -25,6 +25,9 @@ from .constants import (
     CVXFXS,
     CURVE_CVXCRV_CRV_POOL_V2,
     CURVE_TRICRV_POOL,
+    PRISMA,
+    CVXPRISMA,
+    LPXCVX_POOL,
 )
 from .cvxfxs import get_crv_to_eth_amount
 
@@ -121,6 +124,14 @@ def cvxfxs_balance(address):
     return interface.IERC20(CVXFXS).balanceOf(address)
 
 
+def prisma_balance(address):
+    return interface.IERC20(PRISMA).balanceOf(address)
+
+
+def cvxprisma_balance(address):
+    return interface.IERC20(CVXPRISMA).balanceOf(address)
+
+
 def approx(a, b, precision=1e-10):
     if a == b == 0:
         return True
@@ -204,3 +215,11 @@ def eth_to_cvx(amount):
     if amount <= 0:
         return 0
     return interface.ICurveV2Pool(CURVE_CVX_ETH_POOL).get_dy(0, 1, amount)
+
+
+def get_pirex_cvx_received(amount):
+    pool = interface.ICurveV2Pool(LPXCVX_POOL)
+    if pool.price_oracle() > 1e18:
+        return amount
+    else:
+        return pool.get_dy(0, 1, amount) if amount > 0 else 0

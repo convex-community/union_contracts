@@ -22,7 +22,7 @@ def test_manual_claim_workflow(
     merkle_distributor_v2,
     vault,
 ):
-    weights = [MAX_WEIGHT_1E9, 0, 0]
+    weights = [MAX_WEIGHT_1E9, 0, 0, 0]
     gas_refund = 3e16
     proofs = claim_tree.get_proof(union_contract.address)
     params = [

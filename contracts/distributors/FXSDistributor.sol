@@ -47,11 +47,9 @@ contract FXSMerkleDistributor is GenericDistributor {
 
     /// @notice Changes the Zap for deposits
     /// @param newZap - address of the new zap
-    function updateZap(address newZap)
-        external
-        onlyAdmin
-        notToZeroAddress(newZap)
-    {
+    function updateZap(
+        address newZap
+    ) external onlyAdmin notToZeroAddress(newZap) {
         address oldZap = vaultZap;
         vaultZap = newZap;
         emit ZapUpdated(oldZap, vaultZap);

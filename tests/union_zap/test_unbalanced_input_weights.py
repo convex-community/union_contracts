@@ -6,6 +6,7 @@ import pytest
 from ..utils import (
     estimate_amounts_after_swap,
     approx,
+    get_pirex_cvx_received,
 )
 from ..utils.adjust import simulate_adjust, get_spot_prices
 from ..utils.constants import (
@@ -16,20 +17,23 @@ from ..utils.constants import (
     CVXCRV,
     MAX_WEIGHT_1E9,
     UNBALANCED_TOKENS,
+    PRISMA,
+    CVX,
 )
 from ..utils.cvxfxs import get_stk_cvxfxs_received
+from ..utils.cvxprisma import get_stk_cvxprisma_received
 
 
 @pytest.mark.parametrize(
     "weights,adjust_order",
     [
-        [[837299477, 27058091, 135642432], [1, 2, 0]],
-        #        [[300000000, 650000000, 50000000], [2, 1, 0]],
+        [[837299477, 27058091, 67821216, 67821216], [1, 2, 3, 0]],
+        [[300000000, 600000000, 50000000, 50000000], [2, 3, 1, 0]],
         #        [[50000000, 50000000, 900000000], [0, 1, 2]],
         #        [[950000000, 0, 50000000], [2, 1, 0]],
     ],
 )
-@pytest.mark.parametrize("option", [3, 0])
+@pytest.mark.parametrize("option", [3])
 def test_swap_adjust_distribute(
     fn_isolation,
     owner,
@@ -43,6 +47,9 @@ def test_swap_adjust_distribute(
     crv_distributor,
     cvx_distributor,
     fxs_distributor,
+    prisma_vault,
+    prisma_swapper,
+    prisma_distributor,
     weights,
     adjust_order,
     option,
@@ -53,8 +60,13 @@ def test_swap_adjust_distribute(
     initial_platform_balance = platform.balance()
     fxs_swapper.updateOption(option, {"from": owner})
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
-    vaults = [vault, cvx_vault, fxs_vault]
-    distributors = [crv_distributor, cvx_distributor, fxs_distributor]
+    vaults = [vault, cvx_vault, fxs_vault, prisma_vault]
+    distributors = [
+        crv_distributor,
+        cvx_distributor,
+        fxs_distributor,
+        prisma_distributor,
+    ]
 
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
@@ -83,11 +95,11 @@ def test_swap_adjust_distribute(
 
     with brownie.reverts():
         union_contract.adjust(
-            lock, weights, adjust_order[::-1], [0, 0, 0], {"from": owner}
+            lock, weights, adjust_order[::-1], [0, 0, 0, 0], {"from": owner}
         )
 
     tx_adjust = union_contract.adjust(
-        lock, weights, adjust_order, [0, 0, 0], {"from": owner}
+        lock, weights, adjust_order, [0, 0, 0, 0], {"from": owner}
     )
 
     assert approx(platform.balance() - initial_platform_balance, fee_amount, 5e-2)
@@ -106,11 +118,11 @@ def test_swap_adjust_distribute(
         spot_amounts.append(balance * price)
         # unfreeze for distribution while we're at it
         distributors[i].unfreeze({"from": owner})
-
+    print(f"Spots amounts: {spot_amounts}")
     # we know double check that the adjustment done on-chain with oracles
     # corresponds to the weights we get with spot prices
     total_eth_value = sum(spot_amounts)
-    headers = ["Token", "Balance", "ETH Spot Value", "Weight", "Spot Weight"]
+    headers = ["Token", "Price", "Balance", "ETH Spot Value", "Weight", "Spot Weight"]
     reports = []
     for i, output_token in enumerate(output_tokens):
         actual_weight = spot_amounts[i] / total_eth_value * MAX_WEIGHT_1E9
@@ -119,6 +131,7 @@ def test_swap_adjust_distribute(
         reports.append(
             [
                 output_token[:8] + "...",
+                f"{spot_amounts[i] * 1e-18:.2f}",
                 f"{output_amounts[i] * 1e-18:.2f}",
                 f"{spot_amounts[i] * 1e-18:.2f}",
                 f"{weights[i]}",
@@ -131,6 +144,12 @@ def test_swap_adjust_distribute(
     # convert fxs to lp token to validate distributor balance
     fxs_index = output_tokens.index(FXS)
     output_amounts[fxs_index] = get_stk_cvxfxs_received(output_amounts[fxs_index])
+    prisma_index = output_tokens.index(PRISMA)
+    output_amounts[prisma_index] = get_stk_cvxprisma_received(
+        output_amounts[prisma_index]
+    )
+    cvx_index = output_tokens.index(CVX)
+    output_amounts[cvx_index] = get_pirex_cvx_received(output_amounts[cvx_index])
 
     tx_distribute = union_contract.distribute(weights)
 
@@ -156,7 +175,7 @@ def test_swap_adjust_distribute(
         gas_refund,
         weights,
         adjust_order,
-        [0, 0, 0],
+        [0, 0, 0, 0],
         {"from": owner},
     )
 

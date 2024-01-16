@@ -4,8 +4,9 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/IStrategyZaps.sol";
 import "../../interfaces/IGenericDistributor.sol";
+import "../../interfaces/IGenericVault.sol";
 
-contract PirexDistributorZaps {
+contract stkCvxPrismaDistributorZaps {
     using SafeERC20 for IERC20;
 
     address public immutable zaps;
@@ -34,6 +35,49 @@ contract PirexDistributorZaps {
         IERC20(vault).safeTransferFrom(msg.sender, address(this), amount);
     }
 
+    /// @notice Claim from distributor as cvxPrisma
+    /// @param index - claimer index
+    /// @param account - claimer account
+    /// @param amount - claim amount
+    /// @param merkleProof - merkle proof for the claim
+    /// @param to - address to send withdrawn underlying to
+    /// @return amount of underlying withdrawn
+    function claimFromDistributorAsUnderlying(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32[] calldata merkleProof,
+        address to
+    ) external returns (uint256) {
+        _claim(index, account, amount, merkleProof);
+        return IGenericVault(vault).withdrawAll(to);
+    }
+
+    /// @notice Claim from distributor as Prisma
+    /// @param index - claimer index
+    /// @param account - claimer account
+    /// @param amount - claim amount
+    /// @param merkleProof - merkle proof for the claim
+    /// @param minAmountOut - minimum amount of underlying tokens expected
+    /// @param to - address to send withdrawn underlying to
+    /// @return amount of underlying withdrawn
+    function claimFromDistributorAsPrisma(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32[] calldata merkleProof,
+        uint256 minAmountOut,
+        address to
+    ) external returns (uint256) {
+        _claim(index, account, amount, merkleProof);
+        return
+            IStrategyZaps(zaps).claimFromVaultAsPrisma(
+                amount,
+                minAmountOut,
+                to
+            );
+    }
+
     /// @notice Claim from distributor as USDT.
     /// @param index - claimer index
     /// @param account - claimer account
@@ -57,7 +101,7 @@ contract PirexDistributorZaps {
 
     /// @notice Claim to any token via a univ2 router
     /// @notice Use at your own risk
-    /// @param amount - amount of uCRV to unstake
+    /// @param amount - amount of uPRISMA to unstake
     /// @param minAmountOut - min amount of output token expected
     /// @param router - address of the router to use. e.g. 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F for Sushi
     /// @param outputToken - address of the token to swap to
@@ -87,7 +131,7 @@ contract PirexDistributorZaps {
     /// @param account - claimer account
     /// @param amount - claim amount
     /// @param merkleProof - merkle proof for the claim
-    /// @param minAmountOut - min amount of CVX expected
+    /// @param minAmountOut - min amount of ETH expected
     /// @param to - address to lock on behalf of
     function claimFromDistributorAsEth(
         uint256 index,
@@ -99,62 +143,5 @@ contract PirexDistributorZaps {
     ) external {
         _claim(index, account, amount, merkleProof);
         IStrategyZaps(zaps).claimFromVaultAsEth(amount, minAmountOut, to);
-    }
-
-    /// @notice Claim from distributor as CVX
-    /// @param index - claimer index
-    /// @param account - claimer account
-    /// @param amount - claim amount
-    /// @param merkleProof - merkle proof for the claim
-    /// @param minAmountOut - min amount of CVX expected
-    /// @param to - receiver
-    function claimFromDistributorAsCvx(
-        uint256 index,
-        address account,
-        uint256 amount,
-        bytes32[] calldata merkleProof,
-        uint256 minAmountOut,
-        address to
-    ) external {
-        _claim(index, account, amount, merkleProof);
-        IStrategyZaps(zaps).claimFromVaultAsCvx(amount, minAmountOut, to);
-    }
-
-    /// @notice Claim from distributor as CRV
-    /// @param index - claimer index
-    /// @param account - claimer account
-    /// @param amount - claim amount
-    /// @param merkleProof - merkle proof for the claim
-    /// @param minAmountOut - min amount of CRV expected
-    /// @param to - address to lock on behalf of
-    function claimFromDistributorAsCrv(
-        uint256 index,
-        address account,
-        uint256 amount,
-        bytes32[] calldata merkleProof,
-        uint256 minAmountOut,
-        address to
-    ) external {
-        _claim(index, account, amount, merkleProof);
-        IStrategyZaps(zaps).claimFromVaultAsCrv(amount, minAmountOut, to);
-    }
-
-    /// @notice Claim from distributor as cvxCRV
-    /// @param index - claimer index
-    /// @param account - claimer account
-    /// @param amount - claim amount
-    /// @param merkleProof - merkle proof for the claim
-    /// @param minAmountOut - min amount of cvxCRV expected
-    /// @param to - address to lock on behalf of
-    function claimFromDistributorAsCvxCrv(
-        uint256 index,
-        address account,
-        uint256 amount,
-        bytes32[] calldata merkleProof,
-        uint256 minAmountOut,
-        address to
-    ) external {
-        _claim(index, account, amount, merkleProof);
-        IStrategyZaps(zaps).claimFromVaultAsCvxCrv(amount, minAmountOut, to);
     }
 }
