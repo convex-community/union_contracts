@@ -122,7 +122,7 @@ contract stkCvxPrismaZaps is Ownable, stkCvxPrismaStrategyBase {
         address to,
         bool lock
     ) internal {
-        uint256 prismaBalance = _swapEthPrisma(amount, minAmountOut, true);
+        uint256 prismaBalance = _swapEthPrisma(amount, 0, true);
         _deposit(prismaBalance, minAmountOut, to, lock);
     }
 
