@@ -21,33 +21,25 @@ contract stkCvxCrvHarvester {
     bool public useOracle = true;
     bool public forceLock;
 
-    address private constant TRIPOOL =
-        0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
-    address private constant THREECRV_TOKEN =
-        0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;
-    address private constant USDT_TOKEN =
-        0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    address private constant TRICRYPTO =
-        0xD51a44d3FaE010294C616388b506AcdA1bfAAE46;
+    address private constant CRVUSD_TOKEN =
+        0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E;
     address public constant CVX_TOKEN =
         0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
-    address public constant CURVE_CVX_ETH_POOL =
-        0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
-    address public constant CURVE_TRICRV_POOL =
-        0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14;
     address public constant CRV_TOKEN =
         0xD533a949740bb3306d119CC777fa900bA034cd52;
     address public constant CVXCRV_TOKEN =
         0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;
-    address private constant CVXCRV_DEPOSIT =
-        0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae;
+    address public constant CURVE_CVX_ETH_POOL =
+        0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
     address public constant CURVE_CVXCRV_CRV_POOL =
         0x971add32Ea87f10bD192671630be3BE8A11b8623;
+    address private constant CURVE_TRICRV_POOL =
+        0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14;
+    address private constant CVXCRV_DEPOSIT =
+        0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae;
 
-    ICurvePool private tripool = ICurvePool(TRIPOOL);
-    ICurveTriCrypto private tricrypto = ICurveTriCrypto(TRICRYPTO);
     ICurveV2Pool cvxEthSwap = ICurveV2Pool(CURVE_CVX_ETH_POOL);
-    ICurveTriCryptoFactoryNG crvEthSwap =
+    ICurveTriCryptoFactoryNG triCrv =
         ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL);
     ICurveNewFactoryPool crvCvxCrvSwap =
         ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL);
@@ -59,11 +51,8 @@ contract stkCvxCrvHarvester {
 
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
-        IERC20(USDT_TOKEN).safeApprove(TRICRYPTO, 0);
-        IERC20(USDT_TOKEN).safeApprove(TRICRYPTO, type(uint256).max);
-
-        IERC20(THREECRV_TOKEN).safeApprove(TRIPOOL, 0);
-        IERC20(THREECRV_TOKEN).safeApprove(TRIPOOL, type(uint256).max);
+        IERC20(CRVUSD_TOKEN).safeApprove(CURVE_TRICRV_POOL, 0);
+        IERC20(CRVUSD_TOKEN).safeApprove(CURVE_TRICRV_POOL, type(uint256).max);
 
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, 0);
         IERC20(CVX_TOKEN).safeApprove(CURVE_CVX_ETH_POOL, type(uint256).max);
@@ -104,7 +93,7 @@ contract stkCvxCrvHarvester {
         require(
             _token != CRV_TOKEN &&
                 _token != CVX_TOKEN &&
-                _token != THREECRV_TOKEN,
+                _token != CRVUSD_TOKEN,
             "not allowed"
         );
         uint256 _balance = IERC20(_token).balanceOf(address(this));
@@ -118,10 +107,9 @@ contract stkCvxCrvHarvester {
     /// @notice Compute a min amount of ETH based on pool oracle for cvx
     /// @param _amount - amount to swap
     /// @return min acceptable amount of ETH
-    function _calcMinAmountOutCvxEth(uint256 _amount)
-        internal
-        returns (uint256)
-    {
+    function _calcMinAmountOutCvxEth(
+        uint256 _amount
+    ) internal returns (uint256) {
         uint256 _cvxEthPrice = cvxEthSwap.price_oracle();
         uint256 _amountEthPrice = (_amount * _cvxEthPrice) / 1e18;
         return ((_amountEthPrice * allowedSlippage) / DECIMALS);
@@ -134,42 +122,35 @@ contract stkCvxCrvHarvester {
         cvxEthSwap.exchange_underlying{value: 0}(1, 0, _amount, _minAmountOut);
     }
 
-    /// @notice Compute a min amount of ETH based on pool oracle / vprice for 3crv
+    /// @notice Compute a min amount of CRV based on pool oracle for crvUSD
     /// @param _amount - amount to swap
     /// @return min acceptable amount of ETH
-    function _calcMinAmountOutThreeCrvEth(uint256 _amount)
-        internal
-        returns (uint256)
-    {
-        /// assume peg/balance for 3crv pricing in USDT
-        uint256 _virtualPrice = tripool.get_virtual_price();
-        uint256 _usdtAmount = (_amount * _virtualPrice) / 1e18;
-        /// get ETH price in USDT from tricrypto
-        uint256 _ethUsdPrice = tricrypto.price_oracle(1);
-        uint256 _amountEth = ((_usdtAmount * 1e18) / _ethUsdPrice);
-        return ((_amountEth * allowedSlippage) / DECIMALS);
+    function _calcMinAmountOutCrvUsdCrv(
+        uint256 _amount
+    ) internal returns (uint256) {
+        /// get CRV price in crvUSD from triCrv pool
+        uint256 _crvPriceInCrvUsd = triCrv.price_oracle(1);
+        uint256 _amountCrv = ((_amount * 1e18) / _crvPriceInCrvUsd);
+        return ((_amountCrv * allowedSlippage) / DECIMALS);
     }
 
-    function _threeCrvToEth(uint256 _amount) internal {
+    function _crvUsdToCrv(uint256 _amount) internal {
         uint256 _minAmountOut = useOracle
-            ? _calcMinAmountOutThreeCrvEth(_amount)
+            ? _calcMinAmountOutCrvUsdCrv(_amount)
             : 0;
-        tripool.remove_liquidity_one_coin(_amount, 2, 0);
-        uint256 _usdtBalance = IERC20(USDT_TOKEN).balanceOf(address(this));
-        if (_usdtBalance > 0) {
-            tricrypto.exchange(0, 2, _usdtBalance, _minAmountOut, true);
+        if (_amount > 0) {
+            triCrv.exchange(0, 2, _amount, _minAmountOut, false);
         }
     }
 
     /// @notice Compute a min amount of CRV based on pool oracle for ETH
     /// @param _amount - amount to swap
     /// @return min acceptable amount of CRV
-    function _calcMinAmountOutEthCrv(uint256 _amount)
-        internal
-        returns (uint256)
-    {
-        uint256 _amountCrvPrice = ((_amount * crvEthSwap.price_oracle(0)) /
-            crvEthSwap.price_oracle(1));
+    function _calcMinAmountOutEthCrv(
+        uint256 _amount
+    ) internal returns (uint256) {
+        uint256 _amountCrvPrice = ((_amount * triCrv.price_oracle(0)) /
+            triCrv.price_oracle(1));
         return ((_amountCrvPrice * allowedSlippage) / DECIMALS);
     }
 
@@ -178,20 +159,14 @@ contract stkCvxCrvHarvester {
             uint256 _minAmountOut = useOracle
                 ? _calcMinAmountOutEthCrv(_amount)
                 : 0;
-            crvEthSwap.exchange{value: _amount}(
-                1,
-                2,
-                _amount,
-                _minAmountOut,
-                true
-            );
+            triCrv.exchange{value: _amount}(1, 2, _amount, _minAmountOut, true);
         }
     }
 
-    function _crvToCvxCrv(uint256 _amount, uint256 _minAmounOut)
-        internal
-        returns (uint256)
-    {
+    function _crvToCvxCrv(
+        uint256 _amount,
+        uint256 _minAmounOut
+    ) internal returns (uint256) {
         return
             crvCvxCrvSwap.exchange(0, 1, _amount, _minAmounOut, address(this));
     }
@@ -200,14 +175,12 @@ contract stkCvxCrvHarvester {
         uint256 _cvxBalance = IERC20(CVX_TOKEN).balanceOf(address(this));
         if (_cvxBalance > 0) {
             _cvxToEth(_cvxBalance);
+            _ethToCrv(address(this).balance);
         }
-        uint256 _threeCrvBalance = IERC20(THREECRV_TOKEN).balanceOf(
-            address(this)
-        );
-        if (_threeCrvBalance > 0) {
-            _threeCrvToEth(_threeCrvBalance);
+        uint256 _crvUsdBalance = IERC20(CRVUSD_TOKEN).balanceOf(address(this));
+        if (_crvUsdBalance > 0) {
+            _crvUsdToCrv(_crvUsdBalance);
         }
-        _ethToCrv(address(this).balance);
         uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
         if (_crvBalance > 0) {
             // use the pool's price oracle to determine if there's a swap discount

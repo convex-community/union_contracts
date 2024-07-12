@@ -69,24 +69,19 @@ def calc_staked_cvxcrv_harvest(strategy, wrapper, force_lock=False):
     earned = wrapper.earned(strategy, {"from": strategy}).return_value
     reward_amounts = [r[1] for r in earned]
     print("Rewards: ", earned)
-    crv_balance, cvx_balance, three_crv_balance = reward_amounts
+    crv_balance, cvx_balance, _, crvusd_balance = reward_amounts
 
     cvxEthSwap = interface.ICurveV2Pool(CURVE_CVX_ETH_POOL)
-    tripool = interface.ICurvePool(TRIPOOL)
-    tricrypto = interface.ICurveTriCrypto(TRICRYPTO)
-
+    tricrv = interface.ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL)
+    # cvx dump
     eth_balance = cvxEthSwap.get_dy(1, 0, cvx_balance) if cvx_balance > 0 else 0
-    usdt_balance = (
-        tripool.calc_withdraw_one_coin(three_crv_balance, 2)
-        if three_crv_balance > 0
-        else 0
-    )
-    eth_balance += tricrypto.get_dy(0, 2, usdt_balance) if usdt_balance > 0 else 0
     crv_balance += (
         interface.ICurveTriCryptoFactoryNG(CURVE_TRICRV_POOL).get_dy(1, 2, eth_balance)
         if eth_balance > 0
         else 0
     )
+    # crvusd dump
+    crv_balance += tricrv.get_dy(0, 2, crvusd_balance) if crvusd_balance > 0 else 0
 
     cvxcrv_amount = crv_balance
     if crv_balance > 0:

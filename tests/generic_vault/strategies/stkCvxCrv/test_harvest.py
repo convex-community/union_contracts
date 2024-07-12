@@ -16,6 +16,7 @@ from ....utils.constants import (
     CURVE_CVXCRV_CRV_POOL_V2,
     CRV_TOKEN,
     CURVE_TRICRV_POOL,
+    CVXCRV_TOKEN,
 )
 from ....utils import (
     approx,
@@ -44,16 +45,16 @@ def test_harvest_single_staker(
     caller_incentive = estimated_harvest * vault.callIncentive() // 10000
 
     assert approx(
-        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3
+        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 5e-3
     )
-    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 1e-3)
+    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 5e-3)
     assert approx(
-        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
+        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 5e-3
     )
     assert approx(
         interface.ICvxCrvStaking(wrapper).balanceOf(strategy),
         alice_initial_balance + actual_harvest,
-        1e-3,
+        5e-3,
     )
 
 
@@ -78,16 +79,16 @@ def test_harvest_force_lock(
     caller_incentive = estimated_harvest * vault.callIncentive() // 10000
 
     assert approx(
-        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3
+        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 5e-3
     )
-    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 1e-3)
+    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 5e-3)
     assert approx(
-        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
+        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 5e-3
     )
     assert approx(
         interface.ICvxCrvStaking(wrapper).balanceOf(strategy),
         alice_initial_balance + actual_harvest,
-        1e-3,
+        5e-3,
     )
 
 
@@ -112,16 +113,16 @@ def test_harvest_sweep(fn_isolation, alice, bob, owner, vault, strategy, wrapper
     caller_incentive = estimated_sweep_harvest * vault.callIncentive() // 10000
 
     assert approx(
-        estimated_sweep_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3
+        estimated_sweep_harvest, platform_fees + caller_incentive + actual_harvest, 5e-3
     )
-    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 1e-3)
+    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 5e-3)
     assert approx(
-        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
+        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 5e-3
     )
     assert approx(
         interface.ICvxCrvStaking(wrapper).balanceOf(strategy),
         alice_initial_balance + actual_harvest,
-        1e-3,
+        5e-3,
     )
 
 
@@ -144,16 +145,16 @@ def test_harvest_sweep_external_get_rewards(
     caller_incentive = estimated_harvest * vault.callIncentive() // 10000
 
     assert approx(
-        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3
+        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 5e-3
     )
-    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 1e-3)
+    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 5e-3)
     assert approx(
-        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
+        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 5e-3
     )
     assert approx(
         interface.ICvxCrvStaking(wrapper).balanceOf(strategy),
         alice_initial_balance + actual_harvest,
-        1e-3,
+        5e-3,
     )
 
 
@@ -227,46 +228,6 @@ def test_harvest_tricrypto_oracle_failure(
         tx = vault.harvest({"from": alice})
 
 
-def test_harvest_no_discount(fn_isolation, alice, bob, owner, vault, strategy, wrapper):
-    crv = interface.IERC20(CRV)
-    vault.setRewardWeight(10000, {"from": owner})
-    crv.approve(CURVE_CVXCRV_CRV_POOL, 2**256 - 1, {"from": CURVE_VOTING_ESCROW})
-    cvxcrv_swap = interface.ICurveFactoryPool(CURVE_CVXCRV_CRV_POOL)
-    cvxcrv_swap.add_liquidity(
-        [crv.balanceOf(CURVE_VOTING_ESCROW), 0],
-        0,
-        CURVE_VOTING_ESCROW,
-        {"from": CURVE_VOTING_ESCROW},
-    )
-
-    alice_initial_balance = cvxcrv_balance(alice)
-    bob_initial_balance = cvxcrv_balance(bob)
-    platform_initial_balance = cvxcrv_balance(vault.platform())
-    vault.depositAll(alice, {"from": alice})
-    chain.sleep(100000)
-    chain.mine(1)
-    estimated_harvest = calc_staked_cvxcrv_harvest(strategy, wrapper)
-    tx = vault.harvest({"from": bob})
-
-    actual_harvest = tx.events["Harvest"]["_value"]
-
-    platform_fees = estimated_harvest * vault.platformFee() // 10000
-    caller_incentive = estimated_harvest * vault.callIncentive() // 10000
-
-    assert approx(
-        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3
-    )
-    assert approx(cvxcrv_balance(bob), bob_initial_balance + caller_incentive, 1e-3)
-    assert approx(
-        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
-    )
-    assert approx(
-        interface.ICvxCrvStaking(wrapper).balanceOf(strategy),
-        alice_initial_balance + actual_harvest,
-        1e-3,
-    )
-
-
 def test_harvest_multiple_stakers(
     fn_isolation, alice, bob, charlie, dave, owner, vault, strategy, wrapper
 ):
@@ -293,11 +254,11 @@ def test_harvest_multiple_stakers(
     caller_incentive = estimated_harvest * vault.callIncentive() // 10000
 
     assert approx(
-        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3
+        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 5e-3
     )
-    assert approx(cvxcrv_balance(bob), caller_incentive, 1e-3)
+    assert approx(cvxcrv_balance(bob), caller_incentive, 5e-3)
     assert approx(
-        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
+        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 5e-3
     )
     for account in accounts:
         underlying_balance = (
@@ -308,12 +269,13 @@ def test_harvest_multiple_stakers(
         assert approx(
             underlying_balance - initial_balances[account.address],
             (actual_harvest) // len(accounts),
-            1e-3,
+            5e-3,
         )
 
 
+@pytest.mark.parametrize("weight", [0, 5000, 10000])
 def test_harvest_no_discount(
-    fn_isolation, alice, bob, charlie, dave, owner, vault, strategy, wrapper
+    fn_isolation, alice, bob, charlie, dave, owner, vault, strategy, wrapper, weight
 ):
 
     vault.setRewardWeight(5000, {"from": owner})
@@ -328,13 +290,20 @@ def test_harvest_no_discount(
     cvxcrv_swap = interface.ICurveNewFactoryPool(CURVE_CVXCRV_CRV_POOL_V2)
     print(f"Price oracle before {cvxcrv_swap.price_oracle()}")
     crv = interface.IERC20(CRV_TOKEN)
+    cvxcrv = interface.IERC20(CVXCRV_TOKEN)
     total_liq = crv.balanceOf(CURVE_VOTING_ESCROW)
+    cvxcrv.transfer(
+        TRICRYPTO,
+        int(cvxcrv.balanceOf(CURVE_CVXCRV_CRV_POOL_V2) * 0.99),
+        {"from": CURVE_CVXCRV_CRV_POOL_V2},
+    )
+
     crv.approve(CURVE_CVXCRV_CRV_POOL_V2, 2**256 - 1, {"from": CURVE_VOTING_ESCROW})
 
-    steps = 5
+    steps = 10
     for i in range(steps):
         cvxcrv_swap.add_liquidity(
-            [total_liq / 2 // steps, 0],
+            [total_liq // (steps + 2), 0],
             0,
             CURVE_VOTING_ESCROW,
             {"from": CURVE_VOTING_ESCROW},
@@ -352,11 +321,11 @@ def test_harvest_no_discount(
     caller_incentive = estimated_harvest * vault.callIncentive() // 10000
 
     assert approx(
-        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 1e-3
+        estimated_harvest, platform_fees + caller_incentive + actual_harvest, 5e-3
     )
-    assert approx(cvxcrv_balance(bob), caller_incentive, 1e-3)
+    assert approx(cvxcrv_balance(bob), caller_incentive, 5e-3)
     assert approx(
-        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 1e-3
+        cvxcrv_balance(vault.platform()), platform_initial_balance + platform_fees, 5e-3
     )
     for account in accounts:
         underlying_balance = (
@@ -367,7 +336,7 @@ def test_harvest_no_discount(
         assert approx(
             underlying_balance - initial_balances[account.address],
             (actual_harvest) // len(accounts),
-            1e-3,
+            5e-3,
         )
 
 

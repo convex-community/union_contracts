@@ -18,6 +18,7 @@ from ....utils.constants import (
     NEW_CVX_CRV_STAKING,
     CVX,
     THREECRV_TOKEN,
+    CRVUSD_TOKEN,
 )
 
 
@@ -41,6 +42,8 @@ def strategy(owner, vault, wrapper):
     strategy.updateRewardToken(CRV, 1)
     strategy.updateRewardToken(CVX, 1)
     strategy.updateRewardToken(THREECRV_TOKEN, 1)
+    strategy.updateRewardToken(THREECRV_TOKEN, 2)
+    strategy.updateRewardToken(CRVUSD_TOKEN, 1)
     yield strategy
 
 
