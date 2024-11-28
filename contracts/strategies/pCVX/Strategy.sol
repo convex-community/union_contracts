@@ -17,7 +17,11 @@ contract PCvxStrategy is Ownable, IStrategy {
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
-    constructor(address _vault, address _rewards, address _pcvx) {
+    constructor(
+        address _vault,
+        address _rewards,
+        address _pcvx
+    ) {
         vault = _vault;
         stakingRewards = _rewards;
         pCVX = _pcvx;
@@ -52,9 +56,11 @@ contract PCvxStrategy is Ownable, IStrategy {
     /// @dev Can be called by the vault only
     /// @param _caller - the address calling the harvest on the vault
     /// @return harvested - the amount harvested
-    function harvest(
-        address _caller
-    ) external onlyVault returns (uint256 harvested) {
+    function harvest(address _caller)
+        external
+        onlyVault
+        returns (uint256 harvested)
+    {
         // claim rewards
         IStakingRewards(stakingRewards).getReward();
 
