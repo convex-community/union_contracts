@@ -103,11 +103,9 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
 
     /// @notice Updates the address to which platform fees are paid out
     /// @param _platform - the new platform wallet address
-    function setPlatform(address _platform)
-        external
-        onlyOwner
-        notToZeroAddress(_platform)
-    {
+    function setPlatform(
+        address _platform
+    ) external onlyOwner notToZeroAddress(_platform) {
         platform = _platform;
         emit PlatformUpdated(_platform);
     }
@@ -142,11 +140,9 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @param user - address whose claimable amount to query
     /// @return amount - claimable amount
     /// @dev Does not account for penalties and fees
-    function balanceOfUnderlying(address user)
-        external
-        view
-        returns (uint256 amount)
-    {
+    function balanceOfUnderlying(
+        address user
+    ) external view returns (uint256 amount) {
         require(totalSupply() > 0, "No users");
         return ((balanceOf(user) * totalUnderlying()) / totalSupply());
     }
@@ -240,11 +236,10 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @param _to - the address that will receive the shares
     /// @param _amount - the amount of cvxCrv to deposit
     /// @return _shares - the amount of shares issued
-    function deposit(address _to, uint256 _amount)
-        public
-        notToZeroAddress(_to)
-        returns (uint256 _shares)
-    {
+    function deposit(
+        address _to,
+        uint256 _amount
+    ) public notToZeroAddress(_to) returns (uint256 _shares) {
         require(_amount > 0, "Deposit too small");
 
         uint256 _before = totalUnderlying();
@@ -277,10 +272,9 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @notice Unstake cvxCrv in proportion to the amount of shares sent
     /// @param _shares - the number of shares sent
     /// @return _withdrawable - the withdrawable cvxCrv amount
-    function _withdraw(uint256 _shares)
-        internal
-        returns (uint256 _withdrawable)
-    {
+    function _withdraw(
+        uint256 _shares
+    ) internal returns (uint256 _withdrawable) {
         require(totalSupply() > 0);
         // Computes the amount withdrawable based on the number of shares sent
         uint256 amount = (_shares * totalUnderlying()) / totalSupply();
@@ -310,11 +304,10 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @param _to - address to send cvxCrv to
     /// @param _shares - the number of shares sent
     /// @return withdrawn - the amount of cvxCRV returned to the user
-    function withdraw(address _to, uint256 _shares)
-        public
-        notToZeroAddress(_to)
-        returns (uint256 withdrawn)
-    {
+    function withdraw(
+        address _to,
+        uint256 _shares
+    ) public notToZeroAddress(_to) returns (uint256 withdrawn) {
         // Withdraw requested amount of cvxCrv
         uint256 _withdrawable = _withdraw(_shares);
         // And sends back cvxCrv to user
@@ -326,11 +319,9 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @notice Withdraw all of a users' position as cvxCRV
     /// @param _to - address to send cvxCrv to
     /// @return withdrawn - the amount of cvxCRV returned to the user
-    function withdrawAll(address _to)
-        external
-        notToZeroAddress(_to)
-        returns (uint256 withdrawn)
-    {
+    function withdrawAll(
+        address _to
+    ) external notToZeroAddress(_to) returns (uint256 withdrawn) {
         return withdraw(_to, balanceOf(msg.sender));
     }
 
@@ -350,10 +341,10 @@ contract UnionVault is ClaimZaps, ERC20, Ownable {
     /// @notice Zap function to withdraw all shares to another token
     /// @param _to - address to send cvxCrv to
     /// @param option - what to swap to
-    function withdrawAllAs(address _to, Option option)
-        external
-        notToZeroAddress(_to)
-    {
+    function withdrawAllAs(
+        address _to,
+        Option option
+    ) external notToZeroAddress(_to) {
         uint256 _withdrawn = _withdraw(balanceOf(msg.sender));
         _claimAs(_to, _withdrawn, option);
     }

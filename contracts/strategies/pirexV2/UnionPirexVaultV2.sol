@@ -129,12 +129,9 @@ contract UnionPirexVaultV2 is Ownable, ERC4626 {
         @param  shares  uint256  Shares
         @return uint256  Assets
      */
-    function previewRedeem(uint256 shares)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function previewRedeem(
+        uint256 shares
+    ) public view override returns (uint256) {
         // Calculate assets based on a user's % ownership of vault shares
         uint256 assets = convertToAssets(shares);
 
@@ -155,12 +152,9 @@ contract UnionPirexVaultV2 is Ownable, ERC4626 {
         @param  assets  uint256  Assets
         @return uint256  Shares
      */
-    function previewWithdraw(uint256 assets)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function previewWithdraw(
+        uint256 assets
+    ) public view override returns (uint256) {
         // Calculate shares based on the specified assets' proportion of the pool
         uint256 shares = convertToShares(assets);
 

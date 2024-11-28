@@ -35,11 +35,7 @@ contract ClaimZaps is ReentrancyGuard, UnionBase {
         );
     }
 
-    function _claimAs(
-        address account,
-        uint256 amount,
-        Option option
-    ) internal {
+    function _claimAs(address account, uint256 amount, Option option) internal {
         _claim(account, amount, option, 0);
     }
 

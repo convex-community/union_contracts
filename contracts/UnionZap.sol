@@ -86,10 +86,10 @@ contract UnionZap is Ownable, UnionBase {
     /// @notice Add a pool and its swap params to the registry
     /// @param token - Address of the token to swap on Curve
     /// @param params - Address of the pool and WETH index there
-    function addCurvePool(address token, curveSwapParams calldata params)
-        external
-        onlyOwner
-    {
+    function addCurvePool(
+        address token,
+        curveSwapParams calldata params
+    ) external onlyOwner {
         curveRegistry[token] = params;
         IERC20(token).safeApprove(params.pool, 0);
         IERC20(token).safeApprove(params.pool, type(uint256).max);
@@ -101,10 +101,10 @@ contract UnionZap is Ownable, UnionBase {
     /// @param params - The Curve pool and distributor associated w/ the token
     /// @dev No removal options to avoid indexing errors with swaps, pass 0 weight for unused assets
     /// @dev Pool needs to be Curve v2 pool with price oracle
-    function updateOutputToken(address token, tokenContracts calldata params)
-        external
-        onlyOwner
-    {
+    function updateOutputToken(
+        address token,
+        tokenContracts calldata params
+    ) external onlyOwner {
         assert(params.pool != address(0));
         // if we don't have any pool info, it's an addition
         if (tokenInfo[token].pool == address(0)) {
@@ -144,22 +144,18 @@ contract UnionZap is Ownable, UnionBase {
 
     /// @notice Updates the address to which platform fees are paid out
     /// @param _platform - the new platform wallet address
-    function setPlatform(address _platform)
-        external
-        onlyOwner
-        notToZeroAddress(_platform)
-    {
+    function setPlatform(
+        address _platform
+    ) external onlyOwner notToZeroAddress(_platform) {
         platform = _platform;
         emit PlatformUpdated(_platform);
     }
 
     /// @notice Update the votium contract address to claim for
     /// @param _distributor - Address of the new contract
-    function updateVotiumDistributor(address _distributor)
-        external
-        onlyOwner
-        notToZeroAddress(_distributor)
-    {
+    function updateVotiumDistributor(
+        address _distributor
+    ) external onlyOwner notToZeroAddress(_distributor) {
         votiumDistributor = _distributor;
         emit VotiumDistributorUpdated(_distributor);
     }
@@ -169,11 +165,10 @@ contract UnionZap is Ownable, UnionBase {
     /// @param to - address to send the tokens to
     /// @dev This is needed to handle tokens that don't have ETH pairs on sushi
     /// or need to be swapped on other chains (NBST, WormholeLUNA...)
-    function retrieveTokens(address[] calldata tokens, address to)
-        external
-        onlyOwner
-        notToZeroAddress(to)
-    {
+    function retrieveTokens(
+        address[] calldata tokens,
+        address to
+    ) external onlyOwner notToZeroAddress(to) {
         for (uint256 i; i < tokens.length; ++i) {
             address token = tokens[i];
             uint256 tokenBalance = IERC20(token).balanceOf(address(this));
@@ -287,10 +282,10 @@ contract UnionZap is Ownable, UnionBase {
         IWETH(WETH_TOKEN).withdraw(_wethReceived);
     }
 
-    function _isEffectiveOutputToken(address _token, uint32[] calldata _weights)
-        internal
-        returns (bool)
-    {
+    function _isEffectiveOutputToken(
+        address _token,
+        uint32[] calldata _weights
+    ) internal returns (bool) {
         for (uint256 j; j < _weights.length; ++j) {
             if (_token == outputTokens[j] && _weights[j] > 0) {
                 return true;
@@ -303,10 +298,9 @@ contract UnionZap is Ownable, UnionBase {
     /// @param claimParams - an array containing the info necessary to claim for
     /// each available token
     /// @dev Used to retrieve tokens that need to be transferred
-    function claim(IMultiMerkleStash.claimParam[] calldata claimParams)
-        public
-        onlyOwner
-    {
+    function claim(
+        IMultiMerkleStash.claimParam[] calldata claimParams
+    ) public onlyOwner {
         require(claimParams.length > 0, "No claims");
         // claim all from votium
         IMultiMerkleStash(votiumDistributor).claimMulti(
@@ -425,10 +419,10 @@ contract UnionZap is Ownable, UnionBase {
     /// @param _minAmountOut - the min amount of cvxCRV expected
     /// @param _lock - whether to lock or swap
     /// @return the amount of cvxCrv obtained
-    function _toCvxCrv(uint256 _minAmountOut, bool _lock)
-        internal
-        returns (uint256)
-    {
+    function _toCvxCrv(
+        uint256 _minAmountOut,
+        bool _lock
+    ) internal returns (uint256) {
         uint256 _crvBalance = IERC20(CRV_TOKEN).balanceOf(address(this));
         // swap on Curve if there is a premium for doing so
         if (!_lock) {
@@ -507,10 +501,9 @@ contract UnionZap is Ownable, UnionBase {
     /// @notice Gets ETH token price from curve pools with edge case for CRV pool
     /// @param _outputToken the token to get a price for
     /// @return the ETH price of the token
-    function _getPriceFromOracle(address _outputToken)
-        internal
-        returns (uint256)
-    {
+    function _getPriceFromOracle(
+        address _outputToken
+    ) internal returns (uint256) {
         if (_outputToken != CRV_TOKEN) {
             return ICurveV2Pool(tokenInfo[_outputToken].pool).price_oracle();
         } else {
@@ -581,11 +574,9 @@ contract UnionZap is Ownable, UnionBase {
 
     /// @notice Deposits rewards to their respective merkle distributors
     /// @param weights - weights of output assets (cvxCRV, FXS, CVX...)
-    function distribute(uint32[] calldata weights)
-        public
-        onlyOwner
-        validWeights(weights)
-    {
+    function distribute(
+        uint32[] calldata weights
+    ) public onlyOwner validWeights(weights) {
         for (uint256 i; i < weights.length; ++i) {
             if (weights[i] > 0) {
                 address _outputToken = outputTokens[i];

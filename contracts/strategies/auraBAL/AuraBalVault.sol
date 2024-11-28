@@ -26,10 +26,10 @@ contract AuraBalVault is GenericUnionVault {
     /// @notice Adds or remove an address from the harvesters' whitelist
     /// @param _harvester address of the authorized harvester
     /// @param _authorized Whether to add or remove harvester
-    function updateAuthorizedHarvesters(address _harvester, bool _authorized)
-        external
-        onlyOwner
-    {
+    function updateAuthorizedHarvesters(
+        address _harvester,
+        bool _authorized
+    ) external onlyOwner {
         authorizedHarvesters[_harvester] = _authorized;
     }
 

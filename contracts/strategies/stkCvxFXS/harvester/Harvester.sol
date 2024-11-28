@@ -104,10 +104,9 @@ contract stkCvxFxsHarvester is stkCvxFxsStrategyBase {
     /// @notice Compute a min amount of ETH based on pool oracle for cvx
     /// @param _amount - amount to swap
     /// @return min acceptable amount of ETH
-    function _calcMinAmountOutCvxEth(uint256 _amount)
-        internal
-        returns (uint256)
-    {
+    function _calcMinAmountOutCvxEth(
+        uint256 _amount
+    ) internal returns (uint256) {
         uint256 _cvxEthPrice = cvxEthSwap.price_oracle();
         uint256 _amountEthPrice = (_amount * _cvxEthPrice) / 1e18;
         return ((_amountEthPrice * allowedSlippage) / DECIMALS);

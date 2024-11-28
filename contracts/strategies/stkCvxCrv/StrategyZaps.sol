@@ -160,10 +160,10 @@ contract stkCvxCrvZaps {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of ETH obtained after the swap
-    function _crvToEth(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _crvToEth(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return
             crvEthSwap.exchange{value: 0}(
                 TRICRV_CRV_INDEX,
@@ -178,10 +178,10 @@ contract stkCvxCrvZaps {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of CRV obtained after the swap
-    function _ethToCrv(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _ethToCrv(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return
             crvEthSwap.exchange{value: amount}(
                 TRICRV_ETH_INDEX,
@@ -196,10 +196,10 @@ contract stkCvxCrvZaps {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of CRV obtained after the swap
-    function _ethToCvx(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _ethToCvx(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return
             cvxEthSwap.exchange_underlying{value: amount}(
                 CVXETH_ETH_INDEX,
@@ -214,11 +214,10 @@ contract stkCvxCrvZaps {
     /// @notice Deposit into the pounder from ETH
     /// @param minAmountOut - min amount of lp tokens expected
     /// @param to - address to stake on behalf of
-    function depositFromEth(uint256 minAmountOut, address to)
-        external
-        payable
-        notToZeroAddress(to)
-    {
+    function depositFromEth(
+        uint256 minAmountOut,
+        address to
+    ) external payable notToZeroAddress(to) {
         require(msg.value > 0, "cheap");
         _depositFromEth(msg.value, minAmountOut, to);
     }
@@ -342,10 +341,10 @@ contract stkCvxCrvZaps {
     /// @param _amount - amount to withdraw
     /// @param _minAmountOut - min amount of ETH expected
     /// @return amount of ETH withdrawn
-    function _claimAsEth(uint256 _amount, uint256 _minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _claimAsEth(
+        uint256 _amount,
+        uint256 _minAmountOut
+    ) internal returns (uint256) {
         uint256 _crvAmount = claimFromVaultAsCrv(_amount, 0, address(this));
         return _crvToEth(_crvAmount, _minAmountOut);
     }

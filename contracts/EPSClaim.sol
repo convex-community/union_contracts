@@ -23,10 +23,10 @@ contract EPSClaim is Ownable {
         bytes32[] merkleProof;
     }
 
-    function claim(claimParam[] calldata claimParams, address to)
-        external
-        onlyOwner
-    {
+    function claim(
+        claimParam[] calldata claimParams,
+        address to
+    ) external onlyOwner {
         require(to != address(0));
         for (uint256 i; i < claimParams.length; ++i) {
             IMerkleDrop(claimParams[i].claimContract).claim(

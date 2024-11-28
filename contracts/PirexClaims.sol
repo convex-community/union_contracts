@@ -67,10 +67,10 @@ contract PirexClaims is Ownable, UnionBase {
     /// @notice Add a pool and its swap params to the registry
     /// @param token - Address of the token to swap on Curve
     /// @param params - Address of the pool and WETH index there
-    function addCurvePool(address token, curveSwapParams calldata params)
-        external
-        onlyOwner
-    {
+    function addCurvePool(
+        address token,
+        curveSwapParams calldata params
+    ) external onlyOwner {
         curveRegistry[token] = params;
         IERC20(token).safeApprove(params.pool, 0);
         IERC20(token).safeApprove(params.pool, type(uint256).max);
@@ -106,10 +106,10 @@ contract PirexClaims is Ownable, UnionBase {
     /// @param to - address to send the tokens to
     /// @dev This is needed to handle tokens that don't have ETH pairs on sushi
     /// or need to be swapped on other chains (NBST, WormholeLUNA...)
-    function retrieveTokens(address[] calldata tokens, address to)
-        external
-        onlyOwner
-    {
+    function retrieveTokens(
+        address[] calldata tokens,
+        address to
+    ) external onlyOwner {
         require(to != address(0));
         for (uint256 i; i < tokens.length; ++i) {
             address token = tokens[i];
@@ -227,10 +227,10 @@ contract PirexClaims is Ownable, UnionBase {
     /// @param rewardIndexes - an array containing the info necessary to claim for
     /// each available token
     /// @dev Used to retrieve tokens that need to be transferred
-    function claim(uint256 epoch, uint256[] calldata rewardIndexes)
-        public
-        onlyOwner
-    {
+    function claim(
+        uint256 epoch,
+        uint256[] calldata rewardIndexes
+    ) public onlyOwner {
         // claim all from strat
         IPirexStrategy(pcvxStrategy).redeemRewards(epoch, rewardIndexes);
     }

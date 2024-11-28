@@ -83,12 +83,9 @@ contract StakingRewards is ReentrancyGuard, Ownable {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount)
-        external
-        nonReentrant
-        updateReward(msg.sender)
-        returns (bool)
-    {
+    function stake(
+        uint256 amount
+    ) external nonReentrant updateReward(msg.sender) returns (bool) {
         require(amount > 0, "Cannot stake 0");
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         _totalSupply = _totalSupply.add(amount);
@@ -97,12 +94,9 @@ contract StakingRewards is ReentrancyGuard, Ownable {
         return true;
     }
 
-    function withdraw(uint256 amount)
-        public
-        nonReentrant
-        updateReward(msg.sender)
-        returns (bool)
-    {
+    function withdraw(
+        uint256 amount
+    ) public nonReentrant updateReward(msg.sender) returns (bool) {
         require(amount > 0, "Cannot withdraw 0");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
@@ -134,11 +128,9 @@ contract StakingRewards is ReentrancyGuard, Ownable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function notifyRewardAmount(uint256 reward)
-        external
-        onlyDistributor
-        updateReward(address(0))
-    {
+    function notifyRewardAmount(
+        uint256 reward
+    ) external onlyDistributor updateReward(address(0)) {
         if (block.timestamp >= periodFinish) {
             rewardRate = reward.div(rewardsDuration);
         } else {
@@ -163,10 +155,10 @@ contract StakingRewards is ReentrancyGuard, Ownable {
     }
 
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount)
-        external
-        onlyOwner
-    {
+    function recoverERC20(
+        address tokenAddress,
+        uint256 tokenAmount
+    ) external onlyOwner {
         require(
             tokenAddress != address(stakingToken),
             "Cannot withdraw the staking token"

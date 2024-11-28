@@ -9,9 +9,9 @@ contract PrismaSwapper is Ownable {
     using SafeERC20 for IERC20;
 
     address public constant CURVE_PRISMA_ETH_POOL =
-    0x322135Dd9cBAE8Afa84727d9aE1434b5B3EBA44B;
+        0x322135Dd9cBAE8Afa84727d9aE1434b5B3EBA44B;
     address public constant PRISMA_TOKEN =
-    0xdA47862a83dac0c112BA89c6abC2159b95afd71C;
+        0xdA47862a83dac0c112BA89c6abC2159b95afd71C;
 
     address public depositor;
     bool public useOracle = true;
@@ -35,7 +35,10 @@ contract PrismaSwapper is Ownable {
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
         IERC20(PRISMA_TOKEN).safeApprove(CURVE_PRISMA_ETH_POOL, 0);
-        IERC20(PRISMA_TOKEN).safeApprove(CURVE_PRISMA_ETH_POOL, type(uint256).max);
+        IERC20(PRISMA_TOKEN).safeApprove(
+            CURVE_PRISMA_ETH_POOL,
+            type(uint256).max
+        );
     }
 
     /// @notice Change the contract authorized to call buy and sell functions
@@ -44,7 +47,6 @@ contract PrismaSwapper is Ownable {
         require(_depositor != address(0));
         depositor = _depositor;
     }
-
 
     /// @notice Buy PRISMA with ETH
     /// @param amount - amount of ETH to buy with
@@ -78,16 +80,18 @@ contract PrismaSwapper is Ownable {
         uint256 _minAmountOut = 0;
         if (useOracle) {
             uint256 _ethPrismaPrice = prismaEthSwap.price_oracle();
-            uint256 _oracleAmount = ethToPrisma ? (amount * 1e18) / _ethPrismaPrice : (amount * _ethPrismaPrice) / 1e18;
+            uint256 _oracleAmount = ethToPrisma
+                ? (amount * 1e18) / _ethPrismaPrice
+                : (amount * _ethPrismaPrice) / 1e18;
             _minAmountOut = ((_oracleAmount * allowedSlippage) / DECIMALS);
         }
         return
             prismaEthSwap.exchange_underlying{value: ethToPrisma ? amount : 0}(
-            ethToPrisma ? PRISMAETH_ETH_INDEX : PRISMAETH_PRISMA_INDEX,
-            ethToPrisma ? PRISMAETH_PRISMA_INDEX : PRISMAETH_ETH_INDEX,
-            amount,
-            _minAmountOut
-        );
+                ethToPrisma ? PRISMAETH_ETH_INDEX : PRISMAETH_PRISMA_INDEX,
+                ethToPrisma ? PRISMAETH_PRISMA_INDEX : PRISMAETH_ETH_INDEX,
+                amount,
+                _minAmountOut
+            );
     }
 
     receive() external payable {}

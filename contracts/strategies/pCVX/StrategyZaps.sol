@@ -269,11 +269,9 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
     /// @notice Withdraw as native ETH (internal)
     /// @param _amount - amount to withdraw
     /// @return amount of ETH withdrawn
-    function _claimAsEth(uint256 _amount)
-        public
-        nonReentrant
-        returns (uint256)
-    {
+    function _claimAsEth(
+        uint256 _amount
+    ) public nonReentrant returns (uint256) {
         _claimAndWithdraw(_amount);
         uint256 _cvxAmount = _claimAsCvx(
             IERC20(PXCVX_TOKEN).balanceOf(address(this)),
@@ -334,10 +332,10 @@ contract PCvxZaps is UnionBase, ReentrancyGuard {
     /// @param _amount - amount to withdraw
     /// @param _minAmountOut - min amount received
     /// @return amount of CRV withdrawn
-    function _claimAsCrv(uint256 _amount, uint256 _minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _claimAsCrv(
+        uint256 _amount,
+        uint256 _minAmountOut
+    ) internal returns (uint256) {
         uint256 _ethAmount = _claimAsEth(_amount);
         return _swapEthToCrv(_ethAmount, _minAmountOut);
     }

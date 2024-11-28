@@ -16,11 +16,9 @@ contract AssetRegistry {
         assetAllocations[msg.sender] = choices;
     }
 
-    function getAllocations(address[] calldata members)
-        external
-        view
-        returns (uint16[16][] memory)
-    {
+    function getAllocations(
+        address[] calldata members
+    ) external view returns (uint16[16][] memory) {
         uint256 n = members.length;
         uint16[16][] memory allocations = new uint16[16][](n);
         for (uint256 i = 0; i < n; i++) {

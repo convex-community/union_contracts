@@ -40,10 +40,10 @@ contract stkCvxCrvStrategy is Ownable {
     /// @notice update the list and status of reward tokens
     /// @param _token - token address
     /// @param _status - 1 for active, else inactive
-    function updateRewardToken(address _token, uint256 _status)
-        public
-        onlyOwner
-    {
+    function updateRewardToken(
+        address _token,
+        uint256 _status
+    ) public onlyOwner {
         require(_status > 0, "can't delete");
         if (rewardTokenStatus[_token] == 0) {
             rewardTokens.push(_token);

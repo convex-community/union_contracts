@@ -169,11 +169,10 @@ contract CvxFxsZaps is Ownable, CvxFxsStrategyBase, ReentrancyGuard {
     /// @notice Deposit into the pounder from ETH
     /// @param minAmountOut - min amount of lp tokens expected
     /// @param to - address to stake on behalf of
-    function depositFromEth(uint256 minAmountOut, address to)
-        external
-        payable
-        notToZeroAddress(to)
-    {
+    function depositFromEth(
+        uint256 minAmountOut,
+        address to
+    ) external payable notToZeroAddress(to) {
         require(msg.value > 0, "cheap");
         _depositFromEth(msg.value, minAmountOut, to);
     }
