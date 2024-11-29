@@ -22,7 +22,7 @@ def test_manual_claim_workflow(
     merkle_distributor_v2,
     vault,
 ):
-    weights = [MAX_WEIGHT_1E9, 0, 0, 0]
+    weights = [MAX_WEIGHT_1E9, 0, 0, 0, 0]
     gas_refund = 3e16
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
@@ -50,10 +50,10 @@ def test_manual_claim_workflow(
         0,
         [ALCX, WETH],
         owner.address,
-        int(time.time() + 120),
+        int(time.time() + 1200),
         {"from": owner},
     )
-    eth_amount = single_swap_tx.return_value[-1]
+    eth_amount = single_swap_tx.events['Swap']['amount0Out']
     owner.transfer(union_contract, eth_amount)
     original_caller_balance = owner.balance()
 
