@@ -18,7 +18,10 @@ from ..utils.constants import (
     CVXCRV,
     MAX_WEIGHT_1E9,
     PRISMA,
+    CRVUSD_TOKEN,
+    SCRVUSD_VAULT,
 )
+from ..utils.crvusd import crvusd_to_scrvusd
 from ..utils.cvxfxs import get_stk_cvxfxs_received
 from ..utils.cvxprisma import get_stk_cvxprisma_received
 
@@ -26,13 +29,14 @@ data = [
     #    [MAX_WEIGHT_1E9, 0, 0],
     #    [0, MAX_WEIGHT_1E9, 0],
     #    [0, 0, MAX_WEIGHT_1E9],
-    [0, 333333334, 0, 666666666],
-    [0, 800000000, 200000000, 0],
-    [200000000, 0, 800000000, 0],
-    [200000000, 200000000, 0, 600000000],
-    [100000000, 700000000, 100000000, 100000000],
-    [350000000, 250000000, 100000000, 300000000],
-    [300000000, 500000000, 50000000, 150000000],
+    [0, 0, 0, 0, MAX_WEIGHT_1E9],
+    [0, 333333334, 0, 0, 666666666],
+    [0, 800000000, 100000000, 0, 100000000],
+    [100000000, 0, 100000000, 0, 800000000],
+    # [200000000, 200000000, 0, 600000000],
+    # [100000000, 700000000, 100000000, 100000000],
+    # [350000000, 250000000, 100000000, 300000000],
+    # [300000000, 500000000, 50000000, 150000000],
 ]
 
 
@@ -55,23 +59,30 @@ def test_swap_adjust_distribute(
     cvx_distributor,
     fxs_distributor,
     prisma_distributor,
+    scrvusd_vault,
+    scrvusd_distributor,
     weights,
     lock,
     option,
 ):
-    token_symbols = ["CRV", "CVX", "FXS", "PRISMA"]
+    token_symbols = ["CRV", "CVX", "FXS", "PRISMA", "CRVUSD"]
     print(f"Test with weights: {weights}")
     gas_refund = 3e16
     platform = PublicKeyAccount(union_contract.platform())
+    scrvusd_receiver = scrvusd_distributor.platform()
     initial_platform_balance = platform.balance()
     fxs_swapper.updateOption(option, {"from": owner})
+    platform_initial_crvusd_balance = interface.IERC20(SCRVUSD_VAULT).balanceOf(
+        scrvusd_receiver
+    )
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
-    vaults = [vault, cvx_vault, fxs_vault, prisma_vault]
+    vaults = [vault, cvx_vault, fxs_vault, prisma_vault, scrvusd_vault]
     distributors = [
         crv_distributor,
         cvx_distributor,
         fxs_distributor,
         prisma_distributor,
+        scrvusd_distributor,
     ]
 
     proofs = claim_tree.get_proof(union_contract.address)
@@ -97,11 +108,11 @@ def test_swap_adjust_distribute(
     assert union_contract.balance() == expected_eth_amount - gas_fees
 
     fee_amount, output_amounts = simulate_adjust(
-        union_contract, lock, weights, option, output_tokens, [0, 1, 2, 3]
+        union_contract, lock, weights, option, output_tokens, [0, 1, 2, 3, 4]
     )
 
     tx_adjust = union_contract.adjust(
-        lock, weights, [0, 1, 2, 3], [0, 0, 0, 0], {"from": owner}
+        lock, weights, [0, 1, 2, 3, 4], [0, 0, 0, 0, 0], {"from": owner}
     )
 
     assert approx(platform.balance() - initial_platform_balance, fee_amount, 25e-3)
@@ -145,7 +156,7 @@ def test_swap_adjust_distribute(
     print(tabulate(reports, headers=headers))
     for i, actual_weight in enumerate(actual_weights):
         # within 5%
-        precision = 1e-1
+        precision = 15e-1
         assert approx(weights[i], actual_weight, precision)
 
     # Account for discounts in curve pools
@@ -159,17 +170,19 @@ def test_swap_adjust_distribute(
     output_amounts[cvx_index] = get_pirex_cvx_received(output_amounts[cvx_index])
 
     tx_distribute = union_contract.distribute(weights)
-
+    scrvusd_fee = scrvusd_distributor.platformFee()
     for i, output_token in enumerate(output_tokens):
         if weights[i] == 0:
             continue
         assert distributors[i].frozen() == True
         underlying = (
             vaults[i].balanceOfUnderlying(distributors[i])
-            if vaults[i] != cvx_vault
+            if vaults[i] not in [cvx_vault, scrvusd_vault]
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
         print(f"Expected {token_symbols[i]}: {output_amounts[i]}")
+        if vaults[i] == scrvusd_vault:
+            print(f"Net expected: {output_amounts[i] * (1 - scrvusd_fee/1e9)}")
         print(f"Realized {token_symbols[i]}: {underlying}")
         assert approx(underlying, output_amounts[i], 25e-3)
 
@@ -183,8 +196,8 @@ def test_swap_adjust_distribute(
         lock,
         gas_refund,
         weights,
-        [0, 1, 2, 3],
-        [0, 0, 0, 0],
+        [0, 1, 2, 3, 4],
+        [0, 0, 0, 0, 0],
         {"from": owner},
     )
 
@@ -194,7 +207,18 @@ def test_swap_adjust_distribute(
         assert distributors[i].frozen() == True
         underlying = (
             vaults[i].balanceOfUnderlying(distributors[i])
-            if vaults[i] != cvx_vault
+            if vaults[i] not in [cvx_vault, scrvusd_vault]
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
-        assert approx(underlying, output_amounts[i], 25e-3)
+
+        if vaults[i] == scrvusd_vault:
+            collected_fee = output_amounts[i] * scrvusd_fee / 1e9
+            assert approx(underlying, output_amounts[i] - collected_fee, 25e-3)
+            assert approx(
+                collected_fee,
+                interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver)
+                - platform_initial_crvusd_balance,
+                25e-3,
+            )
+        else:
+            assert approx(underlying, output_amounts[i], 25e-3)

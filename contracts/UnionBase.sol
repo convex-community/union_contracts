@@ -41,10 +41,10 @@ contract UnionBase {
     /// @param amount - amount to swap
     /// @param recipient - where swapped tokens will be sent to
     /// @return amount of CRV obtained after the swap
-    function _swapCrvToCvxCrv(uint256 amount, address recipient)
-        internal
-        returns (uint256)
-    {
+    function _swapCrvToCvxCrv(
+        uint256 amount,
+        address recipient
+    ) internal returns (uint256) {
         return _crvToCvxCrv(amount, recipient, 0);
     }
 
@@ -85,10 +85,10 @@ contract UnionBase {
     /// @param amount - amount to swap
     /// @param recipient - where swapped tokens will be sent to
     /// @return amount of CRV obtained after the swap
-    function _swapCvxCrvToCrv(uint256 amount, address recipient)
-        internal
-        returns (uint256)
-    {
+    function _swapCvxCrvToCrv(
+        uint256 amount,
+        address recipient
+    ) internal returns (uint256) {
         return _cvxCrvToCrv(amount, recipient, 0);
     }
 
@@ -136,10 +136,10 @@ contract UnionBase {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of ETH obtained after the swap
-    function _swapCrvToEth(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _swapCrvToEth(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return _crvToEth(amount, minAmountOut);
     }
 
@@ -147,10 +147,10 @@ contract UnionBase {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of ETH obtained after the swap
-    function _crvToEth(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _crvToEth(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return
             crvEthSwap.exchange{value: 0}(
                 TRICRV_CRV_INDEX,
@@ -172,10 +172,10 @@ contract UnionBase {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of CRV obtained after the swap
-    function _swapEthToCrv(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _swapEthToCrv(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return _ethToCrv(amount, minAmountOut);
     }
 
@@ -183,10 +183,10 @@ contract UnionBase {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of CRV obtained after the swap
-    function _ethToCrv(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _ethToCrv(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return
             crvEthSwap.exchange{value: amount}(
                 TRICRV_ETH_INDEX,
@@ -208,10 +208,10 @@ contract UnionBase {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of CRV obtained after the swap
-    function _swapEthToCvx(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _swapEthToCvx(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return _ethToCvx(amount, minAmountOut);
     }
 
@@ -219,10 +219,10 @@ contract UnionBase {
     /// @param amount - amount to swap
     /// @param minAmountOut - minimum expected amount of output tokens
     /// @return amount of CRV obtained after the swap
-    function _ethToCvx(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _ethToCvx(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return
             cvxEthSwap.exchange_underlying{value: amount}(
                 CVXETH_ETH_INDEX,

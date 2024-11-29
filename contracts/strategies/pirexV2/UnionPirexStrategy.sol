@@ -32,9 +32,10 @@ contract UnionPirexStrategyV2 is UnionPirexStaking {
         @param  epoch          uint256    Rewards epoch
         @param  rewardIndexes  uint256[]  Reward indexes
      */
-    function redeemRewards(uint256 epoch, uint256[] calldata rewardIndexes)
-        external
-    {
+    function redeemRewards(
+        uint256 epoch,
+        uint256[] calldata rewardIndexes
+    ) external {
         pirexCvx.redeemSnapshotRewards(epoch, rewardIndexes, distributor);
     }
 }

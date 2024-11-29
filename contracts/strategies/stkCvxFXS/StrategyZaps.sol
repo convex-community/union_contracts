@@ -210,20 +210,20 @@ contract stkCvxFxsZaps is Ownable, stkCvxFxsStrategyBase {
     /// @param amount - amount to withdraw
     /// @param minAmountOut - minimum amount of LP tokens expected
     /// @return amount of underlying withdrawn
-    function _cvxFxsToFxs(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _cvxFxsToFxs(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         return cvxFxsFxsSwap.exchange_underlying(1, 0, amount, minAmountOut);
     }
 
     /// @notice Retrieves a user's vault shares and withdraw all
     /// @param amount - amount of shares to retrieve
     /// @return amount of underlying withdrawn
-    function _claimAndWithdraw(uint256 amount, uint256 minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _claimAndWithdraw(
+        uint256 amount,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
         IERC20(vault).safeTransferFrom(msg.sender, address(this), amount);
         uint256 _cvxFxsAmount = IGenericVault(vault).withdrawAll(address(this));
         return _cvxFxsToFxs(_cvxFxsAmount, minAmountOut);

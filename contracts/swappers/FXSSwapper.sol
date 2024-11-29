@@ -114,10 +114,10 @@ contract FXSSwapper is Ownable {
     /// @param _ethAmount - amount to swap
     /// @param _option - the option to use when swapping
     /// @return amount of FXS obtained after the swap
-    function _swapEthForFxs(uint256 _ethAmount, SwapOption _option)
-        internal
-        returns (uint256)
-    {
+    function _swapEthForFxs(
+        uint256 _ethAmount,
+        SwapOption _option
+    ) internal returns (uint256) {
         return _swapEthFxs(_ethAmount, _option, true);
     }
 
@@ -125,10 +125,10 @@ contract FXSSwapper is Ownable {
     /// @param _fxsAmount - amount to swap
     /// @param _option - the option to use when swapping
     /// @return amount of ETH obtained after the swap
-    function _swapFxsForEth(uint256 _fxsAmount, SwapOption _option)
-        internal
-        returns (uint256)
-    {
+    function _swapFxsForEth(
+        uint256 _fxsAmount,
+        SwapOption _option
+    ) internal returns (uint256) {
         return _swapEthFxs(_fxsAmount, _option, false);
     }
 
@@ -136,10 +136,10 @@ contract FXSSwapper is Ownable {
     /// @param _amount - amount to swap
     /// @param _ethToFxs - whether to swap from eth to fxs or the inverse
     /// @return amount of token obtained after the swap
-    function _curveEthFxsSwap(uint256 _amount, bool _ethToFxs)
-        internal
-        returns (uint256)
-    {
+    function _curveEthFxsSwap(
+        uint256 _amount,
+        bool _ethToFxs
+    ) internal returns (uint256) {
         return
             fxsEthSwap.exchange_underlying{value: _ethToFxs ? _amount : 0}(
                 _ethToFxs ? 0 : 1,
@@ -153,10 +153,10 @@ contract FXSSwapper is Ownable {
     /// @param _amount - amount to swap
     /// @param _ethToFxs - whether to swap from eth to fxs or the inverse
     /// @return amount of token obtained after the swap
-    function _uniV3EthFxsSwap(uint256 _amount, bool _ethToFxs)
-        internal
-        returns (uint256)
-    {
+    function _uniV3EthFxsSwap(
+        uint256 _amount,
+        bool _ethToFxs
+    ) internal returns (uint256) {
         IUniV3Router.ExactInputSingleParams memory _params = IUniV3Router
             .ExactInputSingleParams(
                 _ethToFxs ? WETH_TOKEN : FXS_TOKEN,
@@ -181,10 +181,9 @@ contract FXSSwapper is Ownable {
     /// @notice Swap ETH->FXS on UniV3 via stable pair
     /// @param _amount - amount to swap
     /// @return amount of token obtained after the swap
-    function _uniStableEthToFxsSwap(uint256 _amount)
-        internal
-        returns (uint256)
-    {
+    function _uniStableEthToFxsSwap(
+        uint256 _amount
+    ) internal returns (uint256) {
         uint24 fee = 500;
         IUniV3Router.ExactInputParams memory _params = IUniV3Router
             .ExactInputParams(
@@ -215,10 +214,9 @@ contract FXSSwapper is Ownable {
     /// @notice Swap FXS->ETH on UniV3 via stable pair
     /// @param _amount - amount to swap
     /// @return amount of token obtained after the swap
-    function _uniStableFxsToEthSwap(uint256 _amount)
-        internal
-        returns (uint256)
-    {
+    function _uniStableFxsToEthSwap(
+        uint256 _amount
+    ) internal returns (uint256) {
         address[] memory _path = new address[](2);
         _path[0] = FXS_TOKEN;
         _path[1] = FRAX_TOKEN;
@@ -253,10 +251,9 @@ contract FXSSwapper is Ownable {
     /// @notice Swap FXS->ETH on a mix of UniV2, UniV3 & Curve
     /// @param _amount - amount to swap
     /// @return amount of token obtained after the swap
-    function _uniCurve1FxsToEthSwap(uint256 _amount)
-        internal
-        returns (uint256)
-    {
+    function _uniCurve1FxsToEthSwap(
+        uint256 _amount
+    ) internal returns (uint256) {
         address[] memory _path = new address[](2);
         _path[0] = FXS_TOKEN;
         _path[1] = FRAX_TOKEN;
@@ -295,10 +292,9 @@ contract FXSSwapper is Ownable {
     /// @notice Swap ETH->FXS on a mix of UniV2, UniV3 & Curve
     /// @param _amount - amount to swap
     /// @return amount of token obtained after the swap
-    function _uniCurve1EthToFxsSwap(uint256 _amount)
-        internal
-        returns (uint256)
-    {
+    function _uniCurve1EthToFxsSwap(
+        uint256 _amount
+    ) internal returns (uint256) {
         uint24 fee = 500;
         IUniV3Router.ExactInputParams memory _params = IUniV3Router
             .ExactInputParams(

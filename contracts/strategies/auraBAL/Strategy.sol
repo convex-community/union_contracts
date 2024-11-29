@@ -50,10 +50,10 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
     ///      use address as zero handler
     /// @param _token the reward token to add
     /// @param _handler address of the contract that will sell for BAL or ETH
-    function addRewardToken(address _token, address _handler)
-        external
-        onlyOwner
-    {
+    function addRewardToken(
+        address _token,
+        address _handler
+    ) external onlyOwner {
         rewardTokens.push(_token);
         _updateRewardToken(_token, _handler);
     }
@@ -62,10 +62,10 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
     /// @dev Used to update a handler or retire a token (set handler to address 0)
     /// @param _token the reward token to add
     /// @param _handler address of the contract that will sell for BAL or ETH
-    function updateRewardToken(address _token, address _handler)
-        external
-        onlyOwner
-    {
+    function updateRewardToken(
+        address _token,
+        address _handler
+    ) external onlyOwner {
         _updateRewardToken(_token, _handler);
     }
 
@@ -98,10 +98,10 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
     /// @param _lock - whether to lock or swap
     /// @param _minAmountOut - minimum expected amount of auraBal
     /// @return the amount of auraBal obtained from lock or swap
-    function _lockOrSwap(bool _lock, uint256 _minAmountOut)
-        internal
-        returns (uint256)
-    {
+    function _lockOrSwap(
+        bool _lock,
+        uint256 _minAmountOut
+    ) internal returns (uint256) {
         uint256 _bptBalance = IERC20(BAL_ETH_POOL_TOKEN).balanceOf(
             address(this)
         );
@@ -120,10 +120,10 @@ contract AuraBalStrategy is Ownable, AuraBalStrategyBase {
         }
     }
 
-    function _levyFees(uint256 _auraBalBalance, address _caller)
-        internal
-        returns (uint256)
-    {
+    function _levyFees(
+        uint256 _auraBalBalance,
+        address _caller
+    ) internal returns (uint256) {
         uint256 platformFee = IGenericVault(vault).platformFee();
         uint256 callIncentive = IGenericVault(vault).callIncentive();
         uint256 _stakingAmount = _auraBalBalance;

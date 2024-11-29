@@ -69,11 +69,10 @@ contract stkCvxFxsStrategy is Ownable {
     /// @param _caller - the address calling the harvest on the vault
     /// @param _minAmountOut - min amount of cvxFxs expected
     /// @return harvested - the amount harvested
-    function harvest(address _caller, uint256 _minAmountOut)
-        external
-        onlyVault
-        returns (uint256 harvested)
-    {
+    function harvest(
+        address _caller,
+        uint256 _minAmountOut
+    ) external onlyVault returns (uint256 harvested) {
         // claim rewards
         cvxFxsStaking.getReward(address(this), harvester);
 

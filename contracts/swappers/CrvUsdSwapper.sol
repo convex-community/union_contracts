@@ -3,24 +3,24 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../interfaces/ICurveV2Pool.sol";
+import "../../interfaces/ICurveTriCryptoFactoryNG.sol";
 
-contract PrismaSwapper is Ownable {
+contract CrvUsdSwapper is Ownable {
     using SafeERC20 for IERC20;
 
-    address public constant CURVE_PRISMA_ETH_POOL =
-        0x322135Dd9cBAE8Afa84727d9aE1434b5B3EBA44B;
-    address public constant PRISMA_TOKEN =
-        0xdA47862a83dac0c112BA89c6abC2159b95afd71C;
+    address public constant TRICRV_POOL =
+        0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14;
+    address public constant CRVUSD_TOKEN =
+        0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E;
 
     address public depositor;
     bool public useOracle = true;
     uint256 public allowedSlippage = 9700;
     uint256 public constant DECIMALS = 10000;
-    uint256 public constant PRISMAETH_ETH_INDEX = 0;
-    uint256 public constant PRISMAETH_PRISMA_INDEX = 1;
+    uint256 public constant TRICRV_ETH_INDEX = 1;
+    uint256 public constant TRICRV_CRVUSD_INDEX = 0;
 
-    ICurveV2Pool prismaEthSwap = ICurveV2Pool(CURVE_PRISMA_ETH_POOL);
+    ICurveTriCryptoFactoryNG triCrvSwap = ICurveTriCryptoFactoryNG(TRICRV_POOL);
 
     constructor(address _depositor) {
         require(_depositor != address(0));
@@ -34,11 +34,8 @@ contract PrismaSwapper is Ownable {
 
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {
-        IERC20(PRISMA_TOKEN).safeApprove(CURVE_PRISMA_ETH_POOL, 0);
-        IERC20(PRISMA_TOKEN).safeApprove(
-            CURVE_PRISMA_ETH_POOL,
-            type(uint256).max
-        );
+        IERC20(CRVUSD_TOKEN).safeApprove(TRICRV_POOL, 0);
+        IERC20(CRVUSD_TOKEN).safeApprove(TRICRV_POOL, type(uint256).max);
     }
 
     /// @notice Change the contract authorized to call buy and sell functions
@@ -53,9 +50,7 @@ contract PrismaSwapper is Ownable {
     /// @return amount of PRISMA bought
     /// @dev ETH must have been sent to the contract prior
     function buy(uint256 amount) external onlyDepositor returns (uint256) {
-        uint256 _received = _swapEthPrisma(amount, true);
-        IERC20(PRISMA_TOKEN).safeTransfer(depositor, _received);
-        return _received;
+        return _swapEthCrvUsd(amount, true);
     }
 
     /// @notice Sell PRISMA for ETH
@@ -63,35 +58,40 @@ contract PrismaSwapper is Ownable {
     /// @return amount of ETH bought
     /// @dev PRISMA must have been sent to the contract prior
     function sell(uint256 amount) external onlyDepositor returns (uint256) {
-        uint256 _received = _swapEthPrisma(amount, false);
-        (bool success, ) = depositor.call{value: _received}("");
-        require(success, "ETH transfer failed");
-        return _received;
+        return _swapEthCrvUsd(amount, false);
     }
 
-    /// @notice Swap ETH<->Prisma on Curve
+    /// @notice Swap ETH<->crvUSD on Curve via triCRV pool
     /// @param amount - amount to swap
-    /// @param ethToPrisma - whether to swap from eth to prisma or the inverse
+    /// @param ethToCrvUsd - whether to swap from eth to prisma or the inverse
     /// @return amount of token obtained after the swap
-    function _swapEthPrisma(
+    function _swapEthCrvUsd(
         uint256 amount,
-        bool ethToPrisma
+        bool ethToCrvUsd
     ) internal returns (uint256) {
         uint256 _minAmountOut = 0;
         if (useOracle) {
-            uint256 _ethPrismaPrice = prismaEthSwap.price_oracle();
-            uint256 _oracleAmount = ethToPrisma
-                ? (amount * 1e18) / _ethPrismaPrice
-                : (amount * _ethPrismaPrice) / 1e18;
+            uint256 _ethCrvUsdPrice = triCrvSwap.price_oracle(0);
+            uint256 _oracleAmount = ethToCrvUsd
+                ? (amount * _ethCrvUsdPrice) / 1e18
+                : (amount * 1e18) / _ethCrvUsdPrice;
             _minAmountOut = ((_oracleAmount * allowedSlippage) / DECIMALS);
         }
         return
-            prismaEthSwap.exchange_underlying{value: ethToPrisma ? amount : 0}(
-                ethToPrisma ? PRISMAETH_ETH_INDEX : PRISMAETH_PRISMA_INDEX,
-                ethToPrisma ? PRISMAETH_PRISMA_INDEX : PRISMAETH_ETH_INDEX,
+            triCrvSwap.exchange_underlying{value: ethToCrvUsd ? amount : 0}(
+                ethToCrvUsd ? TRICRV_ETH_INDEX : TRICRV_CRVUSD_INDEX,
+                ethToCrvUsd ? TRICRV_CRVUSD_INDEX : TRICRV_ETH_INDEX,
                 amount,
-                _minAmountOut
+                _minAmountOut,
+                depositor
             );
+    }
+
+    /// @notice Wrapper function around TriCrv oracle to return ETH price of crvUSD
+    /// @dev This is to work with the Union contract which needs ETH price of asset
+    /// @return ETH price of crvUSD
+    function price_oracle() external view returns (uint256) {
+        return (1e18 * 1e18) / triCrvSwap.price_oracle(0);
     }
 
     receive() external payable {}

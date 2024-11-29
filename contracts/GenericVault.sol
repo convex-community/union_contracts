@@ -31,7 +31,9 @@ contract GenericUnionVault is ERC20, Ownable {
     event PlatformUpdated(address indexed _platform);
     event StrategySet(address indexed _strategy);
 
-    constructor(address _token)
+    constructor(
+        address _token
+    )
         ERC20(
             string(abi.encodePacked("Unionized ", ERC20(_token).name())),
             string(abi.encodePacked("u", ERC20(_token).symbol()))
@@ -66,11 +68,9 @@ contract GenericUnionVault is ERC20, Ownable {
 
     /// @notice Updates the address to which platform fees are paid out
     /// @param _platform - the new platform wallet address
-    function setPlatform(address _platform)
-        external
-        onlyOwner
-        notToZeroAddress(_platform)
-    {
+    function setPlatform(
+        address _platform
+    ) external onlyOwner notToZeroAddress(_platform) {
         platform = _platform;
         emit PlatformUpdated(_platform);
     }
@@ -78,11 +78,9 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @notice Set the address of the strategy contract
     /// @dev Can only be set once
     /// @param _strategy - address of the strategy contract
-    function setStrategy(address _strategy)
-        external
-        onlyOwner
-        notToZeroAddress(_strategy)
-    {
+    function setStrategy(
+        address _strategy
+    ) external onlyOwner notToZeroAddress(_strategy) {
         require(strategy == address(0), "Strategy already set");
         strategy = _strategy;
         emit StrategySet(_strategy);
@@ -98,11 +96,9 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @param user - address whose claimable amount to query
     /// @return amount - claimable amount
     /// @dev Does not account for penalties and fees
-    function balanceOfUnderlying(address user)
-        external
-        view
-        returns (uint256 amount)
-    {
+    function balanceOfUnderlying(
+        address user
+    ) external view returns (uint256 amount) {
         require(totalSupply() > 0, "No users");
         return ((balanceOf(user) * totalUnderlying()) / totalSupply());
     }
@@ -112,11 +108,10 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @param _to - the address that will receive the shares
     /// @param _amount - the amount of underlying to deposit
     /// @return _shares - the amount of shares issued
-    function deposit(address _to, uint256 _amount)
-        public
-        notToZeroAddress(_to)
-        returns (uint256 _shares)
-    {
+    function deposit(
+        address _to,
+        uint256 _amount
+    ) public notToZeroAddress(_to) returns (uint256 _shares) {
         require(_amount > 0, "Deposit too small");
 
         uint256 _before = totalUnderlying();
@@ -145,10 +140,9 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @notice Unstake underlying in proportion to the amount of shares sent
     /// @param _shares - the number of shares sent
     /// @return _withdrawable - the withdrawable underlying amount
-    function _withdraw(uint256 _shares)
-        internal
-        returns (uint256 _withdrawable)
-    {
+    function _withdraw(
+        uint256 _shares
+    ) internal returns (uint256 _withdrawable) {
         require(totalSupply() > 0);
         // Computes the amount withdrawable based on the number of shares sent
         uint256 amount = (_shares * totalUnderlying()) / totalSupply();
@@ -178,11 +172,10 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @param _to - address to send underlying to
     /// @param _shares - the number of shares sent
     /// @return withdrawn - the amount of underlying returned to the user
-    function withdraw(address _to, uint256 _shares)
-        public
-        notToZeroAddress(_to)
-        returns (uint256 withdrawn)
-    {
+    function withdraw(
+        address _to,
+        uint256 _shares
+    ) public notToZeroAddress(_to) returns (uint256 withdrawn) {
         // Withdraw requested amount of underlying
         uint256 _withdrawable = _withdraw(_shares);
         // And sends back underlying to user
@@ -194,11 +187,9 @@ contract GenericUnionVault is ERC20, Ownable {
     /// @notice Withdraw all of a users' position as underlying
     /// @param _to - address to send underlying to
     /// @return withdrawn - the amount of underlying returned to the user
-    function withdrawAll(address _to)
-        external
-        notToZeroAddress(_to)
-        returns (uint256 withdrawn)
-    {
+    function withdrawAll(
+        address _to
+    ) external notToZeroAddress(_to) returns (uint256 withdrawn) {
         return withdraw(_to, balanceOf(msg.sender));
     }
 

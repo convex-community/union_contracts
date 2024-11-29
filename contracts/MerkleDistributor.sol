@@ -44,11 +44,7 @@ contract MerkleDistributor is ReentrancyGuard, UnionBase {
     // This event is triggered whenever the admin is updated.
     event AdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 
-    constructor(
-        address token_,
-        address depositor_,
-        bytes32 merkleRoot_
-    ) {
+    constructor(address token_, address depositor_, bytes32 merkleRoot_) {
         token = token_;
         admin = msg.sender;
         depositor = depositor_;
@@ -79,13 +75,13 @@ contract MerkleDistributor is ReentrancyGuard, UnionBase {
     /// @notice Set approvals for the tokens used when swapping
     function setApprovals() external onlyAdmin {
         IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 0);
-        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 2**256 - 1);
+        IERC20(CRV_TOKEN).safeApprove(CURVE_TRICRV_POOL, 2 ** 256 - 1);
 
         IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 0);
-        IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 2**256 - 1);
+        IERC20(CVXCRV_TOKEN).safeApprove(CVXCRV_STAKING_CONTRACT, 2 ** 256 - 1);
 
         IERC20(CVXCRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 0);
-        IERC20(CVXCRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 2**256 - 1);
+        IERC20(CVXCRV_TOKEN).safeApprove(CURVE_CVXCRV_CRV_POOL, 2 ** 256 - 1);
     }
 
     /// @notice Transfers ownership of the contract

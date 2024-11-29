@@ -20,6 +20,8 @@ from brownie import (
     UnionZap,
     stkCvxCrvMerkleDistributor,
     stkCvxPrismaMerkleDistributor,
+    CrvUsdSwapper,
+    sCrvUsdDistributor,
     interface,
 )
 from ..utils.constants import (
@@ -50,6 +52,8 @@ from ..utils.constants import (
     CURVE_PRISMA_ETH_POOL,
     CVXPRISMA,
     PRISMA,
+    SCRVUSD_VAULT,
+    CRVUSD_TOKEN,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -217,6 +221,28 @@ def prisma_distributor(owner, union_contract, prisma_zaps, prisma_vault):
     yield prisma_distributor
 
 
+@pytest.fixture(scope="module")
+def scrvusd_vault(owner):
+    yield interface.IERC4626(SCRVUSD_VAULT)
+
+
+@pytest.fixture(scope="module")
+def scrvusd_distributor(owner, union_contract, scrvusd_vault):
+
+    scrvusd_distributor = sCrvUsdDistributor.deploy(
+        scrvusd_vault, union_contract, CRVUSD_TOKEN, {"from": owner}
+    )
+    scrvusd_distributor.setApprovals({"from": owner})
+    yield scrvusd_distributor
+
+
+@pytest.fixture(scope="module")
+def crvusd_swapper(owner, union_contract):
+    swaps = CrvUsdSwapper.deploy(union_contract, {"from": owner})
+    swaps.setApprovals({"from": owner})
+    yield swaps
+
+
 @pytest.fixture(scope="module", autouse=True)
 def set_up_ouput_tokens(
     owner,
@@ -235,6 +261,8 @@ def set_up_ouput_tokens(
     prisma_vault,
     prisma_strategy,
     prisma_distributor,
+    crvusd_swapper,
+    scrvusd_distributor,
 ):
     # set up all the output tokens since all contracts are deployed
     union_contract.updateOutputToken(
@@ -251,7 +279,11 @@ def set_up_ouput_tokens(
         [CURVE_PRISMA_ETH_POOL, prisma_swapper, prisma_distributor],
         {"from": owner},
     )
-    union_contract.addCurvePool(PRISMA, [CURVE_PRISMA_ETH_POOL, 0])
+    union_contract.updateOutputToken(
+        CRVUSD_TOKEN,
+        [crvusd_swapper, crvusd_swapper, scrvusd_distributor],
+        {"from": owner},
+    )
 
 
 @pytest.fixture(scope="module")

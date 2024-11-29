@@ -29,4 +29,14 @@ interface IUniV2Router {
         external
         view
         returns (uint256[] memory amounts);
+
+    event Swap(
+        address indexed sender,
+        uint amount0In,
+        uint amount1In,
+        uint amount0Out,
+        uint amount1Out,
+        address indexed to
+    );
+
 }

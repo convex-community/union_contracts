@@ -12,9 +12,10 @@ contract AuraHandler is HandlerBase {
     bytes32 private constant AURA_ETH_POOL_ID =
         0xcfca23ca9ca720b6e98e3eb9b6aa0ffc4a5c08b9000200000000000000000274;
 
-    constructor(address _token, address _strategy)
-        HandlerBase(_token, _strategy)
-    {}
+    constructor(
+        address _token,
+        address _strategy
+    ) HandlerBase(_token, _strategy) {}
 
     /// @notice Set approvals for the contracts used when swapping & staking
     function setApprovals() external {

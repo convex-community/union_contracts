@@ -29,11 +29,7 @@ contract UnionPirexStaking is Ownable {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
-        address _token,
-        address _distributor,
-        address _vault
-    ) {
+    constructor(address _token, address _distributor, address _vault) {
         token = ERC20(_token);
         distributor = _distributor;
         vault = _vault;
@@ -130,10 +126,10 @@ contract UnionPirexStaking is Ownable {
     }
 
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount)
-        external
-        onlyOwner
-    {
+    function recoverERC20(
+        address tokenAddress,
+        uint256 tokenAmount
+    ) external onlyOwner {
         require(
             tokenAddress != address(token),
             "Cannot withdraw the staking token"

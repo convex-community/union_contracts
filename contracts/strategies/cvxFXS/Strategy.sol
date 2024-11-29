@@ -107,11 +107,9 @@ contract CvxFxsStrategy is Ownable, CvxFxsStrategyBase, IStrategyOracle {
     /// @dev Can be called by the vault only
     /// @param _caller - the address calling the harvest on the vault
     /// @return harvested - the amount harvested
-    function harvest(address _caller)
-        external
-        onlyVault
-        returns (uint256 harvested)
-    {
+    function harvest(
+        address _caller
+    ) external onlyVault returns (uint256 harvested) {
         // claim rewards
         cvxFxsStaking.getReward();
 
