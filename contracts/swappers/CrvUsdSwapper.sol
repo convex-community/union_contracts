@@ -83,7 +83,6 @@ contract CrvUsdSwapper is Ownable {
                 ethToCrvUsd ? TRICRV_CRVUSD_INDEX : TRICRV_ETH_INDEX,
                 amount,
                 _minAmountOut,
-                true,
                 depositor
             );
     }

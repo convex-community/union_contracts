@@ -8,7 +8,7 @@ contract sCrvUsdDistributor is GenericDistributor {
     using SafeERC20 for IERC20;
 
     uint256 private constant DECIMALS = 1e9;
-    uint256 public platformFee = 4e7;
+    uint256 public platformFee = 2e7;
     address public platform = 0x9Bc7c6ad7E7Cf3A6fCB58fb21e27752AC1e53f99;
 
     event PlatformFeeUpdated(uint256 _fee);
@@ -39,7 +39,8 @@ contract sCrvUsdDistributor is GenericDistributor {
 
     /// @notice Stakes the contract's entire crvUSD balance in the scrvUSD Vault
     function stake() external override onlyAdminOrDistributor {
-        uint256 _scrvUsdBalancce = IERC4626(vault).maxDeposit(address(this));
+        uint256 _crvUsdBalance = IERC20(token).balanceOf(address(this));
+        uint256 _scrvUsdBalancce = IERC4626(vault).deposit(_crvUsdBalance, address(this));
         uint256 _feeAmount = (_scrvUsdBalancce * platformFee) / DECIMALS;
         IERC4626(vault).transfer(platform, _feeAmount);
     }
