@@ -9,7 +9,8 @@ from .constants import (
     CVX,
     MAX_WEIGHT_1E9,
     CURVE_TRICRV_POOL,
-    FXS, PRISMA,
+    FXS,
+    PRISMA,
 )
 from .crvusd import eth_to_crvusd
 from .cvxfxs import eth_to_fxs
@@ -108,7 +109,6 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens, adjust
                     output_amount = token_balance - swappable
                 else:
                     output_amount = token_balance + eth_to_crvusd(swappable)
-
 
             output_amounts[order] = output_amount
 

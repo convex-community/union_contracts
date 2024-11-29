@@ -51,7 +51,9 @@ from ..utils.constants import (
     CVXFXS,
     CURVE_PRISMA_ETH_POOL,
     CVXPRISMA,
-    PRISMA, SCRVUSD_VAULT, CRVUSD_TOKEN,
+    PRISMA,
+    SCRVUSD_VAULT,
+    CRVUSD_TOKEN,
 )
 from ..utils.merkle import OrderedMerkleTree
 

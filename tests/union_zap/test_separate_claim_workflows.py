@@ -53,7 +53,7 @@ def test_manual_claim_workflow(
         int(time.time() + 1200),
         {"from": owner},
     )
-    eth_amount = single_swap_tx.events['Swap']['amount0Out']
+    eth_amount = single_swap_tx.events["Swap"]["amount0Out"]
     owner.transfer(union_contract, eth_amount)
     original_caller_balance = owner.balance()
 

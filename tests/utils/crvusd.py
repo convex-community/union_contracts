@@ -5,7 +5,9 @@ from .constants import (
     CURVE_CVXPRISMA_PRISMA_POOL,
     CURVE_PRISMA_MKUSD_POOL,
     MKUSD_TOKEN,
-    PRISMA, CURVE_TRICRV_POOL, SCRVUSD_VAULT,
+    PRISMA,
+    CURVE_TRICRV_POOL,
+    SCRVUSD_VAULT,
 )
 from .cvxfxs import get_cvx_to_eth_amount
 

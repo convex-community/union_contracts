@@ -18,7 +18,8 @@ from ..utils.constants import (
     MAX_WEIGHT_1E9,
     UNBALANCED_TOKENS,
     PRISMA,
-    CVX, SCRVUSD_VAULT,
+    CVX,
+    SCRVUSD_VAULT,
 )
 from ..utils.cvxfxs import get_stk_cvxfxs_received
 from ..utils.cvxprisma import get_stk_cvxprisma_received
@@ -62,7 +63,9 @@ def test_swap_adjust_distribute(
     initial_platform_balance = platform.balance()
     scrvusd_receiver = scrvusd_distributor.platform()
     fxs_swapper.updateOption(option, {"from": owner})
-    platform_initial_crvusd_balance = interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver)
+    platform_initial_crvusd_balance = interface.IERC20(SCRVUSD_VAULT).balanceOf(
+        scrvusd_receiver
+    )
 
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
     vaults = [vault, cvx_vault, fxs_vault, prisma_vault, scrvusd_vault]
@@ -189,7 +192,6 @@ def test_swap_adjust_distribute(
         {"from": owner},
     )
 
-
     for i, output_token in enumerate(output_tokens):
         if weights[i] == 0:
             continue
@@ -203,6 +205,11 @@ def test_swap_adjust_distribute(
         if vaults[i] == scrvusd_vault:
             collected_fee = output_amounts[i] * scrvusd_fee / 1e9
             assert approx(underlying, output_amounts[i] - collected_fee, 5e-2)
-            assert approx(collected_fee, interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver) - platform_initial_crvusd_balance, 25e-3)
+            assert approx(
+                collected_fee,
+                interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver)
+                - platform_initial_crvusd_balance,
+                25e-3,
+            )
         else:
             assert approx(underlying, output_amounts[i], 5e-2)

@@ -17,7 +17,9 @@ from ..utils.constants import (
     FXS,
     CVXCRV,
     MAX_WEIGHT_1E9,
-    PRISMA, CRVUSD_TOKEN, SCRVUSD_VAULT,
+    PRISMA,
+    CRVUSD_TOKEN,
+    SCRVUSD_VAULT,
 )
 from ..utils.crvusd import crvusd_to_scrvusd
 from ..utils.cvxfxs import get_stk_cvxfxs_received
@@ -28,9 +30,9 @@ data = [
     #    [0, MAX_WEIGHT_1E9, 0],
     #    [0, 0, MAX_WEIGHT_1E9],
     [0, 0, 0, 0, MAX_WEIGHT_1E9],
-     [0, 333333334, 0, 0, 666666666],
-     [0, 800000000, 100000000, 0, 100000000],
-     [100000000, 0, 100000000, 0, 800000000],
+    [0, 333333334, 0, 0, 666666666],
+    [0, 800000000, 100000000, 0, 100000000],
+    [100000000, 0, 100000000, 0, 800000000],
     # [200000000, 200000000, 0, 600000000],
     # [100000000, 700000000, 100000000, 100000000],
     # [350000000, 250000000, 100000000, 300000000],
@@ -70,7 +72,9 @@ def test_swap_adjust_distribute(
     scrvusd_receiver = scrvusd_distributor.platform()
     initial_platform_balance = platform.balance()
     fxs_swapper.updateOption(option, {"from": owner})
-    platform_initial_crvusd_balance = interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver)
+    platform_initial_crvusd_balance = interface.IERC20(SCRVUSD_VAULT).balanceOf(
+        scrvusd_receiver
+    )
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
     vaults = [vault, cvx_vault, fxs_vault, prisma_vault, scrvusd_vault]
     distributors = [
@@ -78,7 +82,7 @@ def test_swap_adjust_distribute(
         cvx_distributor,
         fxs_distributor,
         prisma_distributor,
-        scrvusd_distributor
+        scrvusd_distributor,
     ]
 
     proofs = claim_tree.get_proof(union_contract.address)
@@ -210,6 +214,11 @@ def test_swap_adjust_distribute(
         if vaults[i] == scrvusd_vault:
             collected_fee = output_amounts[i] * scrvusd_fee / 1e9
             assert approx(underlying, output_amounts[i] - collected_fee, 25e-3)
-            assert approx(collected_fee, interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver) - platform_initial_crvusd_balance, 25e-3)
+            assert approx(
+                collected_fee,
+                interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver)
+                - platform_initial_crvusd_balance,
+                25e-3,
+            )
         else:
             assert approx(underlying, output_amounts[i], 25e-3)
