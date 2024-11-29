@@ -21,10 +21,11 @@ def test_swap_slippage(
 @pytest.mark.parametrize(
     "weights,min_amounts",
     [
-        [[0, 0, 0, MAX_WEIGHT_1E9], [0, 0, 0, MAX_UINT256 // 2]],
-        [[MAX_WEIGHT_1E9, 0, 0, 0], [MAX_UINT256, 0, 0, 0]],
-        [[0, MAX_WEIGHT_1E9, 0, 0], [0, MAX_UINT256, 0, 0]],
-        [[0, 0, MAX_WEIGHT_1E9, 0], [0, 0, MAX_UINT256, 0]],
+        [[0, 0, 0, 0, MAX_WEIGHT_1E9], [0, 0, 0, 0, MAX_UINT256 // 2]],
+        [[0, 0, 0, MAX_WEIGHT_1E9, 0], [0, 0, 0, MAX_UINT256 // 2, 0]],
+        [[MAX_WEIGHT_1E9, 0, 0, 0, 0], [MAX_UINT256, 0, 0, 0, 0]],
+        [[0, MAX_WEIGHT_1E9, 0, 0, 0], [0, MAX_UINT256, 0, 0, 0]],
+        [[0, 0, MAX_WEIGHT_1E9, 0, 0], [0, 0, MAX_UINT256, 0, 0]],
     ],
 )
 @pytest.mark.parametrize("lock", [True, False])
@@ -55,10 +56,11 @@ def test_adjust_slippage(
 @pytest.mark.parametrize(
     "weights,min_amounts",
     [
-        [[0, 0, 0, MAX_WEIGHT_1E9], [0, 0, 0, MAX_UINT256]],
-        [[MAX_WEIGHT_1E9, 0, 0], [MAX_UINT256, 0, 0]],
-        [[0, MAX_WEIGHT_1E9, 0], [0, MAX_UINT256, 0]],
-        [[0, 0, MAX_WEIGHT_1E9], [0, 0, MAX_UINT256]],
+        [[0, 0, 0, 0, MAX_WEIGHT_1E9], [0, 0, 0, 0, MAX_UINT256 // 2]],
+        [[0, 0, 0, MAX_WEIGHT_1E9, 0], [0, 0, 0, MAX_UINT256 // 2, 0]],
+        [[MAX_WEIGHT_1E9, 0, 0, 0, 0], [MAX_UINT256, 0, 0, 0, 0]],
+        [[0, MAX_WEIGHT_1E9, 0, 0, 0], [0, MAX_UINT256, 0, 0, 0]],
+        [[0, 0, MAX_WEIGHT_1E9, 0, 0], [0, 0, MAX_UINT256, 0, 0]],
     ],
 )
 @pytest.mark.parametrize("lock", [True, False])

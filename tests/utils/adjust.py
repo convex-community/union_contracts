@@ -9,8 +9,9 @@ from .constants import (
     CVX,
     MAX_WEIGHT_1E9,
     CURVE_TRICRV_POOL,
-    FXS,
+    FXS, PRISMA,
 )
+from .crvusd import eth_to_crvusd
 from .cvxfxs import eth_to_fxs
 from .cvxprisma import eth_to_prisma
 
@@ -19,17 +20,17 @@ session = CachedSession("test_cache", expire_after=300)
 
 
 def get_spot_prices(token):
-    r = session.get(
-        f"https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses={token}&vs_currencies=ETH"
-    )
+    # r = session.get(
+    #     f"https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses={token}&vs_currencies=ETH"
+    # )
+    # data = json.loads(r.content)
+    # try:
+    #     price = data[token.lower()]["eth"]
+    # except KeyError:
+    #    print("Failed to get price from Coingecko, trying defillama")
+    r = session.get(f"https://coins.llama.fi/prices/current/ethereum:{token}")
     data = json.loads(r.content)
-    try:
-        price = data[token.lower()]["eth"]
-    except KeyError:
-        print("Failed to get price from Coingecko, trying defillama")
-        r = session.get(f"https://coins.llama.fi/prices/current/ethereum:{token}")
-        data = json.loads(r.content)
-        price = data["coins"][f"ethereum:{token}"]["price"]
+    price = data["coins"][f"ethereum:{token}"]["price"]
     return price
 
 
@@ -97,11 +98,17 @@ def simulate_adjust(union_contract, lock, weights, option, output_tokens, adjust
                     output_amount = token_balance - swappable
                 else:
                     output_amount = token_balance + eth_to_fxs(swappable, option)
-            else:
+            elif output_token == PRISMA:
                 if sell:
                     output_amount = token_balance - swappable
                 else:
                     output_amount = token_balance + eth_to_prisma(swappable)
+            else:
+                if sell:
+                    output_amount = token_balance - swappable
+                else:
+                    output_amount = token_balance + eth_to_crvusd(swappable)
+
 
             output_amounts[order] = output_amount
 
