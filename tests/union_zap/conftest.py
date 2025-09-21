@@ -22,6 +22,8 @@ from brownie import (
     stkCvxPrismaMerkleDistributor,
     CrvUsdSwapper,
     sCrvUsdDistributor,
+    ReUsdSwapper,
+    sReUsdDistributor,
     interface,
 )
 from ..utils.constants import (
@@ -54,6 +56,8 @@ from ..utils.constants import (
     PRISMA,
     SCRVUSD_VAULT,
     CRVUSD_TOKEN,
+    REUSD_TOKEN,
+    SREUSD_VAULT,
 )
 from ..utils.merkle import OrderedMerkleTree
 
@@ -243,6 +247,27 @@ def crvusd_swapper(owner, union_contract):
     yield swaps
 
 
+@pytest.fixture(scope="module")
+def sreusd_vault(owner):
+    yield interface.IERC4626(SREUSD_VAULT)
+
+
+@pytest.fixture(scope="module")
+def sreusd_distributor(owner, union_contract, sreusd_vault):
+    sreusd_distributor = sReUsdDistributor.deploy(
+        sreusd_vault, union_contract, REUSD_TOKEN, {"from": owner}
+    )
+    sreusd_distributor.setApprovals({"from": owner})
+    yield sreusd_distributor
+
+
+@pytest.fixture(scope="module")
+def reusd_swapper(owner, union_contract):
+    swaps = ReUsdSwapper.deploy(union_contract, {"from": owner})
+    swaps.setApprovals({"from": owner})
+    yield swaps
+
+
 @pytest.fixture(scope="module", autouse=True)
 def set_up_ouput_tokens(
     owner,
@@ -263,6 +288,8 @@ def set_up_ouput_tokens(
     prisma_distributor,
     crvusd_swapper,
     scrvusd_distributor,
+    reusd_swapper,
+    sreusd_distributor,
 ):
     # set up all the output tokens since all contracts are deployed
     union_contract.updateOutputToken(
@@ -282,6 +309,11 @@ def set_up_ouput_tokens(
     union_contract.updateOutputToken(
         CRVUSD_TOKEN,
         [crvusd_swapper, crvusd_swapper, scrvusd_distributor],
+        {"from": owner},
+    )
+    union_contract.updateOutputToken(
+        REUSD_TOKEN,
+        [reusd_swapper, reusd_swapper, sreusd_distributor],
         {"from": owner},
     )
 
