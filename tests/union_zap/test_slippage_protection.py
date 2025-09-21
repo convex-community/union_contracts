@@ -7,7 +7,7 @@ def test_swap_slippage(
     fn_isolation, owner, union_contract, set_mock_claims, claim_tree, vault
 ):
 
-    weights = [MAX_WEIGHT_1E9, 0, 0, 0]
+    weights = [MAX_WEIGHT_1E9, 0, 0, 0, 0, 0]
     proofs = claim_tree.get_proof(union_contract.address)
     params = [
         [token, proofs["claim"]["index"], CLAIM_AMOUNT, proofs["proofs"]]
@@ -21,11 +21,12 @@ def test_swap_slippage(
 @pytest.mark.parametrize(
     "weights,min_amounts",
     [
-        [[0, 0, 0, 0, MAX_WEIGHT_1E9], [0, 0, 0, 0, MAX_UINT256 // 2]],
-        [[0, 0, 0, MAX_WEIGHT_1E9, 0], [0, 0, 0, MAX_UINT256 // 2, 0]],
-        [[MAX_WEIGHT_1E9, 0, 0, 0, 0], [MAX_UINT256, 0, 0, 0, 0]],
-        [[0, MAX_WEIGHT_1E9, 0, 0, 0], [0, MAX_UINT256, 0, 0, 0]],
-        [[0, 0, MAX_WEIGHT_1E9, 0, 0], [0, 0, MAX_UINT256, 0, 0]],
+        [[0, 0, 0, 0, 0, MAX_WEIGHT_1E9], [0, 0, 0, 0, 0, MAX_UINT256 // 2]],
+        [[0, 0, 0, 0, MAX_WEIGHT_1E9, 0], [0, 0, 0, 0, MAX_UINT256 // 2, 0]],
+        [[0, 0, 0, MAX_WEIGHT_1E9, 0, 0], [0, 0, 0, MAX_UINT256 // 2, 0, 0]],
+        [[MAX_WEIGHT_1E9, 0, 0, 0, 0, 0], [MAX_UINT256, 0, 0, 0, 0, 0]],
+        [[0, MAX_WEIGHT_1E9, 0, 0, 0, 0], [0, MAX_UINT256, 0, 0, 0, 0]],
+        [[0, 0, MAX_WEIGHT_1E9, 0, 0, 0], [0, 0, MAX_UINT256, 0, 0, 0]],
     ],
 )
 @pytest.mark.parametrize("lock", [True, False])
@@ -50,17 +51,20 @@ def test_adjust_slippage(
     union_contract.swap(params, 0, True, 0, 0, weights, {"from": owner})
 
     with brownie.reverts():
-        union_contract.adjust(lock, weights, [0, 1, 2, 3], min_amounts, {"from": owner})
+        union_contract.adjust(
+            lock, weights, [0, 1, 2, 3, 4, 5], min_amounts, {"from": owner}
+        )
 
 
 @pytest.mark.parametrize(
     "weights,min_amounts",
     [
-        [[0, 0, 0, 0, MAX_WEIGHT_1E9], [0, 0, 0, 0, MAX_UINT256 // 2]],
-        [[0, 0, 0, MAX_WEIGHT_1E9, 0], [0, 0, 0, MAX_UINT256 // 2, 0]],
-        [[MAX_WEIGHT_1E9, 0, 0, 0, 0], [MAX_UINT256, 0, 0, 0, 0]],
-        [[0, MAX_WEIGHT_1E9, 0, 0, 0], [0, MAX_UINT256, 0, 0, 0]],
-        [[0, 0, MAX_WEIGHT_1E9, 0, 0], [0, 0, MAX_UINT256, 0, 0]],
+        [[0, 0, 0, 0, 0, MAX_WEIGHT_1E9], [0, 0, 0, 0, 0, MAX_UINT256 // 2]],
+        [[0, 0, 0, 0, MAX_WEIGHT_1E9, 0], [0, 0, 0, 0, MAX_UINT256 // 2, 0]],
+        [[0, 0, 0, MAX_WEIGHT_1E9, 0, 0], [0, 0, 0, MAX_UINT256 // 2, 0, 0]],
+        [[MAX_WEIGHT_1E9, 0, 0, 0, 0, 0], [MAX_UINT256, 0, 0, 0, 0, 0]],
+        [[0, MAX_WEIGHT_1E9, 0, 0, 0, 0], [0, MAX_UINT256, 0, 0, 0, 0]],
+        [[0, 0, MAX_WEIGHT_1E9, 0, 0, 0], [0, 0, MAX_UINT256, 0, 0, 0]],
     ],
 )
 @pytest.mark.parametrize("lock", [True, False])
@@ -90,7 +94,7 @@ def test_process_incentives_slippage(
             lock,
             0,
             weights,
-            [0, 1, 2, 3],
+            [0, 1, 2, 3, 4, 5],
             min_amounts,
             {"from": owner},
         )

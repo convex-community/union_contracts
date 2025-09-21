@@ -20,6 +20,7 @@ from ..utils.constants import (
     PRISMA,
     CVX,
     SCRVUSD_VAULT,
+    SREUSD_VAULT,
 )
 from ..utils.cvxfxs import get_stk_cvxfxs_received
 from ..utils.cvxprisma import get_stk_cvxprisma_received
@@ -28,10 +29,9 @@ from ..utils.cvxprisma import get_stk_cvxprisma_received
 @pytest.mark.parametrize(
     "weights,adjust_order",
     [
-        [[837299477, 27058091, 67821216, 33910608, 33910608], [1, 2, 3, 4, 0]],
-        [[300000000, 600000000, 50000000, 10000000, 40000000], [2, 3, 1, 4, 0]],
-        #        [[50000000, 50000000, 900000000], [0, 1, 2]],
-        #        [[950000000, 0, 50000000], [2, 1, 0]],
+        # weights length expanded to 6, add reUSD as last position
+        [[837299477, 27058091, 67821216, 33910608, 33910608, 0], [1, 2, 3, 4, 0, 5]],
+        [[300000000, 600000000, 50000000, 10000000, 40000000, 0], [2, 3, 1, 4, 0, 5]],
     ],
 )
 @pytest.mark.parametrize("option", [3])
@@ -53,6 +53,8 @@ def test_swap_adjust_distribute(
     prisma_distributor,
     scrvusd_vault,
     scrvusd_distributor,
+    sreusd_vault,
+    sreusd_distributor,
     weights,
     adjust_order,
     option,
@@ -66,15 +68,20 @@ def test_swap_adjust_distribute(
     platform_initial_crvusd_balance = interface.IERC20(SCRVUSD_VAULT).balanceOf(
         scrvusd_receiver
     )
+    sreusd_receiver = sreusd_distributor.platform()
+    platform_initial_reusd_balance = interface.IERC20(SREUSD_VAULT).balanceOf(
+        sreusd_receiver
+    )
 
     output_tokens = [union_contract.outputTokens(i) for i in range(len(weights))]
-    vaults = [vault, cvx_vault, fxs_vault, prisma_vault, scrvusd_vault]
+    vaults = [vault, cvx_vault, fxs_vault, prisma_vault, scrvusd_vault, sreusd_vault]
     distributors = [
         crv_distributor,
         cvx_distributor,
         fxs_distributor,
         prisma_distributor,
         scrvusd_distributor,
+        sreusd_distributor,
     ]
 
     proofs = claim_tree.get_proof(union_contract.address)
@@ -108,7 +115,7 @@ def test_swap_adjust_distribute(
         )
 
     tx_adjust = union_contract.adjust(
-        lock, weights, adjust_order, [0, 0, 0, 0, 0], {"from": owner}
+        lock, weights, adjust_order, [0, 0, 0, 0, 0, 0], {"from": owner}
     )
 
     assert approx(platform.balance() - initial_platform_balance, fee_amount, 5e-2)
@@ -172,10 +179,20 @@ def test_swap_adjust_distribute(
         assert distributors[i].frozen() == True
         underlying = (
             vaults[i].balanceOfUnderlying(distributors[i])
-            if vaults[i] not in [cvx_vault, scrvusd_vault]
+            if vaults[i] not in [cvx_vault, scrvusd_vault, sreusd_vault]
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
-        assert approx(underlying, output_amounts[i], 5e-2)
+        # Account for platform fees inside ERC4626 vaults
+        if vaults[i] == scrvusd_vault:
+            scrvusd_fee = scrvusd_distributor.platformFee()
+            collected_fee = output_amounts[i] * scrvusd_fee / 1e9
+            assert approx(underlying, output_amounts[i] - collected_fee, 5e-2)
+        elif vaults[i] == sreusd_vault:
+            sreusd_fee = sreusd_distributor.platformFee()
+            collected_fee = output_amounts[i] * sreusd_fee / 1e9
+            assert approx(underlying, output_amounts[i] - collected_fee, 5e-2)
+        else:
+            assert approx(underlying, output_amounts[i], 5e-2)
 
     # revert to test process incentives result
     chain.revert()
@@ -188,7 +205,7 @@ def test_swap_adjust_distribute(
         gas_refund,
         weights,
         adjust_order,
-        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
         {"from": owner},
     )
 
@@ -198,18 +215,29 @@ def test_swap_adjust_distribute(
         assert distributors[i].frozen() == True
         underlying = (
             vaults[i].balanceOfUnderlying(distributors[i])
-            if vaults[i] not in [cvx_vault, scrvusd_vault]
+            if vaults[i] not in [cvx_vault, scrvusd_vault, sreusd_vault]
             else vaults[i].convertToAssets(vaults[i].balanceOf(distributors[i]))
         )
 
         if vaults[i] == scrvusd_vault:
+            scrvusd_fee = scrvusd_distributor.platformFee()
             collected_fee = output_amounts[i] * scrvusd_fee / 1e9
             assert approx(underlying, output_amounts[i] - collected_fee, 5e-2)
-            assert approx(
-                collected_fee,
-                interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver)
-                - platform_initial_crvusd_balance,
-                25e-3,
-            )
+            # Convert vault shares to underlying for accurate fee comparison
+            current_shares = interface.IERC20(SCRVUSD_VAULT).balanceOf(scrvusd_receiver)
+            fee_assets = scrvusd_vault.convertToAssets(
+                current_shares
+            ) - scrvusd_vault.convertToAssets(platform_initial_crvusd_balance)
+            assert approx(collected_fee, fee_assets, 25e-3)
+        elif vaults[i] == sreusd_vault:
+            sreusd_fee = sreusd_distributor.platformFee()
+            collected_fee = output_amounts[i] * sreusd_fee / 1e9
+            assert approx(underlying, output_amounts[i] - collected_fee, 5e-2)
+            # Convert vault shares to underlying for accurate fee comparison
+            current_shares = interface.IERC20(SREUSD_VAULT).balanceOf(sreusd_receiver)
+            fee_assets = sreusd_vault.convertToAssets(
+                current_shares
+            ) - sreusd_vault.convertToAssets(platform_initial_reusd_balance)
+            assert approx(collected_fee, fee_assets, 25e-3)
         else:
             assert approx(underlying, output_amounts[i], 5e-2)

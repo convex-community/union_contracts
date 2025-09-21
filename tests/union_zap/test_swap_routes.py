@@ -24,11 +24,11 @@ from ..utils.constants import (
 )
 
 data = [
-    [MAX_WEIGHT_1E9, 0, 0, 0, 0],
-    [0, MAX_WEIGHT_1E9, 0, 0, 0],
-    [0, 0, MAX_WEIGHT_1E9, 0, 0],
-    [0, 0, 0, 0, MAX_WEIGHT_1E9],
-    [300000000, 400000000, 100000000, 100000000, 100000000],
+    [MAX_WEIGHT_1E9, 0, 0, 0, 0, 0],
+    [0, MAX_WEIGHT_1E9, 0, 0, 0, 0],
+    [0, 0, MAX_WEIGHT_1E9, 0, 0, 0],
+    [0, 0, 0, 0, MAX_WEIGHT_1E9, 0],
+    [300000000, 400000000, 100000000, 100000000, 100000000, 0],
 ]
 curve_routers = [value[0] for value in CURVE_CONTRACT_REGISTRY.values()]
 claimable_tokens_params = [
@@ -104,7 +104,7 @@ def test_swap_mixed_routes(
 ):
 
     OTHER_TOKENS = [ALCX, FXS]
-    weights = [MAX_WEIGHT_1E9, 0, 0, 0, 0]
+    weights = [MAX_WEIGHT_1E9, 0, 0, 0, 0, 0]
     gas_refund = 3e16
 
     proofs = claim_tree.get_proof(union_contract.address)
