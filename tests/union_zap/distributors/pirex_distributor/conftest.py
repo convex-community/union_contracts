@@ -6,6 +6,7 @@ from brownie import (
     PCvxZaps,
     interface,
     PirexMigrationV1,
+    PirexMigrationV2,
 )
 from tests.utils.constants import (
     PIREX_CVX_VAULT,
@@ -61,6 +62,8 @@ def pirex_cvx(owner):
 def cvx_distributor(owner, cvx_vault, union_contract, alice):
     merkle = CVXMerkleDistributor.deploy(cvx_vault, alice, CVX, {"from": owner})
     merkle.setApprovals({"from": owner})
+    # Enable oracle-based path selection for these tests
+    merkle.toggleOracle({"from": owner})
     yield merkle
 
 
@@ -83,6 +86,11 @@ def distributor_zaps(fxs_distributor, owner, cvx_distributor, cvx_zaps, cvx_vaul
 @pytest.fixture(scope="module")
 def migration(owner):
     yield PirexMigrationV1.deploy({"from": owner})
+
+
+@pytest.fixture(scope="module")
+def migration_v2(owner):
+    yield PirexMigrationV2.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module", autouse=True)
