@@ -24,6 +24,7 @@ contract CVXMerkleDistributor is GenericDistributor {
     // 2.5% slippage tolerance by default
     uint256 public slippage = 9750;
     uint256 private constant DECIMALS = 10000;
+    bool public useOracle = false;
 
     constructor(
         address _vault,
@@ -43,6 +44,11 @@ contract CVXMerkleDistributor is GenericDistributor {
         IERC20(PXCVX_TOKEN).safeApprove(vault, type(uint256).max);
     }
 
+    /// @notice Toggles the use of pool oracle to decide between lock/swap
+    function toggleOracle() external onlyAdmin {
+        useOracle = !useOracle;
+    }
+
     /// @notice Set the acceptable level of slippage for LP deposits
     /// @dev As percentage of the ETH value of original amount in BIPS
     /// @param _slippage - the acceptable slippage threshold
@@ -54,7 +60,7 @@ contract CVXMerkleDistributor is GenericDistributor {
     function stake() external override onlyAdminOrDistributor {
         uint256 _price = LPXCVX_CVX_POOL.price_oracle();
         uint256 _cvxBalance = IERC20(token).balanceOf(address(this));
-        if (_price > 1 ether) {
+        if (_price > 1 ether || !useOracle) {
             IPirexCVX(PIREX_CVX).deposit(
                 _cvxBalance,
                 address(this),
