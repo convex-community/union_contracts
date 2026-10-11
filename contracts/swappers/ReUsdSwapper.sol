@@ -145,9 +145,11 @@ contract ReUsdSwapper is Ownable {
         // Step 2: Swap scrvUSD to reUSD via Curve pool with slippage protection
         uint256 minReUsdOut = 0;
         if (useOracle) {
-            // Get expected reUSD amount using oracle price
-            uint256 oraclePrice = reUsdPool.price_oracle(0); // reUSD/scrvUSD price
-            uint256 expectedReUsd = (scrvUsdAmount * 1e18) / oraclePrice;
+            // The oracle quotes reUSD per crvUSD, with the scrvUSD rate normalized.
+            uint256 oraclePrice = reUsdPool.price_oracle(0);
+            uint256 expectedReUsd = (scrvUsdVault.convertToAssets(
+                scrvUsdAmount
+            ) * oraclePrice) / 1e18;
             minReUsdOut = (expectedReUsd * allowedSlippage) / DECIMALS;
         }
 
@@ -170,9 +172,12 @@ contract ReUsdSwapper is Ownable {
         // Step 1: Swap reUSD to scrvUSD via Curve pool with slippage protection
         uint256 minScrvUsdOut = 0;
         if (useOracle) {
-            // Get expected scrvUSD amount using oracle price
-            uint256 oraclePrice = reUsdPool.price_oracle(0); // reUSD/scrvUSD price
-            uint256 expectedScrvUsd = (reUsdAmount * oraclePrice) / 1e18;
+            // Convert the oracle's crvUSD asset value back to scrvUSD shares.
+            uint256 oraclePrice = reUsdPool.price_oracle(0);
+            uint256 expectedCrvUsd = (reUsdAmount * 1e18) / oraclePrice;
+            uint256 expectedScrvUsd = scrvUsdVault.convertToShares(
+                expectedCrvUsd
+            );
             minScrvUsdOut = (expectedScrvUsd * allowedSlippage) / DECIMALS;
         }
 
@@ -189,22 +194,13 @@ contract ReUsdSwapper is Ownable {
     }
 
     /// @notice Wrapper function around pricing oracles to return ETH price of reUSD
-    /// @dev Combines TriCrv oracle, scrvUSD vault pricePerShare, and Curve pool oracle
+    /// @dev The pool oracle quotes reUSD per crvUSD after normalizing the scrvUSD rate.
     /// @return ETH price of reUSD
     function price_oracle() external view returns (uint256) {
-        // Get ETH price of crvUSD from TriCrv pool
         uint256 ethPriceOfCrvUsd = (1e18 * 1e18) / triCrvSwap.price_oracle(0);
+        uint256 reUsdPriceOfCrvUsd = reUsdPool.price_oracle(0);
 
-        // Get crvUSD price of scrvUSD from vault pricePerShare
-        uint256 crvUsdPriceOfScrvUsd = scrvUsdVault.convertToAssets(1e18);
-
-        // Get scrvUSD price of reUSD from Curve pool oracle (index 0 = reUSD/scrvUSD)
-        uint256 scrvUsdPriceOfReUsd = reUsdPool.price_oracle(0);
-
-        // Chain the prices: ETH -> crvUSD -> scrvUSD -> reUSD
-        return
-            (ethPriceOfCrvUsd * crvUsdPriceOfScrvUsd * scrvUsdPriceOfReUsd) /
-            (1e18 * 1e18);
+        return (ethPriceOfCrvUsd * 1e18) / reUsdPriceOfCrvUsd;
     }
 
     receive() external payable {}
