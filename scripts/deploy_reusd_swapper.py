@@ -30,6 +30,10 @@ def main(publish=True):
     print("Value: 0")
     print(f"Data: {calldata}")
     print(f"Existing distributor: {distributor}")
+    print(
+        f"Propose with mainnet-deploy: brownie run scripts/propose_reusd_swapper.py "
+        f"main {swapper.address} --network mainnet"
+    )
 
     # Print the activation call before verification in case the explorer is unavailable.
     if publish:
